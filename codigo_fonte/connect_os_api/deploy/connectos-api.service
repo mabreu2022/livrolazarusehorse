@@ -1,0 +1,42 @@
+[Unit]
+Description=ConnectOS API — Servico de Gestao de OS e Faturamento
+After=network.target firebird.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=connectos
+Group=connectos
+WorkingDirectory=/opt/connectos/api
+ExecStart=/opt/connectos/api/bin/connect_os_api
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# Politica de Reinicializacao Automatica em caso de falha
+Restart=always
+RestartSec=5s
+
+# Limites de Recursos do Sistema Operacional
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Seguranca de Processo e Isolamento
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+# Variaveis de Ambiente de Producao
+Environment=PORT=9000
+Environment=FB_HOST=localhost
+Environment=FB_DATABASE=/opt/connectos/database/CONNECTOS.FDB
+Environment=FB_USER=CONNECTOS_APP
+Environment=FB_PASS=ChaveForteProducao2026!
+Environment=STORAGE_PATH=/opt/connectos/storage
+
+# Logs e Saida Padrao
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=connectos-api
+
+[Install]
+WantedBy=multi-user.target

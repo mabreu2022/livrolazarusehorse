@@ -1,0 +1,13 @@
+{
+  "name": "connect_os_api",
+  "description": "API RESTful Corporativa com Horse e Firebird 5.0",
+  "version": "1.0.0",
+  "homepage": "",
+  "main": "src/ConnectOSApi.lpr",
+  "author": "Maurício Abreu",
+  "license": "MIT",
+  "dependencies": {
+    "github.com/HashLoad/horse": "^3.1.8",
+    "github.com/HashLoad/jhonson": "^1.1.6"
+  }
+}

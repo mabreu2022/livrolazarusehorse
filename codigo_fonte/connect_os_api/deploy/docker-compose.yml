@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  firebird:
+    image: firebirdsql/firebird:5.0
+    container_name: connectos_firebird
+    restart: always
+    environment:
+      - ISC_PASSWORD=MasterKeyProducao2026!
+      - FIREBIRD_DATABASE=CONNECTOS.FDB
+    volumes:
+      - firebird_data:/firebird/data
+      - ../database/schema_fb5.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend_net
+
+  api_node_1:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: connectos_api_1
+    restart: always
+    environment:
+      - PORT=9000
+      - FB_HOST=firebird
+      - FB_DATABASE=/firebird/data/CONNECTOS.FDB
+      - FB_USER=SYSDBA
+      - FB_PASS=MasterKeyProducao2026!
+    volumes:
+      - storage_data:/app/storage
+    depends_on:
+      - firebird
+    networks:
+      - backend_net
+
+  api_node_2:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: connectos_api_2
+    restart: always
+    environment:
+      - PORT=9000
+      - FB_HOST=firebird
+      - FB_DATABASE=/firebird/data/CONNECTOS.FDB
+      - FB_USER=SYSDBA
+      - FB_PASS=MasterKeyProducao2026!
+    volumes:
+      - storage_data:/app/storage
+    depends_on:
+      - firebird
+    networks:
+      - backend_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: connectos_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/connectos.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - api_node_1
+      - api_node_2
+    networks:
+      - backend_net
+
+networks:
+  backend_net:
+    driver: bridge
+
+volumes:
+  firebird_data:
+  storage_data:

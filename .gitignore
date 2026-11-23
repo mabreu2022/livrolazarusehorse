@@ -1,0 +1,31 @@
+# Ignorar binarios e arquivos intermediarios de compilacao Free Pascal / Lazarus
+lib/
+lib_debug/
+bin/
+backup/
+*.o
+*.ppu
+*.compiled
+*.or
+*.a
+*.bak
+*.rst
+*.rsj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Editor / SO
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Ignorar banco de dados fisico caso seja criado localmente
+*.fdb
+*.fbk

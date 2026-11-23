@@ -1,0 +1,228 @@
+/* ==========================================================================
+   ESTILO EDITORIAL UICLAP (16 cm x 23 cm)
+   Livro: Desenvolvimento de APIs REST Modernas com Horse e Lazarus
+   Autor: Mauricio Abreu
+   Formato: 160mm x 230mm - Padrão UICLAP / Livro Físico
+   ========================================================================== */
+
+@page {
+    size: 160mm 230mm;
+    margin-top: 18mm;
+    margin-bottom: 18mm;
+    margin-left: 20mm;   /* Margem interna para lombada (gutter) */
+    margin-right: 15mm;  /* Margem de corte externa */
+    
+    @bottom-center {
+        content: counter(page);
+        font-family: "Charter", "Merriweather", "Georgia", serif;
+        font-size: 8.5pt;
+        color: #64748B;
+    }
+}
+
+@page :left {
+    margin-left: 15mm;
+    margin-right: 20mm;
+    @top-left {
+        content: "Desenvolvimento de APIs REST Modernas com Horse e Lazarus";
+        font-family: "Inter", "Helvetica Neue", sans-serif;
+        font-size: 7.5pt;
+        color: #64748B;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+}
+
+@page :right {
+    margin-left: 20mm;
+    margin-right: 15mm;
+    @top-right {
+        content: "Maurício Abreu";
+        font-family: "Inter", "Helvetica Neue", sans-serif;
+        font-size: 7.5pt;
+        color: #64748B;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   TIPOGRAFIA BASE (LIGHT MODE EDITORIAL)
+   -------------------------------------------------------------------------- */
+body {
+    font-family: "Charter", "Merriweather", "Georgia", "Times New Roman", serif;
+    font-size: 10pt;
+    line-height: 1.55;
+    color: #1E293B;       /* Cinza-carvão escuro de altíssima legibilidade */
+    background-color: #FFFFFF;
+    text-align: justify;
+    hyphens: auto;
+    margin: 0;
+    padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   TÍTULOS E CABEÇALHOS
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0F172A;
+    font-weight: 700;
+    line-height: 1.25;
+    page-break-after: avoid;
+    break-after: avoid;
+    text-align: left;
+}
+
+h1 {
+    font-size: 18pt;
+    margin-top: 28pt;
+    margin-bottom: 14pt;
+    border-bottom: 1.5pt solid #0F172A;
+    padding-bottom: 6pt;
+    page-break-before: always;
+    break-before: page;
+}
+
+h2 {
+    font-size: 13pt;
+    margin-top: 20pt;
+    margin-bottom: 8pt;
+    border-bottom: 0.5pt solid #CBD5E1;
+    padding-bottom: 3pt;
+}
+
+h3 {
+    font-size: 11pt;
+    margin-top: 14pt;
+    margin-bottom: 6pt;
+    color: #1E293B;
+}
+
+h4 {
+    font-size: 10pt;
+    font-weight: 600;
+    margin-top: 10pt;
+    margin-bottom: 4pt;
+}
+
+p {
+    margin-top: 0;
+    margin-bottom: 8pt;
+}
+
+/* --------------------------------------------------------------------------
+   BLOCOS DE CÓDIGO NATIVO PASCAL / TERMINAL
+   -------------------------------------------------------------------------- */
+pre, code {
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Courier New", monospace;
+}
+
+code {
+    font-size: 8.5pt;
+    background-color: #F1F5F9;
+    color: #0F172A;
+    padding: 1pt 3pt;
+    border-radius: 3pt;
+}
+
+pre {
+    background-color: #F8FAFC;
+    border: 1pt solid #E2E8F0;
+    border-left: 3pt solid #3B82F6;
+    padding: 8pt 10pt;
+    margin: 10pt 0;
+    font-size: 8pt;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    word-break: break-all;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border-radius: 2pt;
+}
+
+pre code {
+    background: transparent;
+    padding: 0;
+    color: #1E293B;
+    font-size: 8pt;
+}
+
+/* --------------------------------------------------------------------------
+   CAIXAS DE DESTAQUE PADRONIZADAS (CALLOUTS)
+   -------------------------------------------------------------------------- */
+blockquote {
+    margin: 10pt 0;
+    padding: 8pt 12pt;
+    border-radius: 3pt;
+    font-size: 9pt;
+    line-height: 1.45;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+/* Nota de Arquitetura */
+blockquote p strong:first-child:contains("Nota de Arquitetura") {
+    color: #1D4ED8;
+}
+
+/* Estilo padrão de blockquote */
+blockquote {
+    border-left: 3.5pt solid #3B82F6;
+    background-color: #F0F7FF;
+    color: #1E293B;
+}
+
+/* --------------------------------------------------------------------------
+   TABELAS TÉCNICAS
+   -------------------------------------------------------------------------- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12pt 0;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+th, td {
+    border: 0.5pt solid #CBD5E1;
+    padding: 5pt 7pt;
+    text-align: left;
+}
+
+th {
+    background-color: #F1F5F9;
+    font-weight: 600;
+    color: #0F172A;
+}
+
+tr:nth-child(even) td {
+    background-color: #F8FAFC;
+}
+
+/* --------------------------------------------------------------------------
+   LISTAS E CHECKLISTS
+   -------------------------------------------------------------------------- */
+ul, ol {
+    margin-top: 0;
+    margin-bottom: 8pt;
+    padding-left: 18pt;
+}
+
+li {
+    margin-bottom: 3pt;
+}
+
+/* --------------------------------------------------------------------------
+   QUEBRAS DE PÁGINA ESPECÍFICAS
+   -------------------------------------------------------------------------- */
+.page-break {
+    page-break-after: always;
+    break-after: page;
+}
+
+.newpage {
+    page-break-before: always;
+    break-before: page;
+}
