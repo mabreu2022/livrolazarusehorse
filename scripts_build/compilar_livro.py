@@ -1,59 +1,136 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Script de Compilação Editorial — Livro Técnico UICLAP (16 cm x 23 cm)
+Script de Compilação Editorial — Trilogia UICLAP (16 cm x 23 cm)
 Livro: Desenvolvimento de APIs REST Modernas com Horse e Lazarus
 Autor: Maurício Abreu
+Divisão em 3 Volumes de ~333 páginas para atendimento estrito ao limite UICLAP
 """
 
 import os
 import re
 import sys
-import glob
+import argparse
 import subprocess
 from pathlib import Path
+import pypdf
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CAPITULOS_DIR = BASE_DIR / "capitulos"
 OUTPUT_DIR = BASE_DIR / "output"
 SCRIPTS_DIR = BASE_DIR / "scripts_build"
 CSS_FILE = SCRIPTS_DIR / "estilo_uiclap_16x23.css"
-PDF_OUTPUT = OUTPUT_DIR / "Livro_Horse_Lazarus_Mauricio_Abreu_16x23.pdf"
-HTML_OUTPUT = OUTPUT_DIR / "livro_completo.html"
+
+VOLUMES_CONFIG = {
+    0: {
+        "numero": 0,
+        "titulo": "Desenvolvimento de APIs REST Modernas com Horse e Lazarus",
+        "subtitulo": "Edição Completa Consolidada (20 Módulos)",
+        "output_pdf": "Livro_Horse_Lazarus_Volume_Unico.pdf",
+        "output_html": "livro_volume_unico.html",
+        "capitulos": [
+            "00_pre_textuais.md",
+            "01_anatomia_http_horse_fpc.md",
+            "02_setup_lazarus_boss_primeiro_servidor.md",
+            "03_roteamento_avancado_verbos_parametros.md",
+            "04_requisicoes_respostas_status_http.md",
+            "05_pipeline_middlewares_next.md",
+            "06_serializacao_json_fpjson_jhonson.md",
+            "07_cors_tratamento_global_excecoes.md",
+            "08_autenticacao_jwt_refresh_tokens.md",
+            "09_arquitetura_limpa_mvc_interfaces_lazarus.md",
+            "10_modelagem_firebird5_identity_utf8.md",
+            "11_pool_conexoes_thread_safe_firebird.md",
+            "12_crud_completo_transacoes_dto.md",
+            "13_paginacao_filtros_dinamicos_performance.md",
+            "14_upload_download_arquivos_octetstream.md",
+            "15_consumo_apis_externas_webhooks.md",
+            "16_documentacao_openapi_swagger.md",
+            "17_testes_automatizados_fpcunit.md",
+            "18_otimizacao_compilacao_cruzada_linux.md",
+            "19_servicos_daemon_systemd_windows_service.md",
+            "20_nginx_proxy_reverso_ssl_docker.md",
+            "21_pos_textuais.md"
+        ]
+    },
+    1: {
+        "numero": 1,
+        "titulo": "Desenvolvimento de APIs REST Modernas com Horse e Lazarus",
+        "subtitulo": "Volume 1: Fundamentos do Horse, Roteamento, Middlewares e Segurança JWT",
+        "output_pdf": "Livro_Horse_Lazarus_Volume_1.pdf",
+        "output_html": "livro_volume_1.html",
+        "capitulos": [
+            "00_pre_textuais_vol1.md",
+            "01_anatomia_http_horse_fpc.md",
+            "02_setup_lazarus_boss_primeiro_servidor.md",
+            "03_roteamento_avancado_verbos_parametros.md",
+            "04_requisicoes_respostas_status_http.md",
+            "05_pipeline_middlewares_next.md",
+            "06_serializacao_json_fpjson_jhonson.md",
+            "07_cors_tratamento_global_excecoes.md",
+            "08_autenticacao_jwt_refresh_tokens.md",
+            "21_pos_textuais_vol1.md"
+        ]
+    },
+    2: {
+        "numero": 2,
+        "titulo": "Desenvolvimento de APIs REST Modernas com Horse e Lazarus",
+        "subtitulo": "Volume 2: Arquitetura Limpa, Firebird 5.0 e Persistência de Dados",
+        "output_pdf": "Livro_Horse_Lazarus_Volume_2.pdf",
+        "output_html": "livro_volume_2.html",
+        "capitulos": [
+            "00_pre_textuais_vol2.md",
+            "09_arquitetura_limpa_mvc_interfaces_lazarus.md",
+            "10_modelagem_firebird5_identity_utf8.md",
+            "11_pool_conexoes_thread_safe_firebird.md",
+            "12_crud_completo_transacoes_dto.md",
+            "13_paginacao_filtros_dinamicos_performance.md",
+            "14_upload_download_arquivos_octetstream.md",
+            "21_pos_textuais_vol2.md"
+        ]
+    },
+    3: {
+        "numero": 3,
+        "titulo": "Desenvolvimento de APIs REST Modernas com Horse e Lazarus",
+        "subtitulo": "Volume 3: Integrações, Qualidade de Software, DevOps e Deploy em Produção",
+        "output_pdf": "Livro_Horse_Lazarus_Volume_3.pdf",
+        "output_html": "livro_volume_3.html",
+        "capitulos": [
+            "00_pre_textuais_vol3.md",
+            "15_consumo_apis_externas_webhooks.md",
+            "16_documentacao_openapi_swagger.md",
+            "17_testes_automatizados_fpcunit.md",
+            "18_otimizacao_compilacao_cruzada_linux.md",
+            "19_servicos_daemon_systemd_windows_service.md",
+            "20_nginx_proxy_reverso_ssl_docker.md",
+            "21_pos_textuais_vol3.md"
+        ]
+    }
+}
 
 def check_dependencies():
-    """Verifica e importa módulos necessários."""
+    """Garante que markdown e pypdf estejam disponíveis."""
     try:
         import markdown
     except ImportError:
         print("[!] Instalando dependencia Python: markdown...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "markdown", "pygments"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "markdown", "pygments", "pypdf"])
 
-def collect_chapters():
-    """Coleta e ordena todos os arquivos markdown da pasta capitulos/."""
-    pattern = str(CAPITULOS_DIR / "*.md")
-    files = sorted(glob.glob(pattern))
-    if not files:
-        print(f"[ERRO] Nenhum arquivo .md encontrado em {CAPITULOS_DIR}")
-        sys.exit(1)
-    print(f"[*] Encontrados {len(files)} capitulo(s):")
-    for f in files:
-        print(f"    - {os.path.basename(f)}")
-    return files
-
-def preprocess_markdown(md_files):
-    """Unifica e limpa os arquivos Markdown para renderizacao."""
+def preprocess_markdown(cap_files):
+    """Unifica e formata arquivos Markdown do volume."""
     full_content = []
     
-    for fpath in md_files:
+    for filename in cap_files:
+        fpath = CAPITULOS_DIR / filename
+        if not fpath.exists():
+            print(f"[ERRO] Arquivo nao encontrado: {fpath}")
+            sys.exit(1)
+            
         with open(fpath, "r", encoding="utf-8") as f:
             content = f.read()
             
-        # Substitui comandos LaTeX comuns por tags HTML compativeis
         content = re.sub(r'\\newpage', '<div class="newpage"></div>', content)
         content = re.sub(r'\\vspace\*?\{[^}]*\}', '<div style="margin: 20px 0;"></div>', content)
-        
-        # Converte caixas de alerta em classes estilizadas
         content = content.replace('> **Nota de Arquitetura:**', '<blockquote class="alert-arquitetura"><strong>Nota de Arquitetura:</strong>')
         content = content.replace('> **Atenção Thread-Safety:**', '<blockquote class="alert-threadsafety"><strong>Atenção Thread-Safety:</strong>')
         content = content.replace('> **Boas Práticas FPC:**', '<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>')
@@ -63,8 +140,8 @@ def preprocess_markdown(md_files):
         
     return "\n".join(full_content)
 
-def build_html(markdown_text):
-    """Converte Markdown para HTML completo com suporte a TOC e CSS UICLAP."""
+def build_html(markdown_text, vol_cfg):
+    """Converte Markdown para HTML completo com suporte a CSS UICLAP."""
     import markdown
     
     extensions = [
@@ -72,7 +149,6 @@ def build_html(markdown_text):
         'tables',
         'fenced_code',
         'toc',
-        'nl2br',
         'sane_lists'
     ]
     
@@ -89,7 +165,7 @@ def build_html(markdown_text):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desenvolvimento de APIs REST Modernas com Horse e Lazarus - Maurício Abreu</title>
+    <title>{vol_cfg['titulo']} — {vol_cfg['subtitulo']} — Maurício Abreu</title>
     <style>
 {css_content}
     </style>
@@ -102,15 +178,14 @@ def build_html(markdown_text):
 </html>
 """
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    with open(HTML_OUTPUT, "w", encoding="utf-8") as f:
+    html_output_path = OUTPUT_DIR / vol_cfg['output_html']
+    with open(html_output_path, "w", encoding="utf-8") as f:
         f.write(html_doc)
         
-    print(f"[OK] Documento HTML intermediario gerado: {HTML_OUTPUT}")
-    return HTML_OUTPUT
+    return html_output_path
 
 def find_pdf_renderer():
-    """Identifica o motor de renderizacao de PDF disponivel."""
-    # 1. Tentar Chrome no Windows
+    """Identifica o Chrome ou Edge disponivel."""
     chrome_paths = [
         r"C:\Program Files\Google\Chrome\Application\chrome.exe",
         r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
@@ -121,73 +196,79 @@ def find_pdf_renderer():
         if os.path.exists(p):
             return ("browser", p)
             
-    # 2. Tentar comando weasyprint
-    try:
-        res = subprocess.run(["weasyprint", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if res.returncode == 0:
-            return ("weasyprint", "weasyprint")
-    except Exception:
-        pass
-        
     return (None, None)
 
-def render_pdf(html_path):
-    """Gera o PDF final utilizando o renderizador disponivel."""
+def render_volume_pdf(html_path, vol_cfg):
+    """Compila o PDF do volume e reporta a contagem de páginas exata."""
     engine_type, engine_bin = find_pdf_renderer()
+    pdf_output_path = OUTPUT_DIR / vol_cfg['output_pdf']
     
     if not engine_type:
-        print("[AVISO] Nenhum renderizador PDF (Chrome/Edge/WeasyPrint) encontrado no PATH.")
-        print(f"[INFO] O arquivo HTML completo foi gerado com sucesso em: {html_path}")
-        print("Voce pode abri-lo no navegador e salvar como PDF em formato 160mm x 230mm.")
+        print("[ERRO] Navegador Chrome/Edge nao localizado para renderizar PDF.")
         return False
         
-    print(f"[*] Compilando PDF via {engine_type} ({os.path.basename(engine_bin)})...")
-    
-    if engine_type == "browser":
-        # Usando Edge ou Chrome em modo headless com margens de corte e impressao de background
-        cmd = [
-            engine_bin,
-            "--headless=new",
-            "--disable-gpu",
-            "--run-all-compositor-stages-before-draw",
-            "--print-to-pdf-no-header",
-            f"--print-to-pdf={PDF_OUTPUT}",
-            str(html_path)
-        ]
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if res.returncode == 0 and PDF_OUTPUT.exists():
-            size_kb = os.path.getsize(PDF_OUTPUT) / 1024
-            print(f"[SUCESSO] PDF gerado: {PDF_OUTPUT} ({size_kb:.1f} KB)")
-            return True
-        else:
-            print(f"[ERRO] Falha na execucao do browser: {res.stderr.decode('utf-8', errors='ignore')}")
-            return False
-            
-    elif engine_type == "weasyprint":
-        cmd = ["weasyprint", str(html_path), str(PDF_OUTPUT)]
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if res.returncode == 0 and PDF_OUTPUT.exists():
-            size_kb = os.path.getsize(PDF_OUTPUT) / 1024
-            print(f"[SUCESSO] PDF gerado via WeasyPrint: {PDF_OUTPUT} ({size_kb:.1f} KB)")
-            return True
-            
-    return False
+    print(f"[*] Compilando {vol_cfg['subtitulo']} via {os.path.basename(engine_bin)}...")
+    cmd = [
+        engine_bin,
+        "--headless=new",
+        "--disable-gpu",
+        "--run-all-compositor-stages-before-draw",
+        "--print-to-pdf-no-header",
+        f"--print-to-pdf={pdf_output_path}",
+        str(html_path)
+    ]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if res.returncode == 0 and pdf_output_path.exists():
+        reader = pypdf.PdfReader(str(pdf_output_path))
+        num_paginas = len(reader.pages)
+        size_kb = os.path.getsize(pdf_output_path) / 1024
+        print(f"[SUCESSO] Volume {vol_cfg['numero']} gerado!")
+        print(f"          Arquivo:  {pdf_output_path.name}")
+        print(f"          Paginas:  {num_paginas} paginas")
+        print(f"          Tamanho:  {size_kb:.1f} KB")
+        return num_paginas
+    else:
+        print(f"[ERRO] Falha ao compilar Volume {vol_cfg['numero']}: {res.stderr.decode('utf-8', errors='ignore')}")
+        return False
+
+def compilar_volume(vol_num):
+    """Compila um volume especifico."""
+    vol_cfg = VOLUMES_CONFIG[vol_num]
+    print(f"\n=================================================================")
+    print(f" COMPILANDO: {vol_cfg['subtitulo']}")
+    print(f"=================================================================")
+    raw_md = preprocess_markdown(vol_cfg['capitulos'])
+    html_file = build_html(raw_md, vol_cfg)
+    return render_volume_pdf(html_file, vol_cfg)
 
 def main():
+    parser = argparse.ArgumentParser(description="Compilador Editorial UICLAP (3 Volumes ou Volume Único)")
+    parser.add_argument("--volume", type=int, choices=[0, 1, 2, 3], help="Numero do volume a compilar (1, 2, 3 para Trilogia ou 0 para Volume Unico)")
+    args = parser.parse_args()
+    
+    check_dependencies()
+    
     print("=================================================================")
-    print(" PIPELINE DE COMPILACAO EDITORIAL — PADRAO UICLAP 16 cm x 23 cm  ")
+    print(" PIPELINE EDITORIAL DA TRILOGIA UICLAP (16 cm x 23 cm)           ")
     print(" Livro: Desenvolvimento de APIs REST Modernas com Horse e Lazarus")
     print(" Autor: Maurício Abreu                                           ")
     print("=================================================================")
     
-    check_dependencies()
-    md_files = collect_chapters()
-    raw_md = preprocess_markdown(md_files)
-    html_file = build_html(raw_md)
-    render_pdf(html_file)
+    volumes_to_build = [args.volume] if args.volume is not None else [1, 2, 3]
+    resultados = {}
+    
+    for v in volumes_to_build:
+        paginas = compilar_volume(v)
+        resultados[v] = paginas
+        
+    print("\n=================================================================")
+    print(" RESUMO FINAL DA TRILOGIA UICLAP")
     print("=================================================================")
-    print(" Processo de compilacao finalizado.")
-    print("=================================================================")
+    for v, p in resultados.items():
+        cfg = VOLUMES_CONFIG[v]
+        status_uiclap = "OK (<= 999 pags)" if p and p <= 999 else "EXCEDE LIMITE"
+        print(f" * Volume {v}: {p} paginas | {cfg['output_pdf']} [{status_uiclap}]")
+    print("=================================================================\n")
 
 if __name__ == "__main__":
     main()

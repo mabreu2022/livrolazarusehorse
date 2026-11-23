@@ -92,18 +92,34 @@ Acesse a documentação Swagger interativa em: `http://localhost:9000/api/docs`
 
 ---
 
-## 📑 Compilação Editorial do Livro (PDF 16 cm × 23 cm)
+## 📑 Trilogia Editorial UICLAP (16 cm × 23 cm)
 
-Para auditar o manuscrito e recompilar o PDF no padrão físico da UICLAP:
+Para atender estritamente aos requisitos da plataforma de publicação **UICLAP** (limite máximo de 999 páginas por volume físico), a obra está disponível tanto na forma de **Trilogia em 3 Volumes Independentes** quanto em **Volume Único Consolidado**:
+
+| Edição / Volume | Subtítulo e Escopo Temático | Módulos | Páginas | PDF Compilado |
+| :--- | :--- | :---: | :---: | :--- |
+| **Volume 1** | *Fundamentos do Horse, Roteamento, Middlewares e Segurança JWT* | 01 a 08 | 111 págs | `output/Livro_Horse_Lazarus_Volume_1.pdf` |
+| **Volume 2** | *Arquitetura Limpa, Firebird 5.0 e Persistência de Dados* | 09 a 14 | 82 págs | `output/Livro_Horse_Lazarus_Volume_2.pdf` |
+| **Volume 3** | *Integrações, Qualidade de Software, DevOps e Deploy em Produção* | 15 a 20 | 66 págs | `output/Livro_Horse_Lazarus_Volume_3.pdf` |
+| **Volume Único** | *Edição Completa Consolidada (20 Módulos + Laboratórios)* | 01 a 20 | 570 págs | `output/Livro_Horse_Lazarus_Volume_Unico.pdf` |
+
+### Como Compilar os Volumes
 
 ```bash
-# 1. Auditoria de palavras e limite de 72 caracteres por linha de codigo
+# 1. Auditoria de palavras e limite de 72 caracteres por linha de código
 python scripts_build/check_formatting.py
 
-# 2. Compilacao Markdown -> HTML -> PDF (via Headless Chrome/Edge)
+# 2. Compilar os 3 Volumes da Trilogia UICLAP (padrão)
 python scripts_build/compilar_livro.py
+
+# 3. Compilar um volume específico
+python scripts_build/compilar_livro.py --volume 1   # Volume 1
+python scripts_build/compilar_livro.py --volume 2   # Volume 2
+python scripts_build/compilar_livro.py --volume 3   # Volume 3
+python scripts_build/compilar_livro.py --volume 0   # Volume Único Consolidado
 ```
-O arquivo PDF resultante será salvo em `output/Livro_Horse_Lazarus_Mauricio_Abreu_16x23.pdf`.
+
+Os arquivos PDFs finais gerados atendem integralmente à diagramação física (160 mm × 230 mm), tipografia light-mode para impressão offset/pólen e limites da UICLAP.
 
 ---
 
