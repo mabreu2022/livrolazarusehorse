@@ -30,30 +30,27 @@ A obra é um guia prático e definitivo de engenharia de software para o ecossis
 ## 📂 Estrutura do Repositório
 
 ```text
-├── capitulos/            # 22 arquivos Markdown da obra completa (58.800+ palavras)
-│   ├── 00_pre_textuais.md
-│   ├── 01_anatomia_http_horse_fpc.md ... 20_nginx_proxy_reverso_ssl_docker.md
-│   └── 21_pos_textuais.md
-├── codigo_fonte/         # Projeto pratico ConnectOSApi completo
-│   └── connect_os_api/
-│       ├── boss.json     # Manifesto de dependencias do Boss
-│       ├── database/     # DDL e seeds do Firebird 5.0
-│       ├── deploy/       # Dockerfile multi-stage, docker-compose.yml e Nginx
-│       ├── scripts/      # Scripts de build automatizado e testes k6
-│       ├── src/          # Fontes Object Pascal (Clean Architecture)
-│       │   ├── Controllers/
-│       │   ├── Core/
-│       │   ├── DTOs/
-│       │   ├── Interfaces/
-│       │   ├── Repositories/
-│       │   └── Services/
-│       └── tests/        # Suite de testes automatizados com FPCUnit
+├── capas/                # Templates HTML editáveis das capas dos 3 volumes
+│   ├── capa_volume_1_aberta.html & capa_volume_1_frente.html
+│   ├── capa_volume_2_aberta.html & capa_volume_2_frente.html
+│   └── capa_volume_3_aberta.html & capa_volume_3_frente.html
+├── capitulos/            # Manuscrito Markdown da obra completa (28 arquivos)
+├── codigo_fonte/         # Projeto prático ConnectOSApi completo
+│   └── connect_os_api/   # DTOs, Services, Controllers, Pool Thread-Safe, Docker
 ├── database/             # Script SQL DDL Firebird 5.0 multi-tenant (schema_fb5.sql)
-├── output/               # PDF compilado pronto para impressao UICLAP (16x23 cm)
-│   └── Livro_Horse_Lazarus_Mauricio_Abreu_16x23.pdf
-└── scripts_build/        # Scripts Python de compilacao e auditoria editorial
+├── output/               # PDFs do miolo prontos para impressão UICLAP (16x23 cm)
+│   ├── Livro_Horse_Lazarus_Volume_1.pdf (111 págs)
+│   ├── Livro_Horse_Lazarus_Volume_2.pdf (82 págs)
+│   ├── Livro_Horse_Lazarus_Volume_3.pdf (66 págs)
+│   ├── Livro_Horse_Lazarus_Volume_Unico.pdf (570 págs)
+│   └── capas/            # Capas completas abertas (PDF + PNG 300 DPI) para UICLAP
+│       ├── Capa_Completa_Volume_1_UICLAP.pdf & Capa_Aberta_Volume_1.png
+│       ├── Capa_Completa_Volume_2_UICLAP.pdf & Capa_Aberta_Volume_2.png
+│       └── Capa_Completa_Volume_3_UICLAP.pdf & Capa_Aberta_Volume_3.png
+└── scripts_build/        # Scripts de automação editorial e compilação
     ├── check_formatting.py
     ├── compilar_livro.py
+    ├── gerar_capas_uiclap.py
     └── estilo_uiclap_16x23.css
 ```
 
@@ -120,6 +117,31 @@ python scripts_build/compilar_livro.py --volume 0   # Volume Único Consolidado
 ```
 
 Os arquivos PDFs finais gerados atendem integralmente à diagramação física (160 mm × 230 mm), tipografia light-mode para impressão offset/pólen e limites da UICLAP.
+
+---
+
+## 🎨 Capas Oficiais da Trilogia no Padrão UICLAP
+
+As capas de cada volume foram projetadas respeitando estritamente o gabarito industrial da **UICLAP**:
+- **Formato Fechado:** 16 cm × 23 cm (160 mm × 230 mm).
+- **Sangria Industrial:** 5 mm em todas as quatro bordas externas (superior, inferior, esquerda e direita).
+- **Altura Total com Sangria:** 240 mm (230 mm + 5 mm superior + 5 mm inferior).
+- **Cálculo da Lombada (Spine):** Dimensionada precisamente para a quantidade exata de páginas de cada volume em papel Avena/Pólen 80g (~0.11 mm/folha + cola):
+  - **Volume 1 (111 págs):** Lombada de **7.0 mm** | Largura Aberta Total: **337.0 mm × 240.0 mm**.
+  - **Volume 2 (82 págs):** Lombada de **5.5 mm** | Largura Aberta Total: **335.5 mm × 240.0 mm**.
+  - **Volume 3 (66 págs):** Lombada de **5.0 mm** | Largura Aberta Total: **335.0 mm × 240.0 mm**.
+
+| Volume | Lombada | Dimensões Abertas | Arquivo PDF UICLAP | Capa Aberta (PNG 300 DPI) | Primeira Capa (PNG 300 DPI) |
+| :--- | :---: | :---: | :--- | :--- | :--- |
+| **Volume 1** | 7.0 mm | 337.0 × 240.0 mm | `output/capas/Capa_Completa_Volume_1_UICLAP.pdf` | `output/capas/Capa_Aberta_Volume_1.png` | `output/capas/Capa_Frente_Volume_1.png` |
+| **Volume 2** | 5.5 mm | 335.5 × 240.0 mm | `output/capas/Capa_Completa_Volume_2_UICLAP.pdf` | `output/capas/Capa_Aberta_Volume_2.png` | `output/capas/Capa_Frente_Volume_2.png` |
+| **Volume 3** | 5.0 mm | 335.0 × 240.0 mm | `output/capas/Capa_Completa_Volume_3_UICLAP.pdf` | `output/capas/Capa_Aberta_Volume_3.png` | `output/capas/Capa_Frente_Volume_3.png` |
+
+### Como Gerar ou Atualizar as Capas
+```bash
+python scripts_build/gerar_capas_uiclap.py
+```
+O script compilará automaticamente os arquivos vetoriais em PDF e as imagens rasterizadas em 300 DPI na pasta `output/capas/`, além de salvar os templates HTML em `capas/`.
 
 ---
 

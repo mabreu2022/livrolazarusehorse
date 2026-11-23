@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Capa Completa Volume 2 — UICLAP (16 cm x 23 cm)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap');
+        
+        @page {
+            size: 335.5mm 240mm;
+            margin: 0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        body {
+            width: 335.5mm;
+            height: 240mm;
+            background-color: #0A0806;
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: #F8FAFC;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Grade de Fundo Tecnológica Sutis */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20mm 20mm;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* Container Principal da Capa Aberta */
+        .cover-spread {
+            display: flex;
+            width: 335.5mm;
+            height: 240mm;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* 1. QUARTA CAPA (Contracapa / Back Cover) = 5mm sangria + 160mm */
+        .back-cover {
+            width: 165mm; /* 5mm sangria esquerda + 160mm */
+            height: 240mm;
+            padding-top: 15mm;
+            padding-bottom: 15mm;
+            padding-left: 20mm; /* 5mm sangria + 15mm margem segura */
+            padding-right: 15mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            border-right: 1px dashed rgba(255, 255, 255, 0.08); /* Linha de vinco da lombada */
+        }
+        
+        /* 2. LOMBADA (Spine) */
+        .spine {
+            width: 5.5mm;
+            height: 240mm;
+            background: linear-gradient(180deg, #EA580C 0%, rgba(15, 23, 42, 0.95) 20%, rgba(15, 23, 42, 0.95) 80%, #EA580C 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12mm 0;
+            position: relative;
+            border-left: 1px dashed rgba(255, 255, 255, 0.15);
+            border-right: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+        
+        .spine-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 7.5pt;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: #F8FAFC;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+        
+        .spine-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7pt;
+            font-weight: 800;
+            color: #FDE047;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 3px 2px;
+            border-radius: 3px;
+            border: 1px solid #FDE047;
+            text-align: center;
+            width: 90%;
+        }
+        
+        /* 3. PRIMEIRA CAPA (Front Cover) = 160mm + 5mm sangria */
+        .front-cover {
+            width: 165mm; /* 160mm + 5mm sangria direita */
+            height: 240mm;
+            padding-top: 15mm;
+            padding-bottom: 15mm;
+            padding-left: 15mm;
+            padding-right: 20mm; /* 15mm margem segura + 5mm sangria */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            background: radial-gradient(circle at 85% 20%, rgba(234, 88, 12, 0.25) 0%, transparent 60%);
+        }
+        
+        /* Elementos da Frente */
+        .series-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 7.5pt;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: #FDE047;
+            text-transform: uppercase;
+            width: fit-content;
+        }
+        
+        .title-block {
+            margin-top: 10mm;
+        }
+        
+        .title-lead {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11pt;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            color: #94A3B8;
+            text-transform: uppercase;
+            margin-bottom: 2mm;
+        }
+        
+        .title-main {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-size: 21pt;
+            font-weight: 900;
+            line-height: 1.15;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+        
+        .title-accent {
+            color: #F97316;
+            display: block;
+            margin-top: 1.5mm;
+            text-shadow: 0 0 25px rgba(234, 88, 12, 0.6);
+        }
+        
+        .volume-card {
+            background: rgba(30, 20, 15, 0.85);
+            border-left: 3.5px solid #FDE047;
+            border-top: 1px solid rgba(249, 115, 22, 0.3);
+            border-right: 1px solid rgba(249, 115, 22, 0.3);
+            border-bottom: 1px solid rgba(249, 115, 22, 0.3);
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 5mm;
+            backdrop-filter: blur(8px);
+        }
+        
+        .volume-card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 8.5pt;
+            font-weight: 700;
+            color: #FDE047;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        
+        .volume-card-desc {
+            font-size: 8pt;
+            color: #CBD5E1;
+            margin-top: 2px;
+            line-height: 1.35;
+        }
+        
+        .artwork-container {
+            width: 100%;
+            height: 52mm;
+            margin: 4mm 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .artwork-svg {
+            width: 100%;
+            max-height: 100%;
+        }
+        
+        .tech-badges-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 4mm;
+        }
+        
+        .badge {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #E2E8F0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 6.5pt;
+            font-weight: 600;
+            padding: 2.5px 6px;
+            border-radius: 3px;
+        }
+        
+        .author-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 3.5mm;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+        }
+        
+        .author-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14pt;
+            font-weight: 800;
+            color: #FFFFFF;
+            letter-spacing: 0.02em;
+        }
+        
+        .author-role {
+            font-size: 7.5pt;
+            color: #94A3B8;
+            margin-top: 1px;
+        }
+        
+        .publisher-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 6.5pt;
+            color: #F97316;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        /* Estilos da Quarta Capa */
+        .back-header {
+            border-bottom: 2px solid #EA580C;
+            padding-bottom: 3mm;
+            margin-bottom: 4mm;
+        }
+        
+        .back-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11pt;
+            font-weight: 800;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.25;
+        }
+        
+        .back-synopsis {
+            font-size: 7.8pt;
+            color: #CBD5E1;
+            line-height: 1.45;
+            text-align: justify;
+            margin-bottom: 4mm;
+        }
+        
+        .back-highlights-box {
+            background: rgba(30, 20, 15, 0.85);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 5px;
+            padding: 8px 10px;
+            margin-bottom: 4mm;
+        }
+        
+        .back-highlights-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 8pt;
+            font-weight: 700;
+            color: #FDE047;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+        
+        .back-highlights-list {
+            list-style: none;
+        }
+        
+        .back-highlights-list li {
+            font-size: 7.2pt;
+            color: #E2E8F0;
+            line-height: 1.35;
+            margin-bottom: 2.5px;
+            display: flex;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        
+        .bullet {
+            font-weight: bold;
+        }
+        
+        .back-author-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 3mm;
+            margin-bottom: 4mm;
+        }
+        
+        .author-bio {
+            font-size: 7.2pt;
+            color: #94A3B8;
+            line-height: 1.35;
+            text-align: justify;
+        }
+        
+        .back-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 3mm;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        
+        .barcode-box {
+            width: 50mm;
+            height: 28mm;
+            background-color: #FFFFFF;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+        
+        .barcode-mock {
+            width: 90%;
+            height: 18mm;
+            background: repeating-linear-gradient(
+                to right,
+                #000 0px, #000 2px,
+                #fff 2px, #fff 4px,
+                #000 4px, #000 7px,
+                #fff 7px, #fff 8px,
+                #000 8px, #000 11px,
+                #fff 11px, #fff 14px,
+                #000 14px, #000 15px,
+                #fff 15px, #fff 18px,
+                #000 18px, #000 22px
+            );
+        }
+        
+        .barcode-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 5pt;
+            color: #1E293B;
+            font-weight: bold;
+            margin-top: 2px;
+            letter-spacing: 0.05em;
+        }
+        
+        .back-brand-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .brand-logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 9pt;
+            font-weight: 800;
+            color: #FFFFFF;
+            letter-spacing: 0.05em;
+        }
+        
+        .brand-subtext {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 6.5pt;
+            color: #F97316;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-overlay"></div>
+    
+    <div class="cover-spread">
+        <!-- ========================================== -->
+        <!-- 1. QUARTA CAPA (CONTRACAPA / BACK COVER)   -->
+        <!-- ========================================== -->
+        <div class="back-cover">
+            <div>
+                <div class="back-header">
+                    <div style="font-family:'Space Grotesk',sans-serif; font-size:7pt; color:#FDE047; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:2px;">TRILOGIA HORSE &amp; LAZARUS • VOL. 2</div>
+                    <h2 class="back-title">Engenharia de Produção Nativamente em Pascal</h2>
+                </div>
+                
+                <p class="back-synopsis">Persistência de dados em alta concorrência exige rigor arquitetural absoluto. No segundo volume, mergulhe na aplicação prática da Clean Architecture e princípios SOLID em projetos Lazarus, projetando contratos desacoplados via Interfaces com gerenciamento automático de memória por contagem de referência. Domine os novos recursos do Firebird 5.0 e resolva o maior desafio de APIs Lazarus multithread: a construção de um Pool de Conexões Thread-Safe de altíssima resiliência, garantindo transações ACID atômicas sob carga extrema sem vazamentos de memória ou concorrência indevida.</p>
+                
+                <div class="back-highlights-box">
+                    <div class="back-highlights-title">O Que Você Vai Dominar Neste Volume</div>
+                    <ul class="back-highlights-list">
+                        <li><span class="bullet" style="color:#FDE047;">▸</span> Clean Architecture, desacoplamento e eliminação de dependências circulares</li><li><span class="bullet" style="color:#FDE047;">▸</span> Contratos rigorosos com Interfaces (IInterface) e injeção de dependência</li><li><span class="bullet" style="color:#FDE047;">▸</span> Modelagem moderna no Firebird 5.0 com colunas IDENTITY, UUIDs e UTF8</li><li><span class="bullet" style="color:#FDE047;">▸</span> O Pool de Conexões Thread-Safe definitivo para SQLdb e ZeosLib</li><li><span class="bullet" style="color:#FDE047;">▸</span> Implementação completa do projeto ConnectOSApi com padrão Unit of Work e DTOs</li><li><span class="bullet" style="color:#FDE047;">▸</span> Paginação de alta velocidade (OFFSET/FETCH) e streaming com horse-octet-stream</li>
+                    </ul>
+                </div>
+                
+                <div class="back-author-box">
+                    <div class="author-bio">
+                        <strong style="color:#FFFFFF;">Maurício Abreu</strong> é Arquiteto de Software, Especialista em Object Pascal (Lazarus / Delphi) e fundador da <strong style="color:#FDE047;">Conect Solutions TI</strong>. Atua há mais de uma década no desenvolvimento de microsserviços de missão crítica, telecomunicações e arquiteturas distribuídas de alta performance.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="back-footer">
+                <div class="back-brand-info">
+                    <div class="brand-logo-text">CONECT SOLUTIONS TI</div>
+                    <div class="brand-subtext">PUBLICAÇÕES TÉCNICAS DE ENGENHARIA</div>
+                    <div style="font-size:6pt; color:#64748B; margin-top:2px;">FORMATO FÍSICO UICLAP 160 × 230 mm</div>
+                </div>
+                
+                <!-- Área do Código de Barras / ISBN Exigido pela UICLAP -->
+                <div class="barcode-box">
+                    <div class="barcode-mock"></div>
+                    <div class="barcode-label">UICLAP • ISBN &amp; DEPÓSITO LEGAL</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ========================================== -->
+        <!-- 2. LOMBADA (SPINE)                         -->
+        <!-- ========================================== -->
+        <div class="spine">
+            <div class="spine-badge">V.2</div>
+            <div class="spine-text">MAURÍCIO ABREU &nbsp;•&nbsp; HORSE E LAZARUS &nbsp;•&nbsp; VOL. 2</div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:6pt; font-weight:800; color:#FFFFFF; text-align:center;">CSTI</div>
+        </div>
+        
+        <!-- ========================================== -->
+        <!-- 3. PRIMEIRA CAPA (FRONT COVER)             -->
+        <!-- ========================================== -->
+        <div class="front-cover">
+            <div>
+                <div class="series-tag">
+                    <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background-color:#FDE047;"></span>
+                    VOLUME 2 • ARQUITETURA LIMPA E FIREBIRD 5.0
+                </div>
+                
+                <div class="title-block">
+                    <div class="title-lead">DESENVOLVIMENTO DE</div>
+                    <h1 class="title-main">APIS REST<br>MODERNAS</h1>
+                    <div class="title-main title-accent">COM HORSE &amp; LAZARUS</div>
+                </div>
+                
+                <div class="volume-card">
+                    <div class="volume-card-title">Arquitetura Limpa, Firebird 5.0 e Persistência de Dados</div>
+                    <div class="volume-card-desc">Da fundamentação de rede ao ciclo de vida completo de engenharia em produção</div>
+                </div>
+            </div>
+            
+            <div class="artwork-container">
+                
+        <svg viewBox="0 0 400 240" fill="none" xmlns="http://www.w3.org/2000/svg" class="artwork-svg">
+            <defs>
+                <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#EA580C"/>
+                    <stop offset="50%" stop-color="#F97316"/>
+                    <stop offset="100%" stop-color="#FDE047"/>
+                </linearGradient>
+                <filter id="glow2" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                </filter>
+            </defs>
+            <!-- Anéis Concéntricos de Clean Architecture -->
+            <circle cx="200" cy="115" r="95" stroke="#EA580C" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.35"/>
+            <circle cx="200" cy="115" r="70" stroke="#F97316" stroke-width="1.8" opacity="0.55"/>
+            <circle cx="200" cy="115" r="45" stroke="#FDE047" stroke-width="2.2" opacity="0.8" filter="url(#glow2)"/>
+            <!-- Cilindro Firebird 5.0 no Centro -->
+            <g transform="translate(165, 85)">
+                <ellipse cx="35" cy="12" rx="32" ry="10" fill="#F97316" fill-opacity="0.8"/>
+                <path d="M3 12 V45 C3 52 17 58 35 58 C53 58 67 52 67 45 V12" fill="#EA580C" fill-opacity="0.8" stroke="#FDE047" stroke-width="1.8"/>
+                <ellipse cx="35" cy="12" rx="32" ry="10" fill="#1C1917" stroke="#FDE047" stroke-width="2"/>
+                <ellipse cx="35" cy="30" rx="32" ry="8" stroke="#F97316" stroke-width="1" stroke-dasharray="3 3"/>
+                <text x="35" y="40" font-family="'JetBrains Mono', monospace" font-size="10" fill="#FFFFFF" text-anchor="middle" font-weight="bold">FB 5.0</text>
+            </g>
+            <!-- Rótulos de Camadas -->
+            <text x="200" y="32" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#F97316" text-anchor="middle" font-weight="600">CONTROLLERS / HTTP API</text>
+            <text x="200" y="58" font-family="'JetBrains Mono', monospace" font-size="8" fill="#FDE047" text-anchor="middle" font-weight="600">USE CASES / SERVICES</text>
+            <text x="200" y="180" font-family="'JetBrains Mono', monospace" font-size="8" fill="#F97316" text-anchor="middle" font-weight="600">REPOSITORIES &amp; POOL THREAD-SAFE</text>
+            <!-- Orbitas de Entidades -->
+            <circle cx="105" cy="115" r="8" fill="#FDE047" filter="url(#glow2)"/>
+            <text x="105" y="135" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#FFFFFF" text-anchor="middle">DTO</text>
+            <circle cx="295" cy="115" r="8" fill="#F97316"/>
+            <text x="295" y="135" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#FFFFFF" text-anchor="middle">DAO</text>
+            <!-- Legenda Inferior -->
+            <text x="200" y="225" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8" text-anchor="middle" letter-spacing="2">DOMÍNIO ISOLADO • CONCORRÊNCIA MULTITHREAD ACID</text>
+        </svg>
+        
+            </div>
+            
+            <div>
+                <div class="tech-badges-grid">
+                    <span class="badge">CLEAN ARCHITECTURE</span><span class="badge">FIREBIRD 5.0</span><span class="badge">POOL THREAD-SAFE</span><span class="badge">SQLDB & ZEOS</span><span class="badge">UNIT OF WORK</span><span class="badge">DTOs</span>
+                </div>
+                
+                <div class="author-footer">
+                    <div>
+                        <div class="author-name">Maurício Abreu</div>
+                        <div class="author-role">Arquiteto de Software • Conect Solutions TI</div>
+                    </div>
+                    <div class="publisher-label">
+                        EDIÇÃO DEFINITIVA<br>PADRÃO UICLAP 16×23
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
