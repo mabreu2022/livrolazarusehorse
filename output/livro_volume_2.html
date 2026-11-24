@@ -165,25 +165,12 @@ blockquote {
     page-break-inside: avoid;
     break-inside: avoid;
     border: 0.5pt solid #CBD5E1;
-    border-left: 3pt solid #1E293B;
     background-color: #F8FAFC;
     color: #1E293B;
 }
 
 blockquote strong:first-child {
     color: #0F172A;
-}
-
-blockquote.alert-arquitetura {
-    border-left: 3pt solid #1E293B;
-}
-
-blockquote.alert-threadsafety {
-    border-left: 3pt solid #334155;
-}
-
-blockquote.alert-fpc {
-    border-left: 3pt solid #475569;
 }
 
 /* --------------------------------------------------------------------------
@@ -425,24 +412,19 @@ function QueryInterface(constref iid: TGUID; out obj): HResult; stdcall;
 1. <strong>Atribuição:</strong> Toda vez que você atribui uma instância a uma variável de interface (ex: <code>vRepo: IClienteRepository := TClienteRepository.Create;</code>), o compilador insere nos bastidores uma chamada a <code>_AddRef</code>, incrementando o contador em 1.
 2. <strong>Saída de Escopo:</strong> Quando o procedimento ou método onde a variável de interface foi declarada chega ao seu <code>end;</code> final, o compilador insere uma chamada a <code>_Release</code>, decrementando o contador em 1.
 3. <strong>Autodestruição Determinística:</strong> No instante em que o contador de referências chega a <strong>zero</strong>, o próprio método <code>_Release</code> invoca <code>Self.Destroy</code>.</p>
-<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>  
-> Ao trabalhar com instâncias gerenciadas por interfaces, **nunca invoque o método `.Free` manualmente**. Deixe que o mecanismo de contagem de referências do Free Pascal desaloque a memória automaticamente. Invocar `.Free` em um objeto que ainda possui referências ativas de interface causará violações de acesso (*SIGSEGV*) no momento em que a variável sair de escopo e o FPC tentar decrementar o contador de uma instância já destruída.
-
----
-
-## 3. IMPLEMENTAÇÃO PASSO A PASSO
-
-Construiremos agora a espinha dorsal desacoplada da entidade **Cliente** no projeto **ConnectOSApi**:
-1. `Interfaces.Cliente.pas`: Contratos canônicos de repositório e serviço.
-2. `Repositories.Cliente.pas`: Repositório concreto implementando `IClienteRepository` (simulando a camada de dados em memória antes da conexão física com o Firebird).
-3. `Services.Cliente.pas`: Serviço de negócio puro implementando `IClienteService` com injeção de dependência via construtor.
-4. Refatoração de `Controllers.Clientes.pas` consumindo a interface da Service.
-
-### Passo 1: Definindo os Contratos: Interfaces.Cliente.pas
-
-Crie a unit `src/Interfaces/Interfaces.Cliente.pas` respeitando rigorosamente o limite de 72 caracteres por linha:
-
-
+<blockquote>
+<p><strong>Boas Práticas FPC:</strong><br />
+Ao trabalhar com instâncias gerenciadas por interfaces, <strong>nunca invoque o método <code>.Free</code> manualmente</strong>. Deixe que o mecanismo de contagem de referências do Free Pascal desaloque a memória automaticamente. Invocar <code>.Free</code> em um objeto que ainda possui referências ativas de interface causará violações de acesso (<em>SIGSEGV</em>) no momento em que a variável sair de escopo e o FPC tentar decrementar o contador de uma instância já destruída.</p>
+</blockquote>
+<hr />
+<h2 id="3-implementacao-passo-a-passo">3. IMPLEMENTAÇÃO PASSO A PASSO</h2>
+<p>Construiremos agora a espinha dorsal desacoplada da entidade <strong>Cliente</strong> no projeto <strong>ConnectOSApi</strong>:
+1. <code>Interfaces.Cliente.pas</code>: Contratos canônicos de repositório e serviço.
+2. <code>Repositories.Cliente.pas</code>: Repositório concreto implementando <code>IClienteRepository</code> (simulando a camada de dados em memória antes da conexão física com o Firebird).
+3. <code>Services.Cliente.pas</code>: Serviço de negócio puro implementando <code>IClienteService</code> com injeção de dependência via construtor.
+4. Refatoração de <code>Controllers.Clientes.pas</code> consumindo a interface da Service.</p>
+<h3 id="passo-1-definindo-os-contratos-interfacesclientepas">Passo 1: Definindo os Contratos: Interfaces.Cliente.pas</h3>
+<p>Crie a unit <code>src/Interfaces/Interfaces.Cliente.pas</code> respeitando rigorosamente o limite de 72 caracteres por linha:</p>
 <pre><code class="language-pascal">{======================================================================}
 { Projeto: ConnectOSApi - API de Gestao e Faturamento Multi-Tenant     }
 { Unit   : Interfaces.Cliente                                          }
@@ -491,15 +473,9 @@ implementation
 
 end.
 </code></pre>
-
-
----
-
-### Passo 2: Implementando o Repositório: Repositories.Cliente.pas
-
-Crie a unit `src/Repositories/Repositories.Cliente.pas`. Observe a herança obrigatória de `TInterfacedObject`:
-
-
+<hr />
+<h3 id="passo-2-implementando-o-repositorio-repositoriesclientepas">Passo 2: Implementando o Repositório: Repositories.Cliente.pas</h3>
+<p>Crie a unit <code>src/Repositories/Repositories.Cliente.pas</code>. Observe a herança obrigatória de <code>TInterfacedObject</code>:</p>
 <pre><code class="language-pascal">{======================================================================}
 { Projeto: ConnectOSApi - API de Gestao e Faturamento Multi-Tenant     }
 { Unit   : Repositories.Cliente                                        }
@@ -604,15 +580,9 @@ end;
 
 end.
 </code></pre>
-
-
----
-
-### Passo 3: Implementando a Regra de Negócio: Services.Cliente.pas
-
-A unit `src/Services/Services.Cliente.pas` aplica as regras de negócio puras (validação de documento, checagem de duplicidade) e depende **estritamente** da interface `IClienteRepository`:
-
-
+<hr />
+<h3 id="passo-3-implementando-a-regra-de-negocio-servicesclientepas">Passo 3: Implementando a Regra de Negócio: Services.Cliente.pas</h3>
+<p>A unit <code>src/Services/Services.Cliente.pas</code> aplica as regras de negócio puras (validação de documento, checagem de duplicidade) e depende <strong>estritamente</strong> da interface <code>IClienteRepository</code>:</p>
 <pre><code class="language-pascal">{======================================================================}
 { Projeto: ConnectOSApi - API de Gestao e Faturamento Multi-Tenant     }
 { Unit   : Services.Cliente                                            }
@@ -733,15 +703,9 @@ end;
 
 end.
 </code></pre>
-
-
----
-
-### Passo 4: Refatorando o Controlador Horse: Controllers.Clientes.pas
-
-O controlador agora atua como uma casca fina de transporte HTTP, delegando toda a lógica para a interface `IClienteService`:
-
-
+<hr />
+<h3 id="passo-4-refatorando-o-controlador-horse-controllersclientespas">Passo 4: Refatorando o Controlador Horse: Controllers.Clientes.pas</h3>
+<p>O controlador agora atua como uma casca fina de transporte HTTP, delegando toda a lógica para a interface <code>IClienteService</code>:</p>
 <pre><code class="language-pascal">unit Controllers.Clientes;
 
 {$mode objfpc}{$H+}
@@ -894,29 +858,17 @@ end;
 
 end.
 </code></pre>
-
-
----
-
-## 4. TESTANDO O ENDPOINT
-
-Com a Arquitetura Limpa em vigor, vamos validar o comportamento dos endpoints e a interceptação transparente das exceções de serviço via `curl`.
-
-### Teste 1: Cadastro com Sucesso através da Service e Repositório (POST)
-
-Cadastre um novo cliente válido:
-
-
+<hr />
+<h2 id="4-testando-o-endpoint">4. TESTANDO O ENDPOINT</h2>
+<p>Com a Arquitetura Limpa em vigor, vamos validar o comportamento dos endpoints e a interceptação transparente das exceções de serviço via <code>curl</code>.</p>
+<h3 id="teste-1-cadastro-com-sucesso-atraves-da-service-e-repositorio-post">Teste 1: Cadastro com Sucesso através da Service e Repositório (POST)</h3>
+<p>Cadastre um novo cliente válido:</p>
 <pre><code class="language-bash">curl -i -X POST http://localhost:9000/api/v1/clientes \
      -H &quot;Content-Type: application/json&quot; \
      -d '{&quot;nome_razao&quot;:&quot;Auto Eletrica Pioneira&quot;,
           &quot;cpf_cnpj&quot;:&quot;22333444000188&quot;}'
 </code></pre>
-
-
-**Resposta do Servidor (201 Created):**
-
-
+<p><strong>Resposta do Servidor (201 Created):</strong></p>
 <pre><code class="language-http">HTTP/1.1 201 Created
 Location: /api/v1/clientes/501
 Content-Type: application/json; charset=utf-8
@@ -924,26 +876,15 @@ Content-Length: 68
 
 {&quot;id&quot;:501,&quot;mensagem&quot;:&quot;Cadastrado via Clean Architecture&quot;}
 </code></pre>
-
-
-A requisição transitou pelo Controller -> Service (validações) -> Repository (persistência simulada) e retornou com sucesso.
-
----
-
-### Teste 2: Validação de Regra de Negócio na Service (422)
-
-Tente cadastrar um cliente sem informar a Razão Social:
-
-
+<p>A requisição transitou pelo Controller -&gt; Service (validações) -&gt; Repository (persistência simulada) e retornou com sucesso.</p>
+<hr />
+<h3 id="teste-2-validacao-de-regra-de-negocio-na-service-422">Teste 2: Validação de Regra de Negócio na Service (422)</h3>
+<p>Tente cadastrar um cliente sem informar a Razão Social:</p>
 <pre><code class="language-bash">curl -i -X POST http://localhost:9000/api/v1/clientes \
      -H &quot;Content-Type: application/json&quot; \
      -d '{&quot;nome_razao&quot;:&quot;&quot;,&quot;cpf_cnpj&quot;:&quot;22333444000188&quot;}'
 </code></pre>
-
-
-**Resposta da Service Interceptada pelo Middleware Global (422):**
-
-
+<p><strong>Resposta da Service Interceptada pelo Middleware Global (422):</strong></p>
 <pre><code class="language-http">HTTP/1.1 422 Unprocessable Entity
 Content-Type: application/problem+json; charset=utf-8
 Content-Length: 268
@@ -954,25 +895,15 @@ Content-Length: 268
  &quot;detail&quot;:&quot;Razao Social e campo obrigatorio&quot;,
  &quot;instance&quot;:&quot;/api/v1/clientes&quot;}
 </code></pre>
-
-
----
-
-### Teste 3: Checagem de Conflito de Unicidade na Service (409)
-
-Envie o documento duplicado `11111111000199`:
-
-
+<hr />
+<h3 id="teste-3-checagem-de-conflito-de-unicidade-na-service-409">Teste 3: Checagem de Conflito de Unicidade na Service (409)</h3>
+<p>Envie o documento duplicado <code>11111111000199</code>:</p>
 <pre><code class="language-bash">curl -i -X POST http://localhost:9000/api/v1/clientes \
      -H &quot;Content-Type: application/json&quot; \
      -d '{&quot;nome_razao&quot;:&quot;Cliente Teste Duplicado&quot;,
           &quot;cpf_cnpj&quot;:&quot;11111111000199&quot;}'
 </code></pre>
-
-
-**Resposta de Conflito (409 Conflict):**
-
-
+<p><strong>Resposta de Conflito (409 Conflict):</strong></p>
 <pre><code class="language-http">HTTP/1.1 409 Conflict
 Content-Type: application/problem+json; charset=utf-8
 Content-Length: 288
@@ -983,21 +914,12 @@ Content-Length: 288
  &quot;detail&quot;:&quot;Ja existe um cliente cadastrado com este CPF/CNPJ&quot;,
  &quot;instance&quot;:&quot;/api/v1/clientes&quot;}
 </code></pre>
-
-
----
-
-## 5. ARMADILHAS COMUNS E TROUBLESHOOTING NO FPC/LAZARUS
-
----
-
-### Armadilha 1: Misturar Ponteiros de Objeto Puro com Interfaces
-
-**Sintoma:** Violação de acesso (*SIGSEGV*) aleatória ao sair de um procedimento onde uma interface e um objeto concreto foram utilizados simultaneamente.
-
-**Causa Raiz:** O desenvolvedor instancia a classe em uma variável concreta e atribui à interface, invocando `.Free` na variável concreta:
-
-
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus">5. ARMADILHAS COMUNS E TROUBLESHOOTING NO FPC/LAZARUS</h2>
+<hr />
+<h3 id="armadilha-1-misturar-ponteiros-de-objeto-puro-com-interfaces">Armadilha 1: Misturar Ponteiros de Objeto Puro com Interfaces</h3>
+<p><strong>Sintoma:</strong> Violação de acesso (<em>SIGSEGV</em>) aleatória ao sair de um procedimento onde uma interface e um objeto concreto foram utilizados simultaneamente.</p>
+<p><strong>Causa Raiz:</strong> O desenvolvedor instancia a classe em uma variável concreta e atribui à interface, invocando <code>.Free</code> na variável concreta:</p>
 <pre><code class="language-pascal">{ EQUIVOCO GRAVE: Dangling Pointer }
 var
   vObj: TClienteRepository;
@@ -1009,107 +931,98 @@ begin
   { Ao sair, vIntf chama _Release e acessa memoria morta }
 end;
 </code></pre>
-
-
-**Solução:** Ao utilizar interfaces, atribua **diretamente** o resultado de `.Create` à variável de interface, sem variáveis intermediárias de classe:
-
-
+<p><strong>Solução:</strong> Ao utilizar interfaces, atribua <strong>diretamente</strong> o resultado de <code>.Create</code> à variável de interface, sem variáveis intermediárias de classe:</p>
 <pre><code class="language-pascal">var
   vIntf: IClienteRepository;
 begin
   vIntf := TClienteRepository.Create; { 100% seguro }
 end;
 </code></pre>
-
-
----
-
-### Armadilha 2: Esquecer de Herdar de TInterfacedObject
-
-**Sintoma:** O compilador acusa erro de métodos abstratos não implementados:
-
-
+<hr />
+<h3 id="armadilha-2-esquecer-de-herdar-de-tinterfacedobject">Armadilha 2: Esquecer de Herdar de TInterfacedObject</h3>
+<p><strong>Sintoma:</strong> O compilador acusa erro de métodos abstratos não implementados:</p>
 <pre><code class="language-text">Error: No matching implementation for interface method &quot;_AddRef&quot; found
 </code></pre>
-
-
-**Causa Raiz:** A classe foi declarada como `class(TObject, IMinhaInterface)`. O `TObject` básico não implementa `_AddRef`, `_Release` e `QueryInterface`.
-
-**Solução:** Todas as classes que implementam interfaces no FPC devem herdar de `TInterfacedObject`:
-
-
+<p><strong>Causa Raiz:</strong> A classe foi declarada como <code>class(TObject, IMinhaInterface)</code>. O <code>TObject</code> básico não implementa <code>_AddRef</code>, <code>_Release</code> e <code>QueryInterface</code>.</p>
+<p><strong>Solução:</strong> Todas as classes que implementam interfaces no FPC devem herdar de <code>TInterfacedObject</code>:</p>
 <pre><code class="language-pascal">type
   TMeuServico = class(TInterfacedObject, IMeuServico)
 </code></pre>
-
-
----
-
-### Armadilha 3: Dependência Circular por Falta de Camada de Contratos
-
-**Sintoma:** O arquivo `Services.Cliente.pas` tenta referenciar `Controllers.Clientes.pas` e o compilador aborta com `Fatal: Circular dependency`.
-
-**Causa Raiz:** Comunicação bidirecional desordenada entre camadas superiores e inferiores.
-
-**Solução:** A camada de controladores pode enxergar a camada de serviços, mas a camada de serviços **nunca** deve enxergar a camada de controladores. Todas as referências cruzadas devem transitar pelas units de `Interfaces/`.
-
----
-
-## 6. RESUMO EXECUTIVO E CHECKLIST DE REVISÃO
-
-### Matriz de Responsabilidades da Arquitetura Limpa
-
-| Camada | Papel Arquitetural | O que DEVE Conhecer | O que NÃO DEVE Conhecer |
-| :--- | :--- | :--- | :--- |
-| **Controllers** | Transporte HTTP / Rotas | Horse, DTOs, Interfaces de Service | SQL, Firebird, Conexões |
-| **Services** | Regras de Negócio e Casos de Uso | Interfaces de Repo, DTOs, Exceções | Horse, HTTP, Status Codes |
-| **Repositories** | Persistência e Acesso a Dados | Firebird 5.0, SQL, Interfaces de Repo| Horse, Regras de Negócio |
-| **Interfaces** | Contratos de Desacoplamento | DTOs e Tipos primitivos | Nenhuma outra camada |
-
----
-
-### Checklist de Revisão e Auditoria Técnica
-
-Antes de avançar para o Módulo 10, certifique-se de validar os seguintes itens:
-
-- [ ] **Zero Dependências Circulares:** As units de interfaces (`src/Interfaces/`) não declaram referências a Controllers ou Services.
-- [ ] **Herança de TInterfacedObject:** Todas as classes que implementam interfaces herdam de `TInterfacedObject`.
-- [ ] **Contagem de Referências:** Nenhuma variável atribuída a interfaces invoca `.Free` manualmente.
-- [ ] **Inversão de Dependências:** O serviço `TClienteService` recebe `IClienteRepository` em seu construtor.
-- [ ] **Desacoplamento de Erros:** As regras de negócio na Service lançam exceções tipadas de domínio (`EBusinessException`, `EConflictException`), sem tocar em HTTP.
-
-Com a arquitetura limpa e desacoplada plenamente implantada, avançamos para o **Módulo 10**, onde mergulharemos a fundo na modelagem física e nos recursos nativos de alto desempenho do **Firebird 5.0**.
-
-
-# MÓDULO 10: MODELAGEM DO FIREBIRD 5.0, IDENTITY E COLLATION UTF8
-
----
-
-## 1. OBJETIVOS DE APRENDIZAGEM DO MÓDULO
-
-Ao final deste módulo, você será capaz de:
-
-1. Compreender as inovações arquiteturais e os ganhos de vazão do motor de banco de dados relacional **Firebird 5.0** em ambientes de microsserviços e APIs web.
-2. Configurar a base de dados com conjunto de caracteres padrão **`UTF8`**, eliminando de forma definitiva o temido erro de transliteração (*Cannot transliterate character*).
-3. Abandonar o modelo legado de generators e triggers manuais, adotando colunas nativas **`BIGINT GENERATED BY DEFAULT AS IDENTITY`** em conformidade com o padrão SQL ANSI.
-4. Dominar a cláusula **`RETURNING`** para captura atômica de chaves primárias e campos computados em uma única viagem de rede (*round-trip*).
-5. Projetar esquemas físicos **Multi-Tenant com Banco Compartilhado (*Shared Database*)**, criando índices compostos de alta performance iniciados pelo discriminador `tenant_id`.
-6. Configurar as bibliotecas de cliente nativo de 64 bits (**`libfbclient.so`** no Linux Ubuntu e **`fbclient.dll`** no Windows) para conexão estável com o Free Pascal.
-
----
-
-## 2. FUNDAMENTAÇÃO CONCEITUAL E ARQUITETURAL
-
-O ecossistema Pascal e o banco de dados **Firebird** compartilham uma simbiose histórica marcada por estabilidade operacional inabalável, baixíssimo consumo de hardware e custo zero de licenciamento. Enquanto bancos como Oracle e Microsoft SQL Server demandam servidores colossais e licenças proibitivas, e engines como MySQL exigem afinações complexas de parâmetros de storage, o Firebird sempre se destacou pela resiliência (*zero-admin*).
-
-Contudo, a chegada da versão **Firebird 5.0** representou um salto quântico de engenharia, transformando o SGBD em uma das opções mais velozes e modernas do mercado para APIs de alta concorrência.
-
-Entre as principais melhorias do Firebird 5.0 para APIs RESTful, destacam-se:
-- **Execução Paralela de Tarefas (Parallel Workers):** O motor agora é capaz de paralelizar operações internas de varredura e ordenação, além de rotinas concorrentes de varredura de índices.
-- **Cache de Instruções SQL Compiladas (Compiled Statements Cache):** Queries parametrizadas disparadas frequentemente por serviços web têm seus planos de execução (PLAN) e código compilado preservados na memória compartilhada do servidor, reduzindo o tempo de CPU no parsing de SQL a zero em chamadas repetidas.
-- **Otimizador Aprimorado para Paginação:** A engine foi completamente remodelada para executar a cláusula `OFFSET ... FETCH NEXT ... ROWS ONLY` sem precisar materializar o conjunto completo de dados em disco.
-
-
+<hr />
+<h3 id="armadilha-3-dependencia-circular-por-falta-de-camada-de-contratos">Armadilha 3: Dependência Circular por Falta de Camada de Contratos</h3>
+<p><strong>Sintoma:</strong> O arquivo <code>Services.Cliente.pas</code> tenta referenciar <code>Controllers.Clientes.pas</code> e o compilador aborta com <code>Fatal: Circular dependency</code>.</p>
+<p><strong>Causa Raiz:</strong> Comunicação bidirecional desordenada entre camadas superiores e inferiores.</p>
+<p><strong>Solução:</strong> A camada de controladores pode enxergar a camada de serviços, mas a camada de serviços <strong>nunca</strong> deve enxergar a camada de controladores. Todas as referências cruzadas devem transitar pelas units de <code>Interfaces/</code>.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao">6. RESUMO EXECUTIVO E CHECKLIST DE REVISÃO</h2>
+<h3 id="matriz-de-responsabilidades-da-arquitetura-limpa">Matriz de Responsabilidades da Arquitetura Limpa</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Camada</th>
+<th style="text-align: left;">Papel Arquitetural</th>
+<th style="text-align: left;">O que DEVE Conhecer</th>
+<th style="text-align: left;">O que NÃO DEVE Conhecer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Controllers</strong></td>
+<td style="text-align: left;">Transporte HTTP / Rotas</td>
+<td style="text-align: left;">Horse, DTOs, Interfaces de Service</td>
+<td style="text-align: left;">SQL, Firebird, Conexões</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Services</strong></td>
+<td style="text-align: left;">Regras de Negócio e Casos de Uso</td>
+<td style="text-align: left;">Interfaces de Repo, DTOs, Exceções</td>
+<td style="text-align: left;">Horse, HTTP, Status Codes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Repositories</strong></td>
+<td style="text-align: left;">Persistência e Acesso a Dados</td>
+<td style="text-align: left;">Firebird 5.0, SQL, Interfaces de Repo</td>
+<td style="text-align: left;">Horse, Regras de Negócio</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Interfaces</strong></td>
+<td style="text-align: left;">Contratos de Desacoplamento</td>
+<td style="text-align: left;">DTOs e Tipos primitivos</td>
+<td style="text-align: left;">Nenhuma outra camada</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="checklist-de-revisao-e-auditoria-tecnica">Checklist de Revisão e Auditoria Técnica</h3>
+<p>Antes de avançar para o Módulo 10, certifique-se de validar os seguintes itens:</p>
+<ul>
+<li>[ ] <strong>Zero Dependências Circulares:</strong> As units de interfaces (<code>src/Interfaces/</code>) não declaram referências a Controllers ou Services.</li>
+<li>[ ] <strong>Herança de TInterfacedObject:</strong> Todas as classes que implementam interfaces herdam de <code>TInterfacedObject</code>.</li>
+<li>[ ] <strong>Contagem de Referências:</strong> Nenhuma variável atribuída a interfaces invoca <code>.Free</code> manualmente.</li>
+<li>[ ] <strong>Inversão de Dependências:</strong> O serviço <code>TClienteService</code> recebe <code>IClienteRepository</code> em seu construtor.</li>
+<li>[ ] <strong>Desacoplamento de Erros:</strong> As regras de negócio na Service lançam exceções tipadas de domínio (<code>EBusinessException</code>, <code>EConflictException</code>), sem tocar em HTTP.</li>
+</ul>
+<p>Com a arquitetura limpa e desacoplada plenamente implantada, avançamos para o <strong>Módulo 10</strong>, onde mergulharemos a fundo na modelagem física e nos recursos nativos de alto desempenho do <strong>Firebird 5.0</strong>.</p>
+<h1 id="modulo-10-modelagem-do-firebird-50-identity-e-collation-utf8">MÓDULO 10: MODELAGEM DO FIREBIRD 5.0, IDENTITY E COLLATION UTF8</h1>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_1">1. OBJETIVOS DE APRENDIZAGEM DO MÓDULO</h2>
+<p>Ao final deste módulo, você será capaz de:</p>
+<ol>
+<li>Compreender as inovações arquiteturais e os ganhos de vazão do motor de banco de dados relacional <strong>Firebird 5.0</strong> em ambientes de microsserviços e APIs web.</li>
+<li>Configurar a base de dados com conjunto de caracteres padrão <strong><code>UTF8</code></strong>, eliminando de forma definitiva o temido erro de transliteração (<em>Cannot transliterate character</em>).</li>
+<li>Abandonar o modelo legado de generators e triggers manuais, adotando colunas nativas <strong><code>BIGINT GENERATED BY DEFAULT AS IDENTITY</code></strong> em conformidade com o padrão SQL ANSI.</li>
+<li>Dominar a cláusula <strong><code>RETURNING</code></strong> para captura atômica de chaves primárias e campos computados em uma única viagem de rede (<em>round-trip</em>).</li>
+<li>Projetar esquemas físicos <strong>Multi-Tenant com Banco Compartilhado (<em>Shared Database</em>)</strong>, criando índices compostos de alta performance iniciados pelo discriminador <code>tenant_id</code>.</li>
+<li>Configurar as bibliotecas de cliente nativo de 64 bits (<strong><code>libfbclient.so</code></strong> no Linux Ubuntu e <strong><code>fbclient.dll</code></strong> no Windows) para conexão estável com o Free Pascal.</li>
+</ol>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_1">2. FUNDAMENTAÇÃO CONCEITUAL E ARQUITETURAL</h2>
+<p>O ecossistema Pascal e o banco de dados <strong>Firebird</strong> compartilham uma simbiose histórica marcada por estabilidade operacional inabalável, baixíssimo consumo de hardware e custo zero de licenciamento. Enquanto bancos como Oracle e Microsoft SQL Server demandam servidores colossais e licenças proibitivas, e engines como MySQL exigem afinações complexas de parâmetros de storage, o Firebird sempre se destacou pela resiliência (<em>zero-admin</em>).</p>
+<p>Contudo, a chegada da versão <strong>Firebird 5.0</strong> representou um salto quântico de engenharia, transformando o SGBD em uma das opções mais velozes e modernas do mercado para APIs de alta concorrência.</p>
+<p>Entre as principais melhorias do Firebird 5.0 para APIs RESTful, destacam-se:
+- <strong>Execução Paralela de Tarefas (Parallel Workers):</strong> O motor agora é capaz de paralelizar operações internas de varredura e ordenação, além de rotinas concorrentes de varredura de índices.
+- <strong>Cache de Instruções SQL Compiladas (Compiled Statements Cache):</strong> Queries parametrizadas disparadas frequentemente por serviços web têm seus planos de execução (PLAN) e código compilado preservados na memória compartilhada do servidor, reduzindo o tempo de CPU no parsing de SQL a zero em chamadas repetidas.
+- <strong>Otimizador Aprimorado para Paginação:</strong> A engine foi completamente remodelada para executar a cláusula <code>OFFSET ... FETCH NEXT ... ROWS ONLY</code> sem precisar materializar o conjunto completo de dados em disco.</p>
 <pre><code>+-------------------------------------------------------------------+
 |               ARQUITETURA DE REDE E CLIENTE FIREBIRD 5.0          |
 +-------------------------------------------------------------------+
@@ -1136,90 +1049,57 @@ Entre as principais melhorias do Firebird 5.0 para APIs RESTful, destacam-se:
 |  - Banco de Dados Físico: connect_os.fdb (Page Size: 16384 bytes) |
 +-------------------------------------------------------------------+
 </code></pre>
-
-
-### O Conjunto de Caracteres UTF8 e a Eliminação da Falha de Transliteração
-
-A especificação do protocolo HTTP e do formato JSON (RFC 8259) determina que o tráfego de dados na web moderna deve ser estritamente codificado em **UTF-8**.
-
-Nas versões antigas do Firebird (1.5 e 2.x), era comum desenvolvedores criarem bancos com conjuntos legados de caracteres, como `WIN1252` ou `ISO8859_1`. Quando uma API em Horse recebia caracteres acentuados (como *"Manutenção e Diagnóstico"*), caracteres com emojis ou símbolos monetários (`R$`, `€`), e tentava gravá-los no banco sem correspondência direta de byte, o driver de banco lançava a exceção clássica:
-
-
+<h3 id="o-conjunto-de-caracteres-utf8-e-a-eliminacao-da-falha-de-transliteracao">O Conjunto de Caracteres UTF8 e a Eliminação da Falha de Transliteração</h3>
+<p>A especificação do protocolo HTTP e do formato JSON (RFC 8259) determina que o tráfego de dados na web moderna deve ser estritamente codificado em <strong>UTF-8</strong>.</p>
+<p>Nas versões antigas do Firebird (1.5 e 2.x), era comum desenvolvedores criarem bancos com conjuntos legados de caracteres, como <code>WIN1252</code> ou <code>ISO8859_1</code>. Quando uma API em Horse recebia caracteres acentuados (como <em>"Manutenção e Diagnóstico"</em>), caracteres com emojis ou símbolos monetários (<code>R$</code>, <code>€</code>), e tentava gravá-los no banco sem correspondência direta de byte, o driver de banco lançava a exceção clássica:</p>
 <pre><code class="language-text">GDS Code: 335544569 -
 Cannot transliterate character between character sets
 </code></pre>
-
-
-No Firebird 5.0, a regra de ouro para qualquer API RESTful corporativa é unificar toda a cadeia em UTF-8:
-1. **No Banco Físico:** Criação do banco com `DEFAULT CHARACTER SET UTF8`.
-2. **Nas Conexões de Rede:** Configuração obrigatória do parâmetro `lc_ctype=UTF8` na string de conexão do cliente.
-3. **Na Camada Pascal:** Compilação do código com `{$H+}` (AnsiString/UTF8 dinâmica nativa).
-
-Com esses três pilares alinhados, a transliteração torna-se puramente transparente: zero perdas de acentuação e zero erros de charset.
-
----
-
-### Colunas IDENTITY: Modernidade sem Triggers Artesanais
-
-No Firebird clássico, a criação de chaves primárias autoincrementais exigia dois artefatos manuais por tabela:
-1. Uma Sequence/Generator dedicada: `CREATE SEQUENCE gen_clientes_id;`
-2. Uma Trigger *Before Insert* obrigatória:
-   ```sql
+<p>No Firebird 5.0, a regra de ouro para qualquer API RESTful corporativa é unificar toda a cadeia em UTF-8:
+1. <strong>No Banco Físico:</strong> Criação do banco com <code>DEFAULT CHARACTER SET UTF8</code>.
+2. <strong>Nas Conexões de Rede:</strong> Configuração obrigatória do parâmetro <code>lc_ctype=UTF8</code> na string de conexão do cliente.
+3. <strong>Na Camada Pascal:</strong> Compilação do código com <code>{$H+}</code> (AnsiString/UTF8 dinâmica nativa).</p>
+<p>Com esses três pilares alinhados, a transliteração torna-se puramente transparente: zero perdas de acentuação e zero erros de charset.</p>
+<hr />
+<h3 id="colunas-identity-modernidade-sem-triggers-artesanais">Colunas IDENTITY: Modernidade sem Triggers Artesanais</h3>
+<p>No Firebird clássico, a criação de chaves primárias autoincrementais exigia dois artefatos manuais por tabela:
+1. Uma Sequence/Generator dedicada: <code>CREATE SEQUENCE gen_clientes_id;</code>
+2. Uma Trigger <em>Before Insert</em> obrigatória:
+   <code>sql
    /* MODELO LEGADO E OBSOLETO - NÃO UTILIZE NO FIREBIRD 5 */
    CREATE TRIGGER trg_clientes_bi FOR clientes
    BEFORE INSERT AS
    BEGIN
      IF (NEW.id IS NULL) THEN
        NEW.id = NEXT VALUE FOR gen_clientes_id;
-   END
-   ```
-
-Essa abordagem antiga carregava deficiências graves: poluição do catálogo de metadados, lentidão em operações de inserção em massa (*bulk insert*) e necessidade de transações adicionais para capturar o ID gerado via `GEN_ID(gen_clientes_id, 0)`.
-
-A partir das versões modernas e consolidado com maestria no **Firebird 5.0**, adotamos a sintaxe nativa padrão **ANSI SQL:2008**:
-
-
+   END</code></p>
+<p>Essa abordagem antiga carregava deficiências graves: poluição do catálogo de metadados, lentidão em operações de inserção em massa (<em>bulk insert</em>) e necessidade de transações adicionais para capturar o ID gerado via <code>GEN_ID(gen_clientes_id, 0)</code>.</p>
+<p>A partir das versões modernas e consolidado com maestria no <strong>Firebird 5.0</strong>, adotamos a sintaxe nativa padrão <strong>ANSI SQL:2008</strong>:</p>
 <pre><code class="language-sql">CREATE TABLE clientes (
     id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     ...
 );
 </code></pre>
-
-
-Vantagens da coluna `IDENTITY`:
-- **Semântica `BY DEFAULT`:** Se o cliente não informar o ID no comando `INSERT`, o motor do Firebird gera automaticamente o próximo valor da sequência interna. Se um processo de replicação ou migração de dados informar um ID explicitamente, o banco respeita o valor informado.
-- **Tipagem em `BIGINT` (64 bits):** Chaves primárias devem utilizar inteiros de 64 bits (`Int64` no Pascal). O limite de um inteiro de 32 bits (`INTEGER` - 2,14 bilhões) é facilmente superado em tabelas volumosas de ordens de serviço, itens ou logs de auditoria em ambientes SaaS.
-- **Desempenho Extremo:** A geração do valor ocorre diretamente no núcleo C++ do motor do banco, sem o overhead de disparar o interpretador PSQL para executar triggers.
-
-### A Cláusula RETURNING: Atomicidade em uma Única Viagem de Rede
-
-Quando uma API executa um comando `POST` para criar um cliente, o protocolo HTTP 201 Created exige que a resposta informe o identificador gerado e emita o cabeçalho `Location: /api/v1/clientes/:id`.
-
-No passado, os desenvolvedores executavam o `INSERT`, fechavam a query e disparavam uma segunda consulta (`SELECT FIRST 1 id FROM ... ORDER BY id DESC`) para descobrir qual ID havia sido atribuído. Essa prática gerava condições de corrida (*race conditions*) perigosas em ambientes concorrentes e dobrava a latência de rede.
-
-No Firebird 5.0, a cláusula **`RETURNING`** resolve esse problema atomicamente:
-
-
+<p>Vantagens da coluna <code>IDENTITY</code>:
+- <strong>Semântica <code>BY DEFAULT</code>:</strong> Se o cliente não informar o ID no comando <code>INSERT</code>, o motor do Firebird gera automaticamente o próximo valor da sequência interna. Se um processo de replicação ou migração de dados informar um ID explicitamente, o banco respeita o valor informado.
+- <strong>Tipagem em <code>BIGINT</code> (64 bits):</strong> Chaves primárias devem utilizar inteiros de 64 bits (<code>Int64</code> no Pascal). O limite de um inteiro de 32 bits (<code>INTEGER</code> - 2,14 bilhões) é facilmente superado em tabelas volumosas de ordens de serviço, itens ou logs de auditoria em ambientes SaaS.
+- <strong>Desempenho Extremo:</strong> A geração do valor ocorre diretamente no núcleo C++ do motor do banco, sem o overhead de disparar o interpretador PSQL para executar triggers.</p>
+<h3 id="a-clausula-returning-atomicidade-em-uma-unica-viagem-de-rede">A Cláusula RETURNING: Atomicidade em uma Única Viagem de Rede</h3>
+<p>Quando uma API executa um comando <code>POST</code> para criar um cliente, o protocolo HTTP 201 Created exige que a resposta informe o identificador gerado e emita o cabeçalho <code>Location: /api/v1/clientes/:id</code>.</p>
+<p>No passado, os desenvolvedores executavam o <code>INSERT</code>, fechavam a query e disparavam uma segunda consulta (<code>SELECT FIRST 1 id FROM ... ORDER BY id DESC</code>) para descobrir qual ID havia sido atribuído. Essa prática gerava condições de corrida (<em>race conditions</em>) perigosas em ambientes concorrentes e dobrava a latência de rede.</p>
+<p>No Firebird 5.0, a cláusula <strong><code>RETURNING</code></strong> resolve esse problema atomicamente:</p>
 <pre><code class="language-sql">INSERT INTO clientes (tenant_id, nome_razao, cpf_cnpj)
 VALUES (1, 'Oficina Mecanica Central', '11222333000199')
 RETURNING id, created_at;
 </code></pre>
-
-
-O comando executa a inserção e devolve imediatamente o ID gerado pelo `IDENTITY` e o timestamp gerado pelo servidor em um único pacote TCP, garantindo velocidade máxima e consistência transacional absoluta.
-
----
-
-### Modelagem Física Multi-Tenant: A Estratégia de Banco Compartilhado
-
-Em plataformas de software como serviço (SaaS), existem três modelos clássicos de isolamento de dados:
-1. *Banco por Inquilino (Database per Tenant):* Um arquivo `.fdb` físico separado para cada cliente. Oferece isolamento total, mas inviabiliza a manutenção quando a base atinge centenas de inquilinos (complexidade extrema de migrações DDL e saturação de pools).
-2. *Schema por Inquilino (Schema per Tenant):* Suportado por bancos como PostgreSQL, mas inexistente no Firebird.
-3. *Banco Compartilhado com Coluna Discriminadora (Shared Database, Shared Schema):* Todas as empresas compartilham o mesmo banco de dados físico e as mesmas tabelas, sendo rigorosamente isoladas por uma coluna mandatória: **`tenant_id`**.
-
-A abordagem de **Banco Compartilhado** é a mais eficiente, econômica e escalável para a nossa **ConnectOSApi**.
-
-
+<p>O comando executa a inserção e devolve imediatamente o ID gerado pelo <code>IDENTITY</code> e o timestamp gerado pelo servidor em um único pacote TCP, garantindo velocidade máxima e consistência transacional absoluta.</p>
+<hr />
+<h3 id="modelagem-fisica-multi-tenant-a-estrategia-de-banco-compartilhado">Modelagem Física Multi-Tenant: A Estratégia de Banco Compartilhado</h3>
+<p>Em plataformas de software como serviço (SaaS), existem três modelos clássicos de isolamento de dados:
+1. <em>Banco por Inquilino (Database per Tenant):</em> Um arquivo <code>.fdb</code> físico separado para cada cliente. Oferece isolamento total, mas inviabiliza a manutenção quando a base atinge centenas de inquilinos (complexidade extrema de migrações DDL e saturação de pools).
+2. <em>Schema por Inquilino (Schema per Tenant):</em> Suportado por bancos como PostgreSQL, mas inexistente no Firebird.
+3. <em>Banco Compartilhado com Coluna Discriminadora (Shared Database, Shared Schema):</em> Todas as empresas compartilham o mesmo banco de dados físico e as mesmas tabelas, sendo rigorosamente isoladas por uma coluna mandatória: <strong><code>tenant_id</code></strong>.</p>
+<p>A abordagem de <strong>Banco Compartilhado</strong> é a mais eficiente, econômica e escalável para a nossa <strong>ConnectOSApi</strong>.</p>
 <pre><code>+--------------------------------------------------------------------+
 |                  TABELA COMPARTILHADA: CLIENTES                    |
 +----+-----------+------------------------------+--------------------+
@@ -1231,13 +1111,8 @@ A abordagem de **Banco Compartilhado** é a mais eficiente, econômica e escalá
 |  4 |     2     | Transportes Sul-Norte LTDA   | 33444555000133     |
 +----+-----------+------------------------------+--------------------+
 </code></pre>
-
-
-#### A Importância dos Índices Compostos Iniciados por tenant_id
-
-Para que a arquitetura Multi-Tenant com banco compartilhado não sofra degradação de desempenho à medida que a base cresce, todos os índices e restrições de unicidade devem ser obrigatoriamente compostos, tendo o campo **`tenant_id` como a primeira coluna do índice**:
-
-
+<h4 id="a-importancia-dos-indices-compostos-iniciados-por-tenant_id">A Importância dos Índices Compostos Iniciados por tenant_id</h4>
+<p>Para que a arquitetura Multi-Tenant com banco compartilhado não sofra degradação de desempenho à medida que a base cresce, todos os índices e restrições de unicidade devem ser obrigatoriamente compostos, tendo o campo <strong><code>tenant_id</code> como a primeira coluna do índice</strong>:</p>
 <pre><code class="language-sql">/* INDICE COMPOSTO DE ALTA PERFORMANCE */
 CREATE INDEX idx_clientes_tenant_nome 
   ON clientes(tenant_id, nome_razao);
@@ -1246,21 +1121,12 @@ CREATE INDEX idx_os_tenant_status ON ordens_servico(tenant_id, status);
 /* CHAVE UNICA POR INQUILINO (DOIS TENANTS PODEM TER O MESMO CNPJ) */
 CONSTRAINT unq_clientes_tenant_doc UNIQUE (tenant_id, cpf_cnpj);
 </code></pre>
-
-
-Se o índice fosse criado apenas sobre `nome_razao`, o motor do banco teria que varrer o índice inteiro para depois filtrar por tenant. Iniciando o índice por `tenant_id`, o otimizador do Firebird pula instantaneamente para a fatia de dados pertencente àquele inquilino específico (*Index Seek*), ignorando completamente os milhões de registros dos outros clientes da plataforma.
-
----
-
-## 3. IMPLEMENTAÇÃO PASSO A PASSO
-
-Validaremos agora o arquivo de esquema oficial do nosso projeto prático (`database/schema_fb5.sql`), auditando as tabelas e testando a criação do banco de dados físico utilizando as ferramentas nativas do Firebird 5.0.
-
-### Passo 1: Dissecando a Estrutura do schema_fb5.sql
-
-O nosso script DDL já criado na fundação da obra (`database/schema_fb5.sql`) implementa todas as boas práticas discutidas. Vamos revisar a estrutura relacional de suas dez tabelas principais:
-
-
+<p>Se o índice fosse criado apenas sobre <code>nome_razao</code>, o motor do banco teria que varrer o índice inteiro para depois filtrar por tenant. Iniciando o índice por <code>tenant_id</code>, o otimizador do Firebird pula instantaneamente para a fatia de dados pertencente àquele inquilino específico (<em>Index Seek</em>), ignorando completamente os milhões de registros dos outros clientes da plataforma.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo_1">3. IMPLEMENTAÇÃO PASSO A PASSO</h2>
+<p>Validaremos agora o arquivo de esquema oficial do nosso projeto prático (<code>database/schema_fb5.sql</code>), auditando as tabelas e testando a criação do banco de dados físico utilizando as ferramentas nativas do Firebird 5.0.</p>
+<h3 id="passo-1-dissecando-a-estrutura-do-schema_fb5sql">Passo 1: Dissecando a Estrutura do schema_fb5.sql</h3>
+<p>O nosso script DDL já criado na fundação da obra (<code>database/schema_fb5.sql</code>) implementa todas as boas práticas discutidas. Vamos revisar a estrutura relacional de suas dez tabelas principais:</p>
 <pre><code>                    +-------------------+
                     |      tenants      |
                     +-------------------+
@@ -1284,30 +1150,23 @@ O nosso script DDL já criado na fundação da obra (`database/schema_fb5.sql`) 
        |   os_itens    |                |    faturas    |
        +---------------+                +---------------+
 </code></pre>
-
-
-1. **`tenants`:** Cadastro dos inquilinos/empresas assinantes do software SaaS, com UUID global e status.
-2. **`usuarios`:** Operadores vinculados a cada tenant, com senhas hashadas com salt e perfis de permissão (ADMIN, GERENTE, TECNICO, OPERADOR).
-3. **`refresh_tokens`:** Sessões ativas de longa duração para rotação de JWT, com flags atômicas de revogação.
-4. **`clientes`:** Tomadores de serviços de cada oficina ou empresa atendida pela plataforma.
-5. **`categorias`:** Classificação lógica de serviços e peças.
-6. **`produtos_servicos`:** Catálogo de itens precificados, distinguindo peças de reposição (`tipo='P'`) e mão de obra técnica (`tipo='S'`).
-7. **`ordens_servico`:** Cabeçalho central do negócio, com controle de status (`ABERTA`, `EM_ANDAMENTO`, `CONCLUIDA`, `CANCELADA`, `FATURADA`), valores totais e descrições técnicas em campos BLOB.
-8. **`os_itens`:** Linhas de lançamento de serviços e produtos em cada ordem, com quantidades, valores unitários e subtotais.
-9. **`faturas`:** Contas a receber e integração financeira com gateways de pagamento.
-10. **`auditoria_logs`:** Registro imutável de compliance para rastreabilidade de requisições.
-
----
-
-### Passo 2: Criando o Banco de Dados Físico com Utilitários do Firebird
-
-Para testar a infraestrutura em ambiente de desenvolvimento, utilizaremos o console de linha de comando nativo do Firebird: o **`isql`** (ou `isql-fb` no Linux).
-
-#### Procedimento no Linux (Ubuntu 24.04 LTS):
-
-Abra o terminal e execute:
-
-
+<ol>
+<li><strong><code>tenants</code>:</strong> Cadastro dos inquilinos/empresas assinantes do software SaaS, com UUID global e status.</li>
+<li><strong><code>usuarios</code>:</strong> Operadores vinculados a cada tenant, com senhas hashadas com salt e perfis de permissão (ADMIN, GERENTE, TECNICO, OPERADOR).</li>
+<li><strong><code>refresh_tokens</code>:</strong> Sessões ativas de longa duração para rotação de JWT, com flags atômicas de revogação.</li>
+<li><strong><code>clientes</code>:</strong> Tomadores de serviços de cada oficina ou empresa atendida pela plataforma.</li>
+<li><strong><code>categorias</code>:</strong> Classificação lógica de serviços e peças.</li>
+<li><strong><code>produtos_servicos</code>:</strong> Catálogo de itens precificados, distinguindo peças de reposição (<code>tipo='P'</code>) e mão de obra técnica (<code>tipo='S'</code>).</li>
+<li><strong><code>ordens_servico</code>:</strong> Cabeçalho central do negócio, com controle de status (<code>ABERTA</code>, <code>EM_ANDAMENTO</code>, <code>CONCLUIDA</code>, <code>CANCELADA</code>, <code>FATURADA</code>), valores totais e descrições técnicas em campos BLOB.</li>
+<li><strong><code>os_itens</code>:</strong> Linhas de lançamento de serviços e produtos em cada ordem, com quantidades, valores unitários e subtotais.</li>
+<li><strong><code>faturas</code>:</strong> Contas a receber e integração financeira com gateways de pagamento.</li>
+<li><strong><code>auditoria_logs</code>:</strong> Registro imutável de compliance para rastreabilidade de requisições.</li>
+</ol>
+<hr />
+<h3 id="passo-2-criando-o-banco-de-dados-fisico-com-utilitarios-do-firebird">Passo 2: Criando o Banco de Dados Físico com Utilitários do Firebird</h3>
+<p>Para testar a infraestrutura em ambiente de desenvolvimento, utilizaremos o console de linha de comando nativo do Firebird: o <strong><code>isql</code></strong> (ou <code>isql-fb</code> no Linux).</p>
+<h4 id="procedimento-no-linux-ubuntu-2404-lts">Procedimento no Linux (Ubuntu 24.04 LTS):</h4>
+<p>Abra o terminal e execute:</p>
 <pre><code class="language-bash"># Acesso ao utilitario isql do Firebird
 sudo isql-fb
 
@@ -1323,13 +1182,8 @@ INPUT /caminho/do/projeto/database/schema_fb5.sql;
 # Confirmacao de saida
 QUIT;
 </code></pre>
-
-
-#### Procedimento no Windows 11:
-
-Abra o Prompt de Comando ou PowerShell:
-
-
+<h4 id="procedimento-no-windows-11">Procedimento no Windows 11:</h4>
+<p>Abra o Prompt de Comando ou PowerShell:</p>
 <pre><code class="language-cmd">:: Navega ate a pasta binaria de instalacao do Firebird 5.0
 cd &quot;C:\Program Files\Firebird\Firebird_5_0&quot;
 
@@ -1344,32 +1198,21 @@ SQL&gt; INPUT database/schema_fb5.sql;
 SQL&gt; COMMIT;
 SQL&gt; QUIT;
 </code></pre>
-
-
-<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>  
-> A escolha de `PAGE_SIZE 16384` (16 Kilobytes) é a mais indicada para servidores modernos de 64 bits operando em discos SSD/NVMe. Tamanhos de página maiores reduzem a profundidade das árvores de índices B-Tree, permitindo que o Firebird localize registros com menos operações de leitura de I/O em disco.
-
----
-
-## 4. TESTANDO O ENDPOINT E AS CONSULTAS DO BANCO
-
-Para validar a integridade da modelagem física no Firebird 5.0, realizaremos consultas de teste diretamente pelo utilitário `isql`, auditando a geração de chaves `IDENTITY`, o comportamento da cláusula `RETURNING` e a preservação de caracteres acentuados em UTF-8.
-
-### Teste 1: Inserção com Geração Automática de IDENTITY e Cláusula RETURNING
-
-Conecte-se ao banco de dados pelo terminal interativo `isql`:
-
-
+<blockquote>
+<p><strong>Boas Práticas FPC:</strong><br />
+A escolha de <code>PAGE_SIZE 16384</code> (16 Kilobytes) é a mais indicada para servidores modernos de 64 bits operando em discos SSD/NVMe. Tamanhos de página maiores reduzem a profundidade das árvores de índices B-Tree, permitindo que o Firebird localize registros com menos operações de leitura de I/O em disco.</p>
+</blockquote>
+<hr />
+<h2 id="4-testando-o-endpoint-e-as-consultas-do-banco">4. TESTANDO O ENDPOINT E AS CONSULTAS DO BANCO</h2>
+<p>Para validar a integridade da modelagem física no Firebird 5.0, realizaremos consultas de teste diretamente pelo utilitário <code>isql</code>, auditando a geração de chaves <code>IDENTITY</code>, o comportamento da cláusula <code>RETURNING</code> e a preservação de caracteres acentuados em UTF-8.</p>
+<h3 id="teste-1-insercao-com-geracao-automatica-de-identity-e-clausula-returning">Teste 1: Inserção com Geração Automática de IDENTITY e Cláusula RETURNING</h3>
+<p>Conecte-se ao banco de dados pelo terminal interativo <code>isql</code>:</p>
 <pre><code class="language-sql">CONNECT 'C:\Projetos Antigrtavity\connect_os.fdb' 
   USER 'SYSDBA' PASSWORD 'masterkey';
 
 SET NAMES UTF8;
 </code></pre>
-
-
-Execute uma inserção na tabela de clientes omitindo o campo `id` e solicitando a captura imediata do valor gerado via `RETURNING`:
-
-
+<p>Execute uma inserção na tabela de clientes omitindo o campo <code>id</code> e solicitando a captura imediata do valor gerado via <code>RETURNING</code>:</p>
 <pre><code class="language-sql">INSERT INTO clientes (
     tenant_id, 
     nome_razao, 
@@ -1386,11 +1229,7 @@ Execute uma inserção na tabela de clientes omitindo o campo `id` e solicitando
     'SP'
 ) RETURNING id, created_at, status_ativo;
 </code></pre>
-
-
-*(Obs: na tabela o campo é `ativo`)*
-
-
+<p><em>(Obs: na tabela o campo é <code>ativo</code>)</em></p>
 <pre><code class="language-sql">INSERT INTO clientes (
     tenant_id, 
     nome_razao, 
@@ -1407,187 +1246,144 @@ Execute uma inserção na tabela de clientes omitindo o campo `id` e solicitando
     'SP'
 ) RETURNING id, created_at, ativo;
 </code></pre>
-
-
-**Resultado Retornado Imediatamente pelo Firebird 5.0:**
-
-
+<p><strong>Resultado Retornado Imediatamente pelo Firebird 5.0:</strong></p>
 <pre><code class="language-text">                  ID                  CREATED_AT   ATIVO 
 ==================== =========================== ======= 
                    1 2026-11-23 12:20:00.1500000 &lt;true&gt;  
 </code></pre>
-
-
-Observe a perfeição da operação:
-1. O campo `id` foi computado nativamente pelo mecanismo `IDENTITY` como `1`.
-2. A data `created_at` foi preenchida pelo carimbo atômico do relógio do servidor (`CURRENT_TIMESTAMP`).
-3. Os caracteres com acentuação e cedilha (*"Mecânica São Cristóvão"*) foram gravados perfeitamente em UTF-8.
-
----
-
-### Teste 2: Auditoria de Performance com o Comando SET PLAN ON
-
-Vamos inspecionar como o otimizador do Firebird 5.0 utiliza o índice composto para recuperar dados de um tenant:
-
-
+<p>Observe a perfeição da operação:
+1. O campo <code>id</code> foi computado nativamente pelo mecanismo <code>IDENTITY</code> como <code>1</code>.
+2. A data <code>created_at</code> foi preenchida pelo carimbo atômico do relógio do servidor (<code>CURRENT_TIMESTAMP</code>).
+3. Os caracteres com acentuação e cedilha (<em>"Mecânica São Cristóvão"</em>) foram gravados perfeitamente em UTF-8.</p>
+<hr />
+<h3 id="teste-2-auditoria-de-performance-com-o-comando-set-plan-on">Teste 2: Auditoria de Performance com o Comando SET PLAN ON</h3>
+<p>Vamos inspecionar como o otimizador do Firebird 5.0 utiliza o índice composto para recuperar dados de um tenant:</p>
 <pre><code class="language-sql">SET PLAN ON;
 
 SELECT id, nome_razao, email 
 FROM clientes 
 WHERE tenant_id = 1 AND cpf_cnpj = '33222111000155';
 </code></pre>
-
-
-**Plano de Execução (*PLAN*) Exibido:**
-
-
+<p><strong>Plano de Execução (<em>PLAN</em>) Exibido:</strong></p>
 <pre><code class="language-text">PLAN (CLIENTES INDEX (UNQ_CLIENTES_TENANT_DOC))
 </code></pre>
-
-
-O otimizador identificou a chave única composta `UNQ_CLIENTES_TENANT_DOC (tenant_id, cpf_cnpj)` e executou uma busca direta por índice (*Index Seek*), retornando o registro em **0,02 milissegundos** sem realizar nenhuma varredura sequencial na tabela inteira (*Natural Scan*).
-
----
-
-### Teste 3: Testando a Proteção contra Duplicidade em Chave Composta
-
-Tente inserir exatamente o mesmo cliente para o mesmo Tenant 1:
-
-
+<p>O otimizador identificou a chave única composta <code>UNQ_CLIENTES_TENANT_DOC (tenant_id, cpf_cnpj)</code> e executou uma busca direta por índice (<em>Index Seek</em>), retornando o registro em <strong>0,02 milissegundos</strong> sem realizar nenhuma varredura sequencial na tabela inteira (<em>Natural Scan</em>).</p>
+<hr />
+<h3 id="teste-3-testando-a-protecao-contra-duplicidade-em-chave-composta">Teste 3: Testando a Proteção contra Duplicidade em Chave Composta</h3>
+<p>Tente inserir exatamente o mesmo cliente para o mesmo Tenant 1:</p>
 <pre><code class="language-sql">INSERT INTO clientes (tenant_id, nome_razao, cpf_cnpj)
 VALUES (1, 'Nome Fantasia Qualquer', '33222111000155');
 </code></pre>
-
-
-**Rejeição Atômica pelo Motor Relacional:**
-
-
+<p><strong>Rejeição Atômica pelo Motor Relacional:</strong></p>
 <pre><code class="language-text">Statement failed, SQLSTATE = 23000
 violation of PRIMARY or UNIQUE KEY constraint &quot;UNQ_CLIENTES_TENANT_DOC&quot; 
 on table &quot;CLIENTES&quot;
 Problematic key value is:
 (&quot;TENANT_ID&quot; = 1, &quot;CPF_CNPJ&quot; = '33222111000155')
 </code></pre>
-
-
-Agora, insira o mesmo documento para o **Tenant 2** (uma empresa completamente distinta):
-
-
+<p>Agora, insira o mesmo documento para o <strong>Tenant 2</strong> (uma empresa completamente distinta):</p>
 <pre><code class="language-sql">INSERT INTO clientes (tenant_id, nome_razao, cpf_cnpj)
 VALUES (2, 'Filial do Outro Tenant', '33222111000155')
 RETURNING id;
 </code></pre>
-
-
-**Resultado:**
-A inserção é aceita com sucesso (retornando `id: 2`), comprovando que a restrição de integridade é multi-inquilino e isola perfeitamente os dados de clientes diferentes.
-
----
-
-## 5. ARMADILHAS COMUNS E TROUBLESHOOTING NO FPC/LAZARUS
-
----
-
-### Armadilha 1: Incompatibilidade de Bits da Biblioteca fbclient (32 vs 64 bits)
-
-**Sintoma:** Ao compilar e executar uma aplicação Lazarus que conecta ao Firebird, o programa aborta com a mensagem:
-
-
+<p><strong>Resultado:</strong>
+A inserção é aceita com sucesso (retornando <code>id: 2</code>), comprovando que a restrição de integridade é multi-inquilino e isola perfeitamente os dados de clientes diferentes.</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_1">5. ARMADILHAS COMUNS E TROUBLESHOOTING NO FPC/LAZARUS</h2>
+<hr />
+<h3 id="armadilha-1-incompatibilidade-de-bits-da-biblioteca-fbclient-32-vs-64-bits">Armadilha 1: Incompatibilidade de Bits da Biblioteca fbclient (32 vs 64 bits)</h3>
+<p><strong>Sintoma:</strong> Ao compilar e executar uma aplicação Lazarus que conecta ao Firebird, o programa aborta com a mensagem:</p>
 <pre><code class="language-text">Can not load default Firebird clients (&quot;fbclient.dll&quot; or &quot;gds32.dll&quot;). 
 Check your installation!
 </code></pre>
-
-
-**Causa Raiz:** O executável em Pascal foi compilado como binário de 64 bits (`x86_64`), mas está tentando carregar uma biblioteca cliente `fbclient.dll` de 32 bits herdada de instalações antigas do Delphi, ou vice-versa.
-
-**Solução:** Garanta que a arquitetura do executável corresponda estritamente à arquitetura da DLL/SO. No Lazarus 64-bit para Windows, utilize a `fbclient.dll` da pasta `Firebird_5_0` de 64 bits. No Linux Ubuntu x86_64, instale o pacote nativo de 64 bits:
-
-
+<p><strong>Causa Raiz:</strong> O executável em Pascal foi compilado como binário de 64 bits (<code>x86_64</code>), mas está tentando carregar uma biblioteca cliente <code>fbclient.dll</code> de 32 bits herdada de instalações antigas do Delphi, ou vice-versa.</p>
+<p><strong>Solução:</strong> Garanta que a arquitetura do executável corresponda estritamente à arquitetura da DLL/SO. No Lazarus 64-bit para Windows, utilize a <code>fbclient.dll</code> da pasta <code>Firebird_5_0</code> de 64 bits. No Linux Ubuntu x86_64, instale o pacote nativo de 64 bits:</p>
 <pre><code class="language-bash">sudo apt install -y libfbclient2
 </code></pre>
-
-
----
-
-### Armadilha 2: Sincronização Desalinhada de Colunas IDENTITY
-
-**Sintoma:** Ao importar registros legados em massa com IDs explícitos (ex: `INSERT INTO clientes (id, ...) VALUES (500, ...)`), a próxima inserção automática que omite o ID falha com violação de chave primária duplicada!
-
-**Causa Raiz:** Ao inserir manualmente valores maiores na coluna IDENTITY, a sequência interna associada pelo Firebird não é avançada automaticamente se o comando não reajustar o gerador.
-
-**Solução:** Após operações de importação manual de dados legados, reajuste o contador da sequência interna da tabela IDENTITY para o maior valor existente:
-
-
+<hr />
+<h3 id="armadilha-2-sincronizacao-desalinhada-de-colunas-identity">Armadilha 2: Sincronização Desalinhada de Colunas IDENTITY</h3>
+<p><strong>Sintoma:</strong> Ao importar registros legados em massa com IDs explícitos (ex: <code>INSERT INTO clientes (id, ...) VALUES (500, ...)</code>), a próxima inserção automática que omite o ID falha com violação de chave primária duplicada!</p>
+<p><strong>Causa Raiz:</strong> Ao inserir manualmente valores maiores na coluna IDENTITY, a sequência interna associada pelo Firebird não é avançada automaticamente se o comando não reajustar o gerador.</p>
+<p><strong>Solução:</strong> Após operações de importação manual de dados legados, reajuste o contador da sequência interna da tabela IDENTITY para o maior valor existente:</p>
 <pre><code class="language-sql">ALTER TABLE clientes ALTER COLUMN id RESTART WITH 501;
 </code></pre>
-
-
----
-
-### Armadilha 3: Bloqueio Transacional por Falta de Commit em Ferramentas de Apoio
-
-**Sintoma:** A API em Horse tenta atualizar um registro no Firebird e a requisição congela por 30 segundos até estourar por *timeout* (*Lock conflict on no wait transaction*).
-
-**Causa Raiz:** O desenvolvedor abriu o DBeaver, FlameRobin ou `isql`, executou um `UPDATE` ou `SELECT` para conferir dados e esqueceu de fechar ou comitar a transação na ferramenta gráfica, retendo um bloqueio exclusivo sobre o registro.
-
-**Solução:** No Firebird, transações ativas seguram bloqueios de versão de registro. Sempre configure ferramentas de administração com commit automático (*Auto-Commit*) ou lembre-se de executar `COMMIT;` após qualquer consulta interativa.
-
----
-
-## 6. RESUMO EXECUTIVO E CHECKLIST DE REVISÃO
-
-### Tabela de Comparação: Firebird Legado vs. Firebird 5.0 Moderno
-
-| Recurso / Paradigma | Firebird Clássico (1.5 a 2.5) | Firebird 5.0 Moderno |
-| :--- | :--- | :--- |
-| **Chave Primária** | `INTEGER` com Generators e Triggers | `BIGINT GENERATED BY DEFAULT AS IDENTITY`|
-| **Captura de ID** | Chamada extra `GEN_ID(gen, 0)` | Cláusula atômica `RETURNING id` |
-| **Encoding Padrão**| `NONE`, `WIN1252` ou `ISO8859_1` | `UTF8` Universal nativo em toda a stack |
-| **Paginação** | `FIRST ... SKIP ...` lento em heap | `OFFSET ... FETCH NEXT ... ROWS ONLY` |
-| **Processamento** | Single-thread ou Multi-process | Multi-thread com paralelismo nativo |
-| **Plano de Execução**| Parsing e compilação a cada query | Cache compartilhado de statements |
-
----
-
-### Checklist de Revisão e Auditoria Técnica
-
-Antes de avançar para o Módulo 11, certifique-se de validar os seguintes itens da base de dados:
-
-- [ ] **Charset UTF8:** O banco `connect_os.fdb` foi criado com `DEFAULT CHARACTER SET UTF8` e tamanho de página de 16 KB (`PAGE_SIZE 16384`).
-- [ ] **Tabelas com IDENTITY:** Todas as tabelas operacionais utilizam chaves primárias do tipo `BIGINT GENERATED BY DEFAULT AS IDENTITY`.
-- [ ] **Índices Multi-Tenant:** Todos os índices de busca e restrições de chave única possuem o campo `tenant_id` posicionado como primeira coluna.
-- [ ] **Cláusula RETURNING:** Testes de inserção no terminal demonstraram a captura atômica do ID gerado sem necessidade de consultas adicionais.
-- [ ] **Triggers de Auditoria:** As triggers de atualização automática do campo `updated_at` estão ativas e funcionando.
-- [ ] **Cliente Nativo 64-bit:** A biblioteca `fbclient` de 64 bits está homologada e pronta para conexão com o Free Pascal.
-
-Com a modelagem física do Firebird 5.0 plenamente validada, ingressamos no coração da infraestrutura de dados no **Módulo 11**, onde resolveremos o maior desafio de engenharia em servidores web Pascal: a construção de um **Pool de Conexões Thread-Safe** de alto desempenho.
-
-
-# MÓDULO 11: POOL DE CONEXÕES THREAD-SAFE COM FIREBIRD 5.0
-
----
-
-## 1. OBJETIVOS DE APRENDIZAGEM DO MÓDULO
-
-Ao final deste módulo, você será capaz de:
-
-1. Identificar com clareza matemática e física o perigo crítico de compartilhar uma única conexão de banco de dados entre threads no Free Pascal (`fphttpserver`).
-2. Compreender a anatomia interna do protocolo Wire do Firebird e as limitações de reentrância dos manipuladores nativos da biblioteca `fbclient` (`isc_db_handle`).
-3. Projetar e construir um **Pool de Conexões Thread-Safe** de alto desempenho utilizando primitivas de sincronização atômica (`TCriticalSection`) e listas seguras (`TThreadList`).
-4. Implementar o padrão arquitetural de empréstimo e devolução automática (*Resource Acquisition Is Initialization - RAII*) através de contratos de interface gerenciada (**`IConnectionWrapper`**).
-5. Configurar rotinas de verificação de integridade (*Health Check*) e reciclagem de conexões rompidas, blindando a API contra esgotamento de conexões (*Pool Exhaustion*) sob rajadas volumosas de tráfego.
-
----
-
-## 2. FUNDAMENTAÇÃO CONCEITUAL E ARQUITETURAL
-
-Ao transicionar do desenvolvimento de softwares desktop cliente-servidor para servidores web de alta concorrência em Lazarus, desenvolvedores inexperientes cometem recorrentemente o erro mais destrutivo de sua trajetória de engenharia: **declarar um único componente global de conexão (como `TIBConnection` ou `TZConnection`) e utilizá-lo simultaneamente em todas as rotas do servidor**.
-
-Em uma aplicação desktop tradicional, existe apenas uma thread principal de interface gráfica (Main Thread), e o usuário executa uma operação por vez: clica em salvar, a query roda e a tela atualiza.
-
-Em uma API web com o Horse sobre o driver `fphttpserver`, a realidade é radicalmente diferente. Cada requisição HTTP de entrada é despachada para uma thread de sistema operacional distinta. Se 50 clientes enviarem requisições no mesmo milissegundo, 50 threads concorrentes tentarão invocar métodos como `Query.Open` ou `Transaction.Commit` sobre a mesmíssima instância de conexão.
-
-
+<hr />
+<h3 id="armadilha-3-bloqueio-transacional-por-falta-de-commit-em-ferramentas-de-apoio">Armadilha 3: Bloqueio Transacional por Falta de Commit em Ferramentas de Apoio</h3>
+<p><strong>Sintoma:</strong> A API em Horse tenta atualizar um registro no Firebird e a requisição congela por 30 segundos até estourar por <em>timeout</em> (<em>Lock conflict on no wait transaction</em>).</p>
+<p><strong>Causa Raiz:</strong> O desenvolvedor abriu o DBeaver, FlameRobin ou <code>isql</code>, executou um <code>UPDATE</code> ou <code>SELECT</code> para conferir dados e esqueceu de fechar ou comitar a transação na ferramenta gráfica, retendo um bloqueio exclusivo sobre o registro.</p>
+<p><strong>Solução:</strong> No Firebird, transações ativas seguram bloqueios de versão de registro. Sempre configure ferramentas de administração com commit automático (<em>Auto-Commit</em>) ou lembre-se de executar <code>COMMIT;</code> após qualquer consulta interativa.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_1">6. RESUMO EXECUTIVO E CHECKLIST DE REVISÃO</h2>
+<h3 id="tabela-de-comparacao-firebird-legado-vs-firebird-50-moderno">Tabela de Comparação: Firebird Legado vs. Firebird 5.0 Moderno</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Recurso / Paradigma</th>
+<th style="text-align: left;">Firebird Clássico (1.5 a 2.5)</th>
+<th style="text-align: left;">Firebird 5.0 Moderno</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Chave Primária</strong></td>
+<td style="text-align: left;"><code>INTEGER</code> com Generators e Triggers</td>
+<td style="text-align: left;"><code>BIGINT GENERATED BY DEFAULT AS IDENTITY</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Captura de ID</strong></td>
+<td style="text-align: left;">Chamada extra <code>GEN_ID(gen, 0)</code></td>
+<td style="text-align: left;">Cláusula atômica <code>RETURNING id</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Encoding Padrão</strong></td>
+<td style="text-align: left;"><code>NONE</code>, <code>WIN1252</code> ou <code>ISO8859_1</code></td>
+<td style="text-align: left;"><code>UTF8</code> Universal nativo em toda a stack</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Paginação</strong></td>
+<td style="text-align: left;"><code>FIRST ... SKIP ...</code> lento em heap</td>
+<td style="text-align: left;"><code>OFFSET ... FETCH NEXT ... ROWS ONLY</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Processamento</strong></td>
+<td style="text-align: left;">Single-thread ou Multi-process</td>
+<td style="text-align: left;">Multi-thread com paralelismo nativo</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Plano de Execução</strong></td>
+<td style="text-align: left;">Parsing e compilação a cada query</td>
+<td style="text-align: left;">Cache compartilhado de statements</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="checklist-de-revisao-e-auditoria-tecnica_1">Checklist de Revisão e Auditoria Técnica</h3>
+<p>Antes de avançar para o Módulo 11, certifique-se de validar os seguintes itens da base de dados:</p>
+<ul>
+<li>[ ] <strong>Charset UTF8:</strong> O banco <code>connect_os.fdb</code> foi criado com <code>DEFAULT CHARACTER SET UTF8</code> e tamanho de página de 16 KB (<code>PAGE_SIZE 16384</code>).</li>
+<li>[ ] <strong>Tabelas com IDENTITY:</strong> Todas as tabelas operacionais utilizam chaves primárias do tipo <code>BIGINT GENERATED BY DEFAULT AS IDENTITY</code>.</li>
+<li>[ ] <strong>Índices Multi-Tenant:</strong> Todos os índices de busca e restrições de chave única possuem o campo <code>tenant_id</code> posicionado como primeira coluna.</li>
+<li>[ ] <strong>Cláusula RETURNING:</strong> Testes de inserção no terminal demonstraram a captura atômica do ID gerado sem necessidade de consultas adicionais.</li>
+<li>[ ] <strong>Triggers de Auditoria:</strong> As triggers de atualização automática do campo <code>updated_at</code> estão ativas e funcionando.</li>
+<li>[ ] <strong>Cliente Nativo 64-bit:</strong> A biblioteca <code>fbclient</code> de 64 bits está homologada e pronta para conexão com o Free Pascal.</li>
+</ul>
+<p>Com a modelagem física do Firebird 5.0 plenamente validada, ingressamos no coração da infraestrutura de dados no <strong>Módulo 11</strong>, onde resolveremos o maior desafio de engenharia em servidores web Pascal: a construção de um <strong>Pool de Conexões Thread-Safe</strong> de alto desempenho.</p>
+<h1 id="modulo-11-pool-de-conexoes-thread-safe-com-firebird-50">MÓDULO 11: POOL DE CONEXÕES THREAD-SAFE COM FIREBIRD 5.0</h1>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_2">1. OBJETIVOS DE APRENDIZAGEM DO MÓDULO</h2>
+<p>Ao final deste módulo, você será capaz de:</p>
+<ol>
+<li>Identificar com clareza matemática e física o perigo crítico de compartilhar uma única conexão de banco de dados entre threads no Free Pascal (<code>fphttpserver</code>).</li>
+<li>Compreender a anatomia interna do protocolo Wire do Firebird e as limitações de reentrância dos manipuladores nativos da biblioteca <code>fbclient</code> (<code>isc_db_handle</code>).</li>
+<li>Projetar e construir um <strong>Pool de Conexões Thread-Safe</strong> de alto desempenho utilizando primitivas de sincronização atômica (<code>TCriticalSection</code>) e listas seguras (<code>TThreadList</code>).</li>
+<li>Implementar o padrão arquitetural de empréstimo e devolução automática (<em>Resource Acquisition Is Initialization - RAII</em>) através de contratos de interface gerenciada (<strong><code>IConnectionWrapper</code></strong>).</li>
+<li>Configurar rotinas de verificação de integridade (<em>Health Check</em>) e reciclagem de conexões rompidas, blindando a API contra esgotamento de conexões (<em>Pool Exhaustion</em>) sob rajadas volumosas de tráfego.</li>
+</ol>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_2">2. FUNDAMENTAÇÃO CONCEITUAL E ARQUITETURAL</h2>
+<p>Ao transicionar do desenvolvimento de softwares desktop cliente-servidor para servidores web de alta concorrência em Lazarus, desenvolvedores inexperientes cometem recorrentemente o erro mais destrutivo de sua trajetória de engenharia: <strong>declarar um único componente global de conexão (como <code>TIBConnection</code> ou <code>TZConnection</code>) e utilizá-lo simultaneamente em todas as rotas do servidor</strong>.</p>
+<p>Em uma aplicação desktop tradicional, existe apenas uma thread principal de interface gráfica (Main Thread), e o usuário executa uma operação por vez: clica em salvar, a query roda e a tela atualiza.</p>
+<p>Em uma API web com o Horse sobre o driver <code>fphttpserver</code>, a realidade é radicalmente diferente. Cada requisição HTTP de entrada é despachada para uma thread de sistema operacional distinta. Se 50 clientes enviarem requisições no mesmo milissegundo, 50 threads concorrentes tentarão invocar métodos como <code>Query.Open</code> ou <code>Transaction.Commit</code> sobre a mesmíssima instância de conexão.</p>
 <pre><code>[ THREAD HTTP 1 ] ---&gt;+
                       |
 [ THREAD HTTP 2 ] ---&gt;+===&gt; [ ÚNICA CONEXÃO GLOBAL (TIBConnection) ]
@@ -1595,35 +1391,24 @@ Em uma API web com o Horse sobre o driver `fphttpserver`, a realidade é radical
 [ THREAD HTTP 3 ] ---&gt;+     - isc_db_handle Compartilhado
                             - CORRUPÇÃO DE MEMÓRIA IMEDIATA!
 </code></pre>
-
-
-### Por que a Biblioteca fbclient Não É Reentrante na Mesma Conexão?
-
-A biblioteca nativa do Firebird (`fbclient.dll` / `libfbclient.so`) utiliza ponteiros de baixo nível da API em linguagem C:
-- **`isc_db_handle`:** Identificador numérico da conexão física com o servidor.
-- **`isc_tr_handle`:** Identificador da transação ativa associada àquele canal.
-
-Quando uma query é executada, o cliente envia um pacote pelo socket TCP na porta 3050 e aguarda os pacotes de resposta do servidor Firebird. Se duas threads utilizarem o mesmo `isc_db_handle` simultaneamente:
-1. Uma thread envia uma instrução `INSERT` enquanto a outra envia um `SELECT`.
+<h3 id="por-que-a-biblioteca-fbclient-nao-e-reentrante-na-mesma-conexao">Por que a Biblioteca fbclient Não É Reentrante na Mesma Conexão?</h3>
+<p>A biblioteca nativa do Firebird (<code>fbclient.dll</code> / <code>libfbclient.so</code>) utiliza ponteiros de baixo nível da API em linguagem C:
+- <strong><code>isc_db_handle</code>:</strong> Identificador numérico da conexão física com o servidor.
+- <strong><code>isc_tr_handle</code>:</strong> Identificador da transação ativa associada àquele canal.</p>
+<p>Quando uma query é executada, o cliente envia um pacote pelo socket TCP na porta 3050 e aguarda os pacotes de resposta do servidor Firebird. Se duas threads utilizarem o mesmo <code>isc_db_handle</code> simultaneamente:
+1. Uma thread envia uma instrução <code>INSERT</code> enquanto a outra envia um <code>SELECT</code>.
 2. As respostas de rede retornadas pelo servidor Firebird se misturam no buffer de recepção da biblioteca.
 3. O driver C do Firebird tenta atribuir linhas de consulta para a transação que esperava apenas a confirmação da inserção.
-4. O processo é sumariamente abortado pelo sistema operacional com violação de acesso (*SIGSEGV*), ou o banco emite o erro:
-   ```text
-   Dynamic SQL Error: SQL error code = -902. Network error.
-   ```
-
-### Abrir e Fechar em Cada Requisição? O Custo Proibitivo de Latência
-
-Percebendo que conexões globais geram corrupção, alguns desenvolvedores adotam a solução ingênua oposta: instanciar uma nova conexão no início de cada rota (`TIBConnection.Create`) e destruí-la ao final (`Connection.Free`).
-
-Embora thread-safe, essa prática destrói o desempenho da API corporativa:
-- **Handshake TCP:** Abertura e fechamento de conexões na porta 3050 em cada clique.
-- **Aperto de Mão Criptográfico:** Autenticação de credenciais SRP (*Secure Remote Password*) do usuário `SYSDBA` exigindo cálculo de chaves simétricas na CPU.
-- **Alocação de Recursos no Servidor:** O Firebird precisa alocar páginas de memória dedicadas e descritores no processo SuperServer a cada nova conexão física.
-
-Medições de laboratório revelam que estabelecer uma conexão física com o Firebird consome entre **15 ms e 45 ms** de latência de rede. Se a sua consulta SQL leva apenas 0,5 ms para ser executada, você estará desperdiçando 98% do tempo da requisição apenas abrindo e fechando o soquete!
-
-
+4. O processo é sumariamente abortado pelo sistema operacional com violação de acesso (<em>SIGSEGV</em>), ou o banco emite o erro:
+   <code>text
+   Dynamic SQL Error: SQL error code = -902. Network error.</code></p>
+<h3 id="abrir-e-fechar-em-cada-requisicao-o-custo-proibitivo-de-latencia">Abrir e Fechar em Cada Requisição? O Custo Proibitivo de Latência</h3>
+<p>Percebendo que conexões globais geram corrupção, alguns desenvolvedores adotam a solução ingênua oposta: instanciar uma nova conexão no início de cada rota (<code>TIBConnection.Create</code>) e destruí-la ao final (<code>Connection.Free</code>).</p>
+<p>Embora thread-safe, essa prática destrói o desempenho da API corporativa:
+- <strong>Handshake TCP:</strong> Abertura e fechamento de conexões na porta 3050 em cada clique.
+- <strong>Aperto de Mão Criptográfico:</strong> Autenticação de credenciais SRP (<em>Secure Remote Password</em>) do usuário <code>SYSDBA</code> exigindo cálculo de chaves simétricas na CPU.
+- <strong>Alocação de Recursos no Servidor:</strong> O Firebird precisa alocar páginas de memória dedicadas e descritores no processo SuperServer a cada nova conexão física.</p>
+<p>Medições de laboratório revelam que estabelecer uma conexão física com o Firebird consome entre <strong>15 ms e 45 ms</strong> de latência de rede. Se a sua consulta SQL leva apenas 0,5 ms para ser executada, você estará desperdiçando 98% do tempo da requisição apenas abrindo e fechando o soquete!</p>
 <pre><code>+-------------------------------------------------------------------+
 |               ANATOMIA DE UM CONNECTION POOL THREAD-SAFE          |
 +-------------------------------------------------------------------+
@@ -1648,31 +1433,19 @@ Medições de laboratório revelam que estabelecer uma conexão física com o Fi
       | Devolução automática (IInterface)            |
       +&lt;---------------------------------------------+
 </code></pre>
-
-
-### O Padrão RAII com Interfaces Gerenciadas (IConnectionWrapper)
-
-Como garantir que uma conexão emprestada do pool seja **obrigatoriamente devolvida**, mesmo se a rota lançar uma exceção de validação, erro de sintaxe SQL ou perda de conexão?
-
-A técnica mais robusta no Free Pascal reside no padrão **RAII (Resource Acquisition Is Initialization)** utilizando interfaces:
-1. O controlador solicita uma conexão ao pool recebendo a interface **`IConnectionWrapper`**.
-2. A interface encapsula a referência física da conexão (`TIBConnection`) e de sua transação associada.
-3. Quando o procedimento da rota atinge o seu `end;` final — seja pelo fluxo feliz ou por desenrolamento da pilha de exceções (*exception unwinding*) —, o compilador FPC invoca automaticamente o método `_Release` da interface.
-4. O destrutor do wrapper intercepta a liberação e devolve a conexão física de volta à fila de conexões disponíveis do pool, garantindo **zero vazamentos de conexões (*zero connection leaks*)**.
-
----
-
-## 3. IMPLEMENTAÇÃO PASSO A PASSO
-
-Construiremos agora o motor oficial de conexões corporativo do nosso projeto **ConnectOSApi**: a unit `src/Core/Core.ConnectionPool.pas`.
-
-Utilizaremos o driver nativo **SQLdb (`TIBConnection` e `TSQLTransaction`)** da biblioteca FCL do Free Pascal, amplamente compatível com o Firebird 5.0 e livre de qualquer dependência visual.
-
-### Construindo a Unit Central do Pool: Core.ConnectionPool.pas
-
-Crie a unit `src/Core/Core.ConnectionPool.pas` respeitando rigorosamente o limite de 72 caracteres por linha:
-
-
+<h3 id="o-padrao-raii-com-interfaces-gerenciadas-iconnectionwrapper">O Padrão RAII com Interfaces Gerenciadas (IConnectionWrapper)</h3>
+<p>Como garantir que uma conexão emprestada do pool seja <strong>obrigatoriamente devolvida</strong>, mesmo se a rota lançar uma exceção de validação, erro de sintaxe SQL ou perda de conexão?</p>
+<p>A técnica mais robusta no Free Pascal reside no padrão <strong>RAII (Resource Acquisition Is Initialization)</strong> utilizando interfaces:
+1. O controlador solicita uma conexão ao pool recebendo a interface <strong><code>IConnectionWrapper</code></strong>.
+2. A interface encapsula a referência física da conexão (<code>TIBConnection</code>) e de sua transação associada.
+3. Quando o procedimento da rota atinge o seu <code>end;</code> final — seja pelo fluxo feliz ou por desenrolamento da pilha de exceções (<em>exception unwinding</em>) —, o compilador FPC invoca automaticamente o método <code>_Release</code> da interface.
+4. O destrutor do wrapper intercepta a liberação e devolve a conexão física de volta à fila de conexões disponíveis do pool, garantindo <strong>zero vazamentos de conexões (<em>zero connection leaks</em>)</strong>.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo_2">3. IMPLEMENTAÇÃO PASSO A PASSO</h2>
+<p>Construiremos agora o motor oficial de conexões corporativo do nosso projeto <strong>ConnectOSApi</strong>: a unit <code>src/Core/Core.ConnectionPool.pas</code>.</p>
+<p>Utilizaremos o driver nativo <strong>SQLdb (<code>TIBConnection</code> e <code>TSQLTransaction</code>)</strong> da biblioteca FCL do Free Pascal, amplamente compatível com o Firebird 5.0 e livre de qualquer dependência visual.</p>
+<h3 id="construindo-a-unit-central-do-pool-coreconnectionpoolpas">Construindo a Unit Central do Pool: Core.ConnectionPool.pas</h3>
+<p>Crie a unit <code>src/Core/Core.ConnectionPool.pas</code> respeitando rigorosamente o limite de 72 caracteres por linha:</p>
 <pre><code class="language-pascal">{======================================================================}
 { Projeto: ConnectOSApi - API de Gestao e Faturamento Multi-Tenant     }
 { Unit   : Core.ConnectionPool                                         }
@@ -2065,18 +1838,13 @@ end;
 
 end.
 </code></pre>
-
-
-<blockquote class="alert-threadsafety"><strong>Atenção Thread-Safety:</strong>  
-> A verificação de conexões ociosas e a expansão dinâmica do pool residem estritamente dentro do bloco `FSection.Enter` e `FSection.Leave`. Se duas threads solicitassem conexão simultaneamente com o pool em 19 conexões (sendo o limite máximo 20), ambas poderiam constatar que `Count < 20` e criar duas conexões simultâneas, violando o limite `MaxPoolSize`. A seção crítica garante linearidade estrita na alocação.
-
----
-
-### Passo 2: Integrando o Pool de Conexões no ConnectOSApi.lpr
-
-No ponto de entrada principal, configuramos a inicialização do pool no boot do servidor e sua destruição graciosa no encerramento:
-
-
+<blockquote>
+<p><strong>Atenção Thread-Safety:</strong><br />
+A verificação de conexões ociosas e a expansão dinâmica do pool residem estritamente dentro do bloco <code>FSection.Enter</code> e <code>FSection.Leave</code>. Se duas threads solicitassem conexão simultaneamente com o pool em 19 conexões (sendo o limite máximo 20), ambas poderiam constatar que <code>Count &lt; 20</code> e criar duas conexões simultâneas, violando o limite <code>MaxPoolSize</code>. A seção crítica garante linearidade estrita na alocação.</p>
+</blockquote>
+<hr />
+<h3 id="passo-2-integrando-o-pool-de-conexoes-no-connectosapilpr">Passo 2: Integrando o Pool de Conexões no ConnectOSApi.lpr</h3>
+<p>No ponto de entrada principal, configuramos a inicialização do pool no boot do servidor e sua destruição graciosa no encerramento:</p>
 <pre><code class="language-pascal">program ConnectOSApi;
 
 {$mode objfpc}{$H+}
@@ -2172,15 +1940,9 @@ begin
   end;
 end.
 </code></pre>
-
-
----
-
-## 4. TESTANDO O ENDPOINT E MONITORANDO O POOL
-
-Para validar que o pool de conexões opera com total isolamento entre threads e devolve recursos de forma determinística, adicionaremos um endpoint de monitoramento em `Controllers.Ping.pas` expondo a telemetria do pool:
-
-
+<hr />
+<h2 id="4-testando-o-endpoint-e-monitorando-o-pool">4. TESTANDO O ENDPOINT E MONITORANDO O POOL</h2>
+<p>Para validar que o pool de conexões opera com total isolamento entre threads e devolve recursos de forma determinística, adicionaremos um endpoint de monitoramento em <code>Controllers.Ping.pas</code> expondo a telemetria do pool:</p>
 <pre><code class="language-pascal">class procedure TControllersPing.DoGetPoolStatus(Req: THorseRequest; 
   Res: THorseResponse; Next: TNextProc);
 var
@@ -2195,44 +1957,24 @@ begin
      .Status(THTTPStatus.OK);
 end;
 </code></pre>
-
-
-### Teste 1: Auditoria de Conexões em Repouso (Idle)
-
-Inicie a aplicação e consulte o status do pool via `curl`:
-
-
+<h3 id="teste-1-auditoria-de-conexoes-em-repouso-idle">Teste 1: Auditoria de Conexões em Repouso (Idle)</h3>
+<p>Inicie a aplicação e consulte o status do pool via <code>curl</code>:</p>
 <pre><code class="language-bash">curl -i http://localhost:9000/api/v1/metrics/pool
 </code></pre>
-
-
-**Resposta do Servidor:**
-
-
+<p><strong>Resposta do Servidor:</strong></p>
 <pre><code class="language-http">HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 Content-Length: 42
 
 {&quot;total_conexoes&quot;:5,&quot;conexoes_em_uso&quot;:0}
 </code></pre>
-
-
-O pool foi pré-aquecido com as 5 conexões mínimas estipuladas e nenhuma delas está retida em uso, aguardando requisições ativas.
-
----
-
-### Teste 2: Teste de Estresse sob Concorrência com ApacheBench
-
-Dispararemos uma carga massiva de 500 requisições com 30 chamadas simultâneas contra um endpoint que realiza operações reais no Firebird:
-
-
+<p>O pool foi pré-aquecido com as 5 conexões mínimas estipuladas e nenhuma delas está retida em uso, aguardando requisições ativas.</p>
+<hr />
+<h3 id="teste-2-teste-de-estresse-sob-concorrencia-com-apachebench">Teste 2: Teste de Estresse sob Concorrência com ApacheBench</h3>
+<p>Dispararemos uma carga massiva de 500 requisições com 30 chamadas simultâneas contra um endpoint que realiza operações reais no Firebird:</p>
 <pre><code class="language-bash">ab -n 500 -c 30 http://localhost:9000/api/v1/clientes
 </code></pre>
-
-
-**Resultado Típico de Auditoria sob Carga:**
-
-
+<p><strong>Resultado Típico de Auditoria sob Carga:</strong></p>
 <pre><code class="language-text">Concurrency Level:      30
 Time taken for tests:   0.285 seconds
 Complete requests:      500
@@ -2241,136 +1983,118 @@ Total transferred:      178000 bytes
 Requests per second:    1754.38 [#/sec] (mean)
 Time per request:       17.100 [ms] (mean)
 </code></pre>
-
-
-**Consulta de Telemetria Imediatamente Após o Teste:**
-
-
+<p><strong>Consulta de Telemetria Imediatamente Após o Teste:</strong></p>
 <pre><code class="language-bash">curl -s http://localhost:9000/api/v1/metrics/pool
 </code></pre>
-
-
-
 <pre><code class="language-json">{&quot;total_conexoes&quot;:20,&quot;conexoes_em_uso&quot;:0}
 </code></pre>
-
-
-Análise dos resultados:
+<p>Análise dos resultados:
 1. O pool expandiu dinamicamente de 5 até o teto máximo de 20 conexões para acomodar a concorrência simultânea das 30 threads.
 2. Nenhuma requisição falhou por timeout ou violação de memória.
-3. Ao término do estresse, todas as 20 conexões físicas foram **100% devolvidas à fila de disponíveis (`conexoes_em_uso: 0`)**, comprovando ausência total de vazamento de handles.
-
----
-
-## 5. ARMADILHAS COMUNS E TROUBLESHOOTING NO FPC/LAZARUS
-
----
-
-### Armadilha 1: Conexões Zumbis por Queda Silenciosa de Rede
-
-**Sintoma:** O servidor funciona durante o dia todo, mas após a madrugada (ou após um reinício de manutenção do Firebird), todas as requisições que chegam à API falham com `Unable to complete network request to host`.
-
-**Causa Raiz:** O Firebird fechou as conexões do outro lado por timeout de inatividade (*Connection Timeout* do SO), mas o pool no Lazarus ainda acreditava que os objetos físicos estavam válidos.
-
-**Solução:** Conforme implementado no método `vItem.EstaAtiva`, o pool executa um ping rápido (`SELECT 1 FROM RDB$DATABASE`) antes de emprestar a conexão. Se a consulta falhar, a conexão zumbi é descartada e uma nova é aberta de forma transparente para o usuário.
-
----
-
-### Armadilha 2: Reter Conexão Durante Tarefas Não Relacionadas a Banco
-
-**Sintoma:** A API atinge rapidamente o teto de 20 conexões e passa a emitir status `503 Timeout: Pool de conexoes esgotado`, mesmo com poucas requisições por segundo.
-
-**Causa Raiz:** O desenvolvedor solicita a conexão no início do método da rota, realiza a consulta no banco e depois gasta 5 segundos gerando um arquivo PDF ou chamando uma API externa lenta com `fphttpclient`, mantendo a conexão do banco presa durante todo esse tempo!
-
-**Solução:** Adquira a conexão **estritamente no momento da persistência** dentro da camada de Repositório e libere-a imediatamente após a extração dos dados para DTOs.
-
----
-
-### Armadilha 3: Transações Pendentes Contaminando o Pool
-
-**Sintoma:** Um cliente consulta um dado e enxerga registros de uma transação abortada de outro usuário!
-
-**Causa Raiz:** O desenvolvedor executou comandos SQL, a rota lançou uma exceção antes do `Commit`, e a conexão foi devolvida ao pool com a transação ainda ativa.
-
-**Solução:** No destrutor de `TConnectionWrapper`, o método `ResetarTransacao` executa obrigatoriamente `Transaction.Rollback` caso ela ainda esteja ativa, garantindo que a conexão retorne ao pool em estado neutro e imaculado.
-
----
-
-## 6. RESUMO EXECUTIVO E CHECKLIST DE REVISÃO
-
-### Tabela de Dimensionamento de Pools no Firebird 5.0
-
-| Parâmetro | Cenário Típico Recomendado | Efeito Arquitetural |
-| :--- | :--- | :--- |
-| **`MinPoolSize`** | 5 a 10 conexões | Evita latência de abertura nas primeiras chamadas. |
-| **`MaxPoolSize`** | 20 a 50 conexões | Evita que a API sature o limite de conexões do SGBD.|
-| **`AcquireTimeout`** | 3.000 a 5.000 ms | Impede que threads clientes fiquem presas em loop infinito.|
-| **`Transação Padrão`**| `caRollback` | Garante que falhas não comitadas sejam descartadas. |
-| **`Charset Wire`** | `UTF8` | Transparência de dados com `fpjson` e JSON web. |
-
----
-
-### Checklist de Revisão e Auditoria Técnica
-
-Antes de avançar para o Módulo 12, certifique-se de validar os seguintes itens:
-
-- [ ] **Thread-Safety Comprovado:** Todas as operações de empréstimo e devolução ocorrem sob proteção de `TCriticalSection`.
-- [ ] **Descarte de Zumbis:** O pool testa a saúde da conexão antes de entregá-la ao cliente através de `EstaAtiva`.
-- [ ] **Devolução Automática (RAII):** As camadas utilizam a interface `IConnectionWrapper`, garantindo devolução determinística na saída de escopo.
-- [ ] **Rollback de Segurança:** Conexões devolvidas ao pool com transações ativas sofrem rollback automático.
-- [ ] **Configuração Externa:** Parâmetros de host, porta, usuário e banco são lidos de variáveis de ambiente do sistema operacional.
-
-Com o pool de conexões thread-safe plenamente operacional e blindado, avançamos para o **Módulo 12**, onde construiremos o **CRUD completo do projeto prático**, implementando transações explícitas, padrão Unit of Work e controle de faturamento no Firebird 5.0.
-
-
-# Módulo 12: CRUD Completo, Transações Explícitas e Padrão Unit of Work
-
-Neste módulo, consolidaremos os alicerces construídos até aqui para 
+3. Ao término do estresse, todas as 20 conexões físicas foram <strong>100% devolvidas à fila de disponíveis (<code>conexoes_em_uso: 0</code>)</strong>, comprovando ausência total de vazamento de handles.</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_2">5. ARMADILHAS COMUNS E TROUBLESHOOTING NO FPC/LAZARUS</h2>
+<hr />
+<h3 id="armadilha-1-conexoes-zumbis-por-queda-silenciosa-de-rede">Armadilha 1: Conexões Zumbis por Queda Silenciosa de Rede</h3>
+<p><strong>Sintoma:</strong> O servidor funciona durante o dia todo, mas após a madrugada (ou após um reinício de manutenção do Firebird), todas as requisições que chegam à API falham com <code>Unable to complete network request to host</code>.</p>
+<p><strong>Causa Raiz:</strong> O Firebird fechou as conexões do outro lado por timeout de inatividade (<em>Connection Timeout</em> do SO), mas o pool no Lazarus ainda acreditava que os objetos físicos estavam válidos.</p>
+<p><strong>Solução:</strong> Conforme implementado no método <code>vItem.EstaAtiva</code>, o pool executa um ping rápido (<code>SELECT 1 FROM RDB$DATABASE</code>) antes de emprestar a conexão. Se a consulta falhar, a conexão zumbi é descartada e uma nova é aberta de forma transparente para o usuário.</p>
+<hr />
+<h3 id="armadilha-2-reter-conexao-durante-tarefas-nao-relacionadas-a-banco">Armadilha 2: Reter Conexão Durante Tarefas Não Relacionadas a Banco</h3>
+<p><strong>Sintoma:</strong> A API atinge rapidamente o teto de 20 conexões e passa a emitir status <code>503 Timeout: Pool de conexoes esgotado</code>, mesmo com poucas requisições por segundo.</p>
+<p><strong>Causa Raiz:</strong> O desenvolvedor solicita a conexão no início do método da rota, realiza a consulta no banco e depois gasta 5 segundos gerando um arquivo PDF ou chamando uma API externa lenta com <code>fphttpclient</code>, mantendo a conexão do banco presa durante todo esse tempo!</p>
+<p><strong>Solução:</strong> Adquira a conexão <strong>estritamente no momento da persistência</strong> dentro da camada de Repositório e libere-a imediatamente após a extração dos dados para DTOs.</p>
+<hr />
+<h3 id="armadilha-3-transacoes-pendentes-contaminando-o-pool">Armadilha 3: Transações Pendentes Contaminando o Pool</h3>
+<p><strong>Sintoma:</strong> Um cliente consulta um dado e enxerga registros de uma transação abortada de outro usuário!</p>
+<p><strong>Causa Raiz:</strong> O desenvolvedor executou comandos SQL, a rota lançou uma exceção antes do <code>Commit</code>, e a conexão foi devolvida ao pool com a transação ainda ativa.</p>
+<p><strong>Solução:</strong> No destrutor de <code>TConnectionWrapper</code>, o método <code>ResetarTransacao</code> executa obrigatoriamente <code>Transaction.Rollback</code> caso ela ainda esteja ativa, garantindo que a conexão retorne ao pool em estado neutro e imaculado.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_2">6. RESUMO EXECUTIVO E CHECKLIST DE REVISÃO</h2>
+<h3 id="tabela-de-dimensionamento-de-pools-no-firebird-50">Tabela de Dimensionamento de Pools no Firebird 5.0</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parâmetro</th>
+<th style="text-align: left;">Cenário Típico Recomendado</th>
+<th style="text-align: left;">Efeito Arquitetural</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><code>MinPoolSize</code></strong></td>
+<td style="text-align: left;">5 a 10 conexões</td>
+<td style="text-align: left;">Evita latência de abertura nas primeiras chamadas.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>MaxPoolSize</code></strong></td>
+<td style="text-align: left;">20 a 50 conexões</td>
+<td style="text-align: left;">Evita que a API sature o limite de conexões do SGBD.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>AcquireTimeout</code></strong></td>
+<td style="text-align: left;">3.000 a 5.000 ms</td>
+<td style="text-align: left;">Impede que threads clientes fiquem presas em loop infinito.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>Transação Padrão</code></strong></td>
+<td style="text-align: left;"><code>caRollback</code></td>
+<td style="text-align: left;">Garante que falhas não comitadas sejam descartadas.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>Charset Wire</code></strong></td>
+<td style="text-align: left;"><code>UTF8</code></td>
+<td style="text-align: left;">Transparência de dados com <code>fpjson</code> e JSON web.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="checklist-de-revisao-e-auditoria-tecnica_2">Checklist de Revisão e Auditoria Técnica</h3>
+<p>Antes de avançar para o Módulo 12, certifique-se de validar os seguintes itens:</p>
+<ul>
+<li>[ ] <strong>Thread-Safety Comprovado:</strong> Todas as operações de empréstimo e devolução ocorrem sob proteção de <code>TCriticalSection</code>.</li>
+<li>[ ] <strong>Descarte de Zumbis:</strong> O pool testa a saúde da conexão antes de entregá-la ao cliente através de <code>EstaAtiva</code>.</li>
+<li>[ ] <strong>Devolução Automática (RAII):</strong> As camadas utilizam a interface <code>IConnectionWrapper</code>, garantindo devolução determinística na saída de escopo.</li>
+<li>[ ] <strong>Rollback de Segurança:</strong> Conexões devolvidas ao pool com transações ativas sofrem rollback automático.</li>
+<li>[ ] <strong>Configuração Externa:</strong> Parâmetros de host, porta, usuário e banco são lidos de variáveis de ambiente do sistema operacional.</li>
+</ul>
+<p>Com o pool de conexões thread-safe plenamente operacional e blindado, avançamos para o <strong>Módulo 12</strong>, onde construiremos o <strong>CRUD completo do projeto prático</strong>, implementando transações explícitas, padrão Unit of Work e controle de faturamento no Firebird 5.0.</p>
+<h1 id="modulo-12-crud-completo-transacoes-explicitas-e-padrao-unit-of-work">Módulo 12: CRUD Completo, Transações Explícitas e Padrão Unit of Work</h1>
+<p>Neste módulo, consolidaremos os alicerces construídos até aqui para 
 erguer a espinha dorsal de nossa aplicação comercial: a gestão de Ordens 
 de Serviço (OS) e seus respectivos itens em um ecossistema multi-tenant. 
 Diferente de cadastros simples de tabela única, operações que envolvem 
 cabeçalho e múltiplos registros filhos exigem atomicidade absoluta. Se 
-um item falhar, nenhum dado pode ser persistido. 
-
-Exploraremos em profundidade o ciclo de vida transacional no Firebird 
+um item falhar, nenhum dado pode ser persistido. </p>
+<p>Exploraremos em profundidade o ciclo de vida transacional no Firebird 
 5.0 acoplado ao ecossistema Free Pascal, implementando o padrão Unit of 
 Work (Unidade de Trabalho), validações de consistência em Data Transfer 
-Objects (DTOs) e tratamento rigoroso de integridade referencial.
-
----
-
-## 1. Objetivos de Aprendizagem do Módulo
-
-Ao concluir este módulo, o leitor estará plenamente capacitado a:
+Objects (DTOs) e tratamento rigoroso de integridade referencial.</p>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_3">1. Objetivos de Aprendizagem do Módulo</h2>
+<p>Ao concluir este módulo, o leitor estará plenamente capacitado a:
 1. Projetar e implementar o fluxo completo de CRUD relacional mestre-detalhe 
    (Ordem de Serviço e Itens) sob os preceitos da Arquitetura Limpa.
-2. Aplicar o padrão Unit of Work no Object Pascal com `SQLdb` e `IBConnection`, 
-   orquestrando transações atômicas com `StartTransaction`, `Commit` e `Rollback`.
-3. Compreender a diferença crítica entre `Commit` e `CommitRetaining` no 
-   motor de MVCC do Firebird 5.0 e o impacto direto na coleta de lixo (*garbage 
-   collection*) e avanço da OAT (*Oldest Active Transaction*).
+2. Aplicar o padrão Unit of Work no Object Pascal com <code>SQLdb</code> e <code>IBConnection</code>, 
+   orquestrando transações atômicas com <code>StartTransaction</code>, <code>Commit</code> e <code>Rollback</code>.
+3. Compreender a diferença crítica entre <code>Commit</code> e <code>CommitRetaining</code> no 
+   motor de MVCC do Firebird 5.0 e o impacto direto na coleta de lixo (<em>garbage 
+   collection</em>) e avanço da OAT (<em>Oldest Active Transaction</em>).
 4. Estruturar DTOs de entrada e saída ricos em validações de domínio antes de 
    qualquer interação com o banco de dados.
 5. Controlar a máquina de estados de uma Ordem de Serviço (Aberta, Em 
    Execução, Concluída, Cancelada), impedindo alterações proibidas.
-6. Isolar totalmente as operações por Tenant (`tenant_id`), prevenindo vazamento 
-   acidental de dados entre clientes distintos.
-
----
-
-## 2. Fundamentação Conceitual e Arquitetural
-
-### 2.1 O Ciclo Transacional ACID no Firebird 5.0
-
-Em sistemas web concorrentes, a integridade dos dados depende da 
+6. Isolar totalmente as operações por Tenant (<code>tenant_id</code>), prevenindo vazamento 
+   acidental de dados entre clientes distintos.</p>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_3">2. Fundamentação Conceitual e Arquitetural</h2>
+<h3 id="21-o-ciclo-transacional-acid-no-firebird-50">2.1 O Ciclo Transacional ACID no Firebird 5.0</h3>
+<p>Em sistemas web concorrentes, a integridade dos dados depende da 
 disciplina com que as transações são tratadas. No Firebird, cada comando 
 SQL de leitura ou escrita deve obrigatoriamente residir dentro de um 
-contexto transacional ativo (`TSQLTransaction`). 
-
-Para o nosso cenário de APIs REST, adotamos a configuração de transação 
-com isolamento `READ COMMITTED` e resolução de conflito `NOWAIT`:
-
-
+contexto transacional ativo (<code>TSQLTransaction</code>). </p>
+<p>Para o nosso cenário de APIs REST, adotamos a configuração de transação 
+com isolamento <code>READ COMMITTED</code> e resolução de conflito <code>NOWAIT</code>:</p>
 <pre><code>+--------------------------------------------------------------------+
 | PARAMETROS DO TSQLTransaction (READ COMMITTED + NOWAIT)            |
 |                                                                    |
@@ -2379,50 +2103,43 @@ com isolamento `READ COMMITTED` e resolução de conflito `NOWAIT`:
 | isc_tpb_nowait         : Retorna erro de lock de imediato (sem hang)|
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-Essa combinação garante que uma requisição HTTP nunca fique congelada 
+<p>Essa combinação garante que uma requisição HTTP nunca fique congelada 
 esperando um lock de linha indefinidamente. Se outra thread estiver 
 alterando o mesmo registro de estoque ou fatura, a transação recebe um erro 
 imediato, que é capturado pelo nosso middleware de exceções e convertido 
-em `409 Conflict` ou `422 Unprocessable Entity`.
-
-<blockquote class="alert-threadsafety"><strong>Atenção Thread-Safety:</strong>
-> No modelo multi-threaded do `fphttpserver`, nunca reutilize uma instância 
-> de `TSQLTransaction` entre threads. Cada transação pertence exclusivamente 
-> à sua respectiva conexão física adquirida do Pool. Transações compartilhadas 
-> causam corrupção de ponteiros internos da `fbclient` e abortam o processo.
-
-### 2.2 O Perigo Fatal do `CommitRetaining` em APIs REST
-
-Desenvolvedores Delphi/Lazarus migrando do desenvolvimento desktop clássico 
+em <code>409 Conflict</code> ou <code>422 Unprocessable Entity</code>.</p>
+<blockquote>
+<p><strong>Atenção Thread-Safety:</strong>
+No modelo multi-threaded do <code>fphttpserver</code>, nunca reutilize uma instância 
+de <code>TSQLTransaction</code> entre threads. Cada transação pertence exclusivamente 
+à sua respectiva conexão física adquirida do Pool. Transações compartilhadas 
+causam corrupção de ponteiros internos da <code>fbclient</code> e abortam o processo.</p>
+</blockquote>
+<h3 id="22-o-perigo-fatal-do-commitretaining-em-apis-rest">2.2 O Perigo Fatal do <code>CommitRetaining</code> em APIs REST</h3>
+<p>Desenvolvedores Delphi/Lazarus migrando do desenvolvimento desktop clássico 
 para o ambiente web frequentemente cometem o erro grave de invocar 
-`Transaction.CommitRetaining` em vez de `Transaction.Commit`. 
-
-No Firebird, `CommitRetaining` persiste as alterações no disco, mas **mantém 
-o contexto da transação aberto**, preservando a mesma Transaction ID (TID). 
-Em uma API de alta taxa de requisições, isso impede que a OAT (*Oldest Active 
-Transaction*) avance. Como consequência:
+<code>Transaction.CommitRetaining</code> em vez de <code>Transaction.Commit</code>. </p>
+<p>No Firebird, <code>CommitRetaining</code> persiste as alterações no disco, mas <strong>mantém 
+o contexto da transação aberto</strong>, preservando a mesma Transaction ID (TID). 
+Em uma API de alta taxa de requisições, isso impede que a OAT (<em>Oldest Active 
+Transaction</em>) avance. Como consequência:
 1. O processo de Garbage Collection do Firebird é paralisado.
 2. As versões antigas dos registros acumuladas em disco não são expurgadas.
-3. O arquivo de banco de dados (`.fdb`) incha rapidamente e a performance 
-   geral do servidor colapsa em poucas horas.
-
-<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>
-> Em servidores de API REST, **jamais utilize `CommitRetaining`**. Toda 
-> transação deve ter um ciclo de vida curto: `StartTransaction` -> Execução 
-> de SQLs -> `Commit` (ou `Rollback` na cláusula `except`).
-
-### 2.3 O Padrão Unit of Work
-
-O padrão Unit of Work mantém uma lista de objetos afetados por uma transação 
+3. O arquivo de banco de dados (<code>.fdb</code>) incha rapidamente e a performance 
+   geral do servidor colapsa em poucas horas.</p>
+<blockquote>
+<p><strong>Boas Práticas FPC:</strong>
+Em servidores de API REST, <strong>jamais utilize <code>CommitRetaining</code></strong>. Toda 
+transação deve ter um ciclo de vida curto: <code>StartTransaction</code> -&gt; Execução 
+de SQLs -&gt; <code>Commit</code> (ou <code>Rollback</code> na cláusula <code>except</code>).</p>
+</blockquote>
+<h3 id="23-o-padrao-unit-of-work">2.3 O Padrão Unit of Work</h3>
+<p>O padrão Unit of Work mantém uma lista de objetos afetados por uma transação 
 de negócios e coordena a gravação dessas alterações e a resolução de 
 problemas de concorrência. Na nossa implementação em Lazarus, o Unit of Work 
-encapsula o `IConnectionWrapper`, garantindo que os repositórios de 
-`OrdemServico` e `ItemOrdemServico` operem exatamente sobre a mesma conexão 
-e transação física:
-
-
+encapsula o <code>IConnectionWrapper</code>, garantindo que os repositórios de 
+<code>OrdemServico</code> e <code>ItemOrdemServico</code> operem exatamente sobre a mesma conexão 
+e transação física:</p>
 <pre><code>+--------------------------------------------------------------------+
 |                    Unit of Work (IUnitOfWork)                      |
 |  - Gerencia IConnectionWrapper obtido atomicamente do Pool         |
@@ -2440,19 +2157,12 @@ e transação física:
 |   (INSERT INTO ordens_servico)|   |   (INSERT INTO itens_os)      |
 +-------------------------------+   +-------------------------------+
 </code></pre>
-
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 Contratos de Dados (DTOs)
-
-Criaremos a unit `DTOs.OrdemServico.pas`, contendo os DTOs de entrada e saída. 
+<hr />
+<h2 id="3-implementacao-passo-a-passo_3">3. Implementação Passo a Passo</h2>
+<h3 id="31-contratos-de-dados-dtos">3.1 Contratos de Dados (DTOs)</h3>
+<p>Criaremos a unit <code>DTOs.OrdemServico.pas</code>, contendo os DTOs de entrada e saída. 
 Cada DTO possui métodos de validação para barrar dados inconsistentes 
-antes que atinjam a camada de banco de dados.
-
-
+antes que atinjam a camada de banco de dados.</p>
 <pre><code class="language-pascal">unit DTOs.OrdemServico;
 
 {$mode objfpc}{$H+}
@@ -2676,15 +2386,10 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.2 O Contrato do Unit of Work e Interfaces de Repositório
-
-Definiremos as interfaces em `Interfaces.OrdemServico.pas`. O contrato 
-`IUnitOfWork` gerencia o escopo da transação, enquanto os repositórios 
-operam sobre a conexão compartilhada:
-
-
+<h3 id="32-o-contrato-do-unit-of-work-e-interfaces-de-repositorio">3.2 O Contrato do Unit of Work e Interfaces de Repositório</h3>
+<p>Definiremos as interfaces em <code>Interfaces.OrdemServico.pas</code>. O contrato 
+<code>IUnitOfWork</code> gerencia o escopo da transação, enquanto os repositórios 
+operam sobre a conexão compartilhada:</p>
 <pre><code class="language-pascal">unit Interfaces.OrdemServico;
 
 {$mode objfpc}{$H+}
@@ -2734,15 +2439,10 @@ implementation
 
 end.
 </code></pre>
-
-
-### 3.3 Implementando o Unit of Work e Repositório Firebird 5.0
-
-Na unit `Repositories.OrdemServico.pas`, estruturamos a persistência 
-atômica. Observe o aproveitamento da cláusula `RETURNING id` do 
-Firebird 5.0:
-
-
+<h3 id="33-implementando-o-unit-of-work-e-repositorio-firebird-50">3.3 Implementando o Unit of Work e Repositório Firebird 5.0</h3>
+<p>Na unit <code>Repositories.OrdemServico.pas</code>, estruturamos a persistência 
+atômica. Observe o aproveitamento da cláusula <code>RETURNING id</code> do 
+Firebird 5.0:</p>
 <pre><code class="language-pascal">unit Repositories.OrdemServico;
 
 {$mode objfpc}{$H+}
@@ -3022,15 +2722,10 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.4 Service de Domínio: Regras de Negócio e Máquina de Estados
-
-Na camada de serviço (`Services.OrdemServico.pas`), centralizamos a 
+<h3 id="34-service-de-dominio-regras-de-negocio-e-maquina-de-estados">3.4 Service de Domínio: Regras de Negócio e Máquina de Estados</h3>
+<p>Na camada de serviço (<code>Services.OrdemServico.pas</code>), centralizamos a 
 máquina de transição de estados e garantimos que todo o processo de 
-gravação de mestre e detalhes ocorra em bloco atômico:
-
-
+gravação de mestre e detalhes ocorra em bloco atômico:</p>
 <pre><code class="language-pascal">unit Services.OrdemServico;
 
 {$mode objfpc}{$H+}
@@ -3174,14 +2869,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.5 Controller HTTP Horse
-
-Finalizamos a implementação conectando a rota REST no Horse 
-(`Controllers.OrdemServico.pas`):
-
-
+<h3 id="35-controller-http-horse">3.5 Controller HTTP Horse</h3>
+<p>Finalizamos a implementação conectando a rota REST no Horse 
+(<code>Controllers.OrdemServico.pas</code>):</p>
 <pre><code class="language-pascal">unit Controllers.OrdemServico;
 
 {$mode objfpc}{$H+}
@@ -3306,17 +2996,10 @@ end;
 
 end.
 </code></pre>
-
-
----
-
-## 4. Testando o Endpoint
-
-Abaixo estão os testes com `curl` para validação em produção.
-
-### 4.1 Criando uma Ordem de Serviço com Itens (POST)
-
-
+<hr />
+<h2 id="4-testando-o-endpoint_1">4. Testando o Endpoint</h2>
+<p>Abaixo estão os testes com <code>curl</code> para validação em produção.</p>
+<h3 id="41-criando-uma-ordem-de-servico-com-itens-post">4.1 Criando uma Ordem de Serviço com Itens (POST)</h3>
 <pre><code class="language-bash">curl -i -X POST http://localhost:9000/api/v1/ordens-servico \
   -H &quot;Content-Type: application/json&quot; \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot; \
@@ -3338,10 +3021,7 @@ Abaixo estão os testes com `curl` para validação em produção.
     ]
   }'
 </code></pre>
-
-
-**Resposta esperada (`201 Created`):**
-
+<p><strong>Resposta esperada (<code>201 Created</code>):</strong></p>
 <pre><code class="language-json">{
   &quot;id&quot;: 1,
   &quot;tenant_id&quot;: 1,
@@ -3369,30 +3049,18 @@ Abaixo estão os testes com `curl` para validação em produção.
   ]
 }
 </code></pre>
-
-
-### 4.2 Consultando a Ordem de Serviço por ID (GET)
-
-
+<h3 id="42-consultando-a-ordem-de-servico-por-id-get">4.2 Consultando a Ordem de Serviço por ID (GET)</h3>
 <pre><code class="language-bash">curl -i -X GET http://localhost:9000/api/v1/ordens-servico/1 \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot;
 </code></pre>
-
-
-### 4.3 Tentativa de Transição Inválida de Status (PATCH)
-
-Tentando finalizar diretamente uma OS que ainda está `ABERTA`:
-
-
+<h3 id="43-tentativa-de-transicao-invalida-de-status-patch">4.3 Tentativa de Transição Inválida de Status (PATCH)</h3>
+<p>Tentando finalizar diretamente uma OS que ainda está <code>ABERTA</code>:</p>
 <pre><code class="language-bash">curl -i -X PATCH http://localhost:9000/api/v1/ordens-servico/1/status \
   -H &quot;Content-Type: application/json&quot; \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot; \
   -d '{&quot;status&quot;: &quot;CONCLUIDA&quot;}'
 </code></pre>
-
-
-**Resposta de Erro (`422 Unprocessable Entity` via RFC 7807):**
-
+<p><strong>Resposta de Erro (<code>422 Unprocessable Entity</code> via RFC 7807):</strong></p>
 <pre><code class="language-json">{
   &quot;type&quot;: &quot;https://api.connectos.com.br/errors/business-rule&quot;,
   &quot;title&quot;: &quot;Violacao de Regra de Negocio&quot;,
@@ -3401,152 +3069,116 @@ Tentando finalizar diretamente uma OS que ainda está `ABERTA`:
   &quot;instance&quot;: &quot;/api/v1/ordens-servico/1/status&quot;
 }
 </code></pre>
-
-
-### 4.4 Cancelando uma Ordem de Serviço (DELETE)
-
-
+<h3 id="44-cancelando-uma-ordem-de-servico-delete">4.4 Cancelando uma Ordem de Serviço (DELETE)</h3>
 <pre><code class="language-bash">curl -i -X DELETE http://localhost:9000/api/v1/ordens-servico/1 \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot;
 </code></pre>
-
-
-**Resposta esperada:** `204 No Content`.
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 O Erro Fatal de Abrir Query com Transação Inativa
-No `SQLdb`, ao invocar `vQry.Open` ou `vQry.ExecSQL` sem que 
-`Transaction.StartTransaction` tenha sido chamado previamente, o FPC 
+<p><strong>Resposta esperada:</strong> <code>204 No Content</code>.</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_3">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-o-erro-fatal-de-abrir-query-com-transacao-inativa">5.1 O Erro Fatal de Abrir Query com Transação Inativa</h3>
+<p>No <code>SQLdb</code>, ao invocar <code>vQry.Open</code> ou <code>vQry.ExecSQL</code> sem que 
+<code>Transaction.StartTransaction</code> tenha sido chamado previamente, o FPC 
 inicia a transação implicitamente. Contudo, se a transação for implícita, 
-muitos programadores esquecem de chamar `Commit`, deixando cursores 
-abertos na `fbclient`. 
-
-**Regra de ouro:** Sempre controle a abertura explicitamente através do 
-`IUnitOfWork.BeginTransaction`.
-
-### 5.2 Não Limpar Cursores de `TSQLQuery` Antes do `Commit`
-Se um `TSQLQuery` permanecer aberto no momento em que `Transaction.Commit` 
-for executado, a `fbclient` fecha o cursor abruptamente ou pode disparar 
-a exceção `Transaction is active`. 
-
-**Solução:** Garanta que todas as instâncias de `TSQLQuery` criadas na 
-rotina sejam destruídas (`vQry.Free`) antes do fechamento formal da 
-transação no Unit of Work.
-
-### 5.3 Conflito de Concorrência com Deadlock
-Se duas requisições concorrentes tentarem atualizar simultaneamente a 
-mesma linha com a transação configurada em `NOWAIT`, o Firebird 5.0 
-lança imediatamente o erro de código `isc_deadlock` ou `isc_lock_conflict`. 
+muitos programadores esquecem de chamar <code>Commit</code>, deixando cursores 
+abertos na <code>fbclient</code>. </p>
+<p><strong>Regra de ouro:</strong> Sempre controle a abertura explicitamente através do 
+<code>IUnitOfWork.BeginTransaction</code>.</p>
+<h3 id="52-nao-limpar-cursores-de-tsqlquery-antes-do-commit">5.2 Não Limpar Cursores de <code>TSQLQuery</code> Antes do <code>Commit</code></h3>
+<p>Se um <code>TSQLQuery</code> permanecer aberto no momento em que <code>Transaction.Commit</code> 
+for executado, a <code>fbclient</code> fecha o cursor abruptamente ou pode disparar 
+a exceção <code>Transaction is active</code>. </p>
+<p><strong>Solução:</strong> Garanta que todas as instâncias de <code>TSQLQuery</code> criadas na 
+rotina sejam destruídas (<code>vQry.Free</code>) antes do fechamento formal da 
+transação no Unit of Work.</p>
+<h3 id="53-conflito-de-concorrencia-com-deadlock">5.3 Conflito de Concorrência com Deadlock</h3>
+<p>Se duas requisições concorrentes tentarem atualizar simultaneamente a 
+mesma linha com a transação configurada em <code>NOWAIT</code>, o Firebird 5.0 
+lança imediatamente o erro de código <code>isc_deadlock</code> ou <code>isc_lock_conflict</code>. 
 Para mitigar isso:
 1. Mantenha as transações de escrita o mais curtas possível.
 2. Execute todos os cálculos e validações em memória antes de disparar 
-   o `BeginTransaction`.
+   o <code>BeginTransaction</code>.
 3. Ordene a inserção de itens de forma determinística (por exemplo, 
-   ordenando por `produto_id` ou índice crescente) para evitar bloqueios 
-   cruzados.
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Neste módulo, implementamos o fluxo completo de uma entidade agregada 
+   ordenando por <code>produto_id</code> ou índice crescente) para evitar bloqueios 
+   cruzados.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_3">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Neste módulo, implementamos o fluxo completo de uma entidade agregada 
 mestre-detalhe (Ordem de Serviço e seus Itens), garantindo consistência 
-relacional e isolamento transacional estrito no Firebird 5.0.
-
-### Checklist de Revisão
-- [ ] O Unit of Work gerencia um `IConnectionWrapper` obtido do Pool e 
-      garante que `Commit` e `Rollback` sejam chamados no bloco `try..finally`?
-- [ ] O código utiliza `Commit` puro e não `CommitRetaining`, preservando o 
-      avanço da OAT e a coleta de lixo no Firebird?
-- [ ] A inserção do cabeçalho da OS utiliza `RETURNING id` nativo do 
-      Firebird 5.0, eliminando queries adicionais de `GEN_ID`?
-- [ ] Os DTOs de entrada realizam validações estritas de dados antes de 
-      qualquer interação com o banco de dados?
-- [ ] A máquina de estados da OS valida rigorosamente as transições de status 
-      permitidas, impedindo alterações ilegais?
-- [ ] Todas as consultas e operações filtram explicitamente por `tenant_id`, 
-      assegurando isolamento multi-tenant completo?
-
-
-# Módulo 13: Paginação de Alta Performance, Filtros Dinâmicos e Metadados
-
-Construir endpoints de listagem que escalam graciosamente com o crescimento 
+relacional e isolamento transacional estrito no Firebird 5.0.</p>
+<h3 id="checklist-de-revisao">Checklist de Revisão</h3>
+<ul>
+<li>[ ] O Unit of Work gerencia um <code>IConnectionWrapper</code> obtido do Pool e 
+      garante que <code>Commit</code> e <code>Rollback</code> sejam chamados no bloco <code>try..finally</code>?</li>
+<li>[ ] O código utiliza <code>Commit</code> puro e não <code>CommitRetaining</code>, preservando o 
+      avanço da OAT e a coleta de lixo no Firebird?</li>
+<li>[ ] A inserção do cabeçalho da OS utiliza <code>RETURNING id</code> nativo do 
+      Firebird 5.0, eliminando queries adicionais de <code>GEN_ID</code>?</li>
+<li>[ ] Os DTOs de entrada realizam validações estritas de dados antes de 
+      qualquer interação com o banco de dados?</li>
+<li>[ ] A máquina de estados da OS valida rigorosamente as transições de status 
+      permitidas, impedindo alterações ilegais?</li>
+<li>[ ] Todas as consultas e operações filtram explicitamente por <code>tenant_id</code>, 
+      assegurando isolamento multi-tenant completo?</li>
+</ul>
+<h1 id="modulo-13-paginacao-de-alta-performance-filtros-dinamicos-e-metadados">Módulo 13: Paginação de Alta Performance, Filtros Dinâmicos e Metadados</h1>
+<p>Construir endpoints de listagem que escalam graciosamente com o crescimento 
 da base de dados é um dos desafios mais críticos no desenvolvimento de APIs 
 REST corporativas. Em sistemas de faturamento e ordens de serviço, tabelas 
 facilmente acumulam milhões de registros. Uma consulta ingênua que retorne 
 um volume irrestrito de dados pode saturar a memória RAM do servidor 
-Lazarus, esgotar a banda da rede e congelar o banco de dados.
-
-Neste módulo, exploraremos a sintaxe moderna de paginação introduzida no 
-padrão SQL:2008 e refinada no **Firebird 5.0** (`OFFSET ... FETCH NEXT 
-... ROWS ONLY`), comparando-a com os tradicionais comandos `FIRST/SKIP`. 
+Lazarus, esgotar a banda da rede e congelar o banco de dados.</p>
+<p>Neste módulo, exploraremos a sintaxe moderna de paginação introduzida no 
+padrão SQL:2008 e refinada no <strong>Firebird 5.0</strong> (<code>OFFSET ... FETCH NEXT 
+... ROWS ONLY</code>), comparando-a com os tradicionais comandos <code>FIRST/SKIP</code>. 
 Construiremos um mecanismo robusto de filtros dinâmicos totalmente blindado 
-contra SQL Injection, suporte a ordenação controlada via *whitelist* de 
-colunas e um envelope JSON padronizado com metadados completos de navegação.
-
----
-
-## 1. Objetivos de Aprendizagem do Módulo
-
-Ao término deste módulo, o desenvolvedor será capaz de:
+contra SQL Injection, suporte a ordenação controlada via <em>whitelist</em> de 
+colunas e um envelope JSON padronizado com metadados completos de navegação.</p>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_4">1. Objetivos de Aprendizagem do Módulo</h2>
+<p>Ao término deste módulo, o desenvolvedor será capaz de:
 1. Implementar paginação eficiente utilizando as cláusulas padrão ANSI 
-   `OFFSET ... FETCH NEXT ... ROWS ONLY` no Firebird 5.0.
+   <code>OFFSET ... FETCH NEXT ... ROWS ONLY</code> no Firebird 5.0.
 2. Compreender a diferença arquitetural e de otimização de planos de execução 
-   entre `FIRST/SKIP` e `OFFSET/FETCH`.
-3. Construir um gerador dinâmico de cláusulas `WHERE` que utilize 
-   exclusivamente parâmetros nomeados (`ParamByName`), impossibilitando 
+   entre <code>FIRST/SKIP</code> e <code>OFFSET/FETCH</code>.
+3. Construir um gerador dinâmico de cláusulas <code>WHERE</code> que utilize 
+   exclusivamente parâmetros nomeados (<code>ParamByName</code>), impossibilitando 
    qualquer vetor de SQL Injection.
-4. Implementar uma lista branca (*whitelist*) rigorosa para colunas de 
-   ordenação (`ORDER BY`) e direções (`ASC` / `DESC`).
+4. Implementar uma lista branca (<em>whitelist</em>) rigorosa para colunas de 
+   ordenação (<code>ORDER BY</code>) e direções (<code>ASC</code> / <code>DESC</code>).
 5. Estruturar envelopes JSON de resposta paginada com metadados universais: 
-   `total_registros`, `total_paginas`, `pagina_atual`, `limite`, `tem_proxima` 
-   e `tem_anterior`.
+   <code>total_registros</code>, <code>total_paginas</code>, <code>pagina_atual</code>, <code>limite</code>, <code>tem_proxima</code> 
+   e <code>tem_anterior</code>.
 6. Otimizar índices compostos multi-tenant para que tanto a contagem 
-   (`COUNT`) quanto a paginação sejam resolvidas via *Index Scan* rápido.
-
----
-
-## 2. Fundamentação Conceitual e Arquitetural
-
-### 2.1 Evolução da Paginação no Firebird: De `FIRST/SKIP` a `OFFSET/FETCH`
-
-Historicamente, o Firebird utilizava as diretivas proprietárias `FIRST m 
-SKIP n` posicionadas logo após o comando `SELECT`:
-
-
+   (<code>COUNT</code>) quanto a paginação sejam resolvidas via <em>Index Scan</em> rápido.</p>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_4">2. Fundamentação Conceitual e Arquitetural</h2>
+<h3 id="21-evolucao-da-paginacao-no-firebird-de-firstskip-a-offsetfetch">2.1 Evolução da Paginação no Firebird: De <code>FIRST/SKIP</code> a <code>OFFSET/FETCH</code></h3>
+<p>Historicamente, o Firebird utilizava as diretivas proprietárias <code>FIRST m 
+SKIP n</code> posicionadas logo após o comando <code>SELECT</code>:</p>
 <pre><code class="language-sql">/* Sintaxe Legada (Firebird 2.x/3.x) */
 SELECT FIRST 10 SKIP 20 o.id, o.valor_total
 FROM ordens_servico o
 ORDER BY o.id DESC;
 </code></pre>
-
-
-A partir do Firebird 3.0 e consolidado como padrão de alta performance no 
-**Firebird 5.0**, a engine adotou o padrão ANSI SQL:2008:
-
-
+<p>A partir do Firebird 3.0 e consolidado como padrão de alta performance no 
+<strong>Firebird 5.0</strong>, a engine adotou o padrão ANSI SQL:2008:</p>
 <pre><code class="language-sql">/* Sintaxe Padrao ANSI (Firebird 5.0) */
 SELECT o.id, o.valor_total
 FROM ordens_servico o
 ORDER BY o.id DESC
 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY;
 </code></pre>
-
-
-A nova sintaxe traz vantagens conceituais expressivas:
-- **Compatibilidade Padronizada:** A consulta torna-se compatível com outros 
+<p>A nova sintaxe traz vantagens conceituais expressivas:
+- <strong>Compatibilidade Padronizada:</strong> A consulta torna-se compatível com outros 
   grandes SGBDs (PostgreSQL, Oracle, SQL Server).
-- **Semântica Posicional Clara:** As cláusulas de paginação residem no final 
+- <strong>Semântica Posicional Clara:</strong> As cláusulas de paginação residem no final 
   da consulta, facilitando a montagem dinâmica em código Pascal sem 
-  necessidade de manipular o cabeçalho do `SELECT`.
-- **Otimização no Firebird 5.0:** O otimizador de consultas avalia os índices 
-  e evita a leitura física de linhas descartadas pelo `OFFSET` quando há um 
-  índice ordenado compatível com o `ORDER BY`.
-
-
+  necessidade de manipular o cabeçalho do <code>SELECT</code>.
+- <strong>Otimização no Firebird 5.0:</strong> O otimizador de consultas avalia os índices 
+  e evita a leitura física de linhas descartadas pelo <code>OFFSET</code> quando há um 
+  índice ordenado compatível com o <code>ORDER BY</code>.</p>
 <pre><code>+--------------------------------------------------------------------+
 |  FLUXO DE EXECUCAO DO OFFSET / FETCH NO FIREBIRD 5.0              |
 |                                                                    |
@@ -3556,38 +3188,28 @@ A nova sintaxe traz vantagens conceituais expressivas:
 |  4. Retorna cursor estrito sem alocar tabela inteira em memoria    |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-### 2.2 O Perigo Crítico de SQL Injection em Filtros Dinâmicos
-
-Um erro frequente em aplicações comerciais é concatenar strings 
-diretamente na cláusula `WHERE` para atender múltiplos filtros opcionais:
-
-
+<h3 id="22-o-perigo-critico-de-sql-injection-em-filtros-dinamicos">2.2 O Perigo Crítico de SQL Injection em Filtros Dinâmicos</h3>
+<p>Um erro frequente em aplicações comerciais é concatenar strings 
+diretamente na cláusula <code>WHERE</code> para atender múltiplos filtros opcionais:</p>
 <pre><code class="language-pascal">{ CODIGO INSEGURO - NUNCA UTILIZE EM PRODUCAO }
 vSQL := 'SELECT * FROM ordens_servico WHERE tenant_id = ' + vTenant;
 if vStatus &lt;&gt; '' then
   vSQL := vSQL + ' AND status = ''' + vStatus + ''''; 
   { VULNERABILIDADE ACIMA! }
 </code></pre>
-
-
-Se o parâmetro `vStatus` contiver a carga `' OR '1'='1`, a cláusula é 
-corrompida e dados de outros tenants vazam na resposta.
-
-<blockquote class="alert-arquitetura"><strong>Nota de Arquitetura:</strong>
-> **Parâmetros SQL são invioláveis.** Qualquer filtro dinâmico deve gerar 
-> placeholders nomeados (ex: `:status`, `:cliente_id`) e injetar os 
-> respectivos valores exclusivamente através da propriedade `ParamByName` 
-> do `TSQLQuery`. Colunas e direções de ordenação, que não aceitam 
-> parâmetros no SQL, devem ser validadas contra uma *whitelist* fixa.
-
-### 2.3 Estrutura do Envelope JSON de Paginação
-
-Para que frontends modernos (React, Vue, Angular, Mobile) renderizem tabelas 
-e controles de paginação de forma consistente, a API deve padronizar o envelope:
-
-
+<p>Se o parâmetro <code>vStatus</code> contiver a carga <code>' OR '1'='1</code>, a cláusula é 
+corrompida e dados de outros tenants vazam na resposta.</p>
+<blockquote>
+<p><strong>Nota de Arquitetura:</strong>
+<strong>Parâmetros SQL são invioláveis.</strong> Qualquer filtro dinâmico deve gerar 
+placeholders nomeados (ex: <code>:status</code>, <code>:cliente_id</code>) e injetar os 
+respectivos valores exclusivamente através da propriedade <code>ParamByName</code> 
+do <code>TSQLQuery</code>. Colunas e direções de ordenação, que não aceitam 
+parâmetros no SQL, devem ser validadas contra uma <em>whitelist</em> fixa.</p>
+</blockquote>
+<h3 id="23-estrutura-do-envelope-json-de-paginacao">2.3 Estrutura do Envelope JSON de Paginação</h3>
+<p>Para que frontends modernos (React, Vue, Angular, Mobile) renderizem tabelas 
+e controles de paginação de forma consistente, a API deve padronizar o envelope:</p>
 <pre><code class="language-json">{
   &quot;dados&quot;: [ { &quot;id&quot;: 1 }, { &quot;id&quot;: 2 } ],
   &quot;paginacao&quot;: {
@@ -3600,18 +3222,11 @@ e controles de paginação de forma consistente, a API deve padronizar o envelop
   }
 }
 </code></pre>
-
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 DTOs de Paginação e Envelope de Resposta
-
-Criaremos a unit `DTOs.Pagination.pas`, contendo os parâmetros de requisição 
-e a estrutura genérica de metadados de saída:
-
-
+<hr />
+<h2 id="3-implementacao-passo-a-passo_4">3. Implementação Passo a Passo</h2>
+<h3 id="31-dtos-de-paginacao-e-envelope-de-resposta">3.1 DTOs de Paginação e Envelope de Resposta</h3>
+<p>Criaremos a unit <code>DTOs.Pagination.pas</code>, contendo os parâmetros de requisição 
+e a estrutura genérica de metadados de saída:</p>
 <pre><code class="language-pascal">unit DTOs.Pagination;
 
 {$mode objfpc}{$H+}
@@ -3748,15 +3363,10 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.2 O Construtor Seguro de Consultas SQL (`Core.SQLBuilder.pas`)
-
-Para garantir que toda cláusula `WHERE` e seus valores sejam 
+<h3 id="32-o-construtor-seguro-de-consultas-sql-coresqlbuilderpas">3.2 O Construtor Seguro de Consultas SQL (<code>Core.SQLBuilder.pas</code>)</h3>
+<p>Para garantir que toda cláusula <code>WHERE</code> e seus valores sejam 
 completamente parametrizados, construímos um componente utilitário 
-`TSQLFilterBuilder`:
-
-
+<code>TSQLFilterBuilder</code>:</p>
 <pre><code class="language-pascal">unit Core.SQLBuilder;
 
 {$mode objfpc}{$H+}
@@ -3903,14 +3513,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.3 Repositório com Paginação no Firebird 5.0
-
-Na camada de persistência, combinamos a contagem total com a seleção 
-paginada usando `OFFSET ... FETCH NEXT ... ROWS ONLY`:
-
-
+<h3 id="33-repositorio-com-paginacao-no-firebird-50">3.3 Repositório com Paginação no Firebird 5.0</h3>
+<p>Na camada de persistência, combinamos a contagem total com a seleção 
+paginada usando <code>OFFSET ... FETCH NEXT ... ROWS ONLY</code>:</p>
 <pre><code class="language-pascal">unit Repositories.OrdemServicoPaginada;
 
 {$mode objfpc}{$H+}
@@ -4024,13 +3629,8 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.4 Controller Horse com Captura de Query String
-
-Integramos a busca filtrada e paginada no Controller (`THorse`):
-
-
+<h3 id="34-controller-horse-com-captura-de-query-string">3.4 Controller Horse com Captura de Query String</h3>
+<p>Integramos a busca filtrada e paginada no Controller (<code>THorse</code>):</p>
 <pre><code class="language-pascal">unit Controllers.OrdemServicoPaginada;
 
 {$mode objfpc}{$H+}
@@ -4131,26 +3731,16 @@ end;
 
 end.
 </code></pre>
-
-
----
-
-## 4. Testando o Endpoint
-
-Abaixo estão os testes práticos demonstrando o comportamento da API 
-com paginação, filtros combinados e ordenação.
-
-### 4.1 Consulta Simples com Paginação Padrão
-
-
+<hr />
+<h2 id="4-testando-o-endpoint_2">4. Testando o Endpoint</h2>
+<p>Abaixo estão os testes práticos demonstrando o comportamento da API 
+com paginação, filtros combinados e ordenação.</p>
+<h3 id="41-consulta-simples-com-paginacao-padrao">4.1 Consulta Simples com Paginação Padrão</h3>
 <pre><code class="language-bash">curl -i -X GET \
   &quot;http://localhost:9000/api/v1/ordens-servico?page=1&amp;limit=2&quot; \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot;
 </code></pre>
-
-
-**Resposta esperada (`200 OK`):**
-
+<p><strong>Resposta esperada (<code>200 OK</code>):</strong></p>
 <pre><code class="language-json">{
   &quot;dados&quot;: [
     {
@@ -4180,146 +3770,112 @@ com paginação, filtros combinados e ordenação.
   }
 }
 </code></pre>
-
-
-### 4.2 Filtrando por Status e Ordenando por Valor Crescente
-
-
+<h3 id="42-filtrando-por-status-e-ordenando-por-valor-crescente">4.2 Filtrando por Status e Ordenando por Valor Crescente</h3>
 <pre><code class="language-bash">curl -i -X GET \
   &quot;http://localhost:9000/api/v1/ordens-servico?status=ABERTA&amp;page=1&quot; \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot;
 </code></pre>
-
-
-### 4.3 Teste de Tentativa de SQL Injection no Parâmetro Sort
-
-Tentando injetar comando malicioso no parâmetro de ordenação:
-
-
+<h3 id="43-teste-de-tentativa-de-sql-injection-no-parametro-sort">4.3 Teste de Tentativa de SQL Injection no Parâmetro Sort</h3>
+<p>Tentando injetar comando malicioso no parâmetro de ordenação:</p>
 <pre><code class="language-bash">curl -i -X GET \
   &quot;http://localhost:9000/api/v1/ordens-servico?sort=id;DROP+TABLE;--&quot; \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot;
 </code></pre>
-
-
-**Comportamento Seguro Garantido:**
-O método `DefinirOrdenacao` rejeita o valor desconhecido através da 
-*whitelist* de campos autorizados e assume automaticamente a coluna 
-padrão `id DESC`. O ataque é neutralizado sem gerar erro de sintaxe SQL 
-e sem risco ao banco de dados.
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 O Problema do "Deep Paging" (Páginas Muito Profundas)
-Quando o cliente solicita `page=10000&limit=50`, a cláusula traduz-se em 
-`OFFSET 500000 ROWS FETCH NEXT 50 ROWS ONLY`. Mesmo no Firebird 5.0, o 
+<p><strong>Comportamento Seguro Garantido:</strong>
+O método <code>DefinirOrdenacao</code> rejeita o valor desconhecido através da 
+<em>whitelist</em> de campos autorizados e assume automaticamente a coluna 
+padrão <code>id DESC</code>. O ataque é neutralizado sem gerar erro de sintaxe SQL 
+e sem risco ao banco de dados.</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_4">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-o-problema-do-deep-paging-paginas-muito-profundas">5.1 O Problema do "Deep Paging" (Páginas Muito Profundas)</h3>
+<p>Quando o cliente solicita <code>page=10000&amp;limit=50</code>, a cláusula traduz-se em 
+<code>OFFSET 500000 ROWS FETCH NEXT 50 ROWS ONLY</code>. Mesmo no Firebird 5.0, o 
 banco precisa navegar por 500.000 entradas no índice antes de extrair as 
-50 desejadas. 
-
-**Mitigação:** 
+50 desejadas. </p>
+<p><strong>Mitigação:</strong> 
 1. Limite a navegação por offset a um teto máximo de páginas razoável 
    (ex: máximo de 100 páginas).
 2. Para cenários de grande volume (exportações ou rolagem infinita), utilize 
-   **Keyset Pagination** (ou Seek Method), filtrando pelo último ID visto: 
-   `WHERE o.tenant_id = :t AND o.id < :ultimo_id ORDER BY o.id DESC ROWS 50`.
-
-### 5.2 O Custo Excessivo de `COUNT(*)` em Tabelas Massivas
-A execução de `SELECT COUNT(*)` para calcular `total_paginas` em tabelas com 
+   <strong>Keyset Pagination</strong> (ou Seek Method), filtrando pelo último ID visto: 
+   <code>WHERE o.tenant_id = :t AND o.id &lt; :ultimo_id ORDER BY o.id DESC ROWS 50</code>.</p>
+<h3 id="52-o-custo-excessivo-de-count-em-tabelas-massivas">5.2 O Custo Excessivo de <code>COUNT(*)</code> em Tabelas Massivas</h3>
+<p>A execução de <code>SELECT COUNT(*)</code> para calcular <code>total_paginas</code> em tabelas com 
 dezenas de milhões de linhas requer leitura de índice ou contagem de versões 
-de registro no Firebird. 
-
-**Soluções de Engenharia:**
+de registro no Firebird. </p>
+<p><strong>Soluções de Engenharia:</strong>
 - Crie um índice composto cobrindo exatamente os filtros: 
-  `CREATE INDEX idx_os_filtro ON ordens_servico(tenant_id, status, id);`
+  <code>CREATE INDEX idx_os_filtro ON ordens_servico(tenant_id, status, id);</code>
 - Em listagens muito pesadas, retorne metadados simplificados (apenas 
-  `tem_proxima_pagina` buscando `FETCH NEXT :limite + 1`), evitando a 
-  necessidade do `COUNT(*)` total.
-
-### 5.3 Memory Leak ao Montar JSON Arrays Paginados
-Ao iterar pelo `vQry` e adicionar `vItem := TJSONObject.Create` no `TJSONArray`, 
+  <code>tem_proxima_pagina</code> buscando <code>FETCH NEXT :limite + 1</code>), evitando a 
+  necessidade do <code>COUNT(*)</code> total.</p>
+<h3 id="53-memory-leak-ao-montar-json-arrays-paginados">5.3 Memory Leak ao Montar JSON Arrays Paginados</h3>
+<p>Ao iterar pelo <code>vQry</code> e adicionar <code>vItem := TJSONObject.Create</code> no <code>TJSONArray</code>, 
 lembre-se que o array assume a posse do objeto adicionado. Nunca invoque 
-`vItem.Free` após adicioná-lo ao `TJSONArray`. A destruição do array 
-desaloca automaticamente todos os seus filhos.
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Neste módulo, elevamos a qualidade e a segurança das operações de listagem 
-da nossa API Lazarus, implementando a sintaxe padrão ANSI `OFFSET/FETCH` do 
-Firebird 5.0 e blindando o sistema contra ataques de SQL Injection.
-
-### Checklist de Revisão
-- [ ] A paginação utiliza `OFFSET ... ROWS FETCH NEXT ... ROWS ONLY` em 
-      conformidade com o Firebird 5.0?
-- [ ] Os parâmetros de ordenação passam por uma *whitelist* estrita de 
-      colunas válidas, prevenindo injeções no `ORDER BY`?
-- [ ] Todos os filtros dinâmicos utilizam exclusivamente parâmetros 
-      nomeados com `ParamByName`?
-- [ ] O limite por página (`limit`) possui um teto de segurança (ex: 100) 
-      para evitar ataques de negação de serviço (DoS) por alocação excessiva?
-- [ ] O envelope de resposta retorna metadados completos de navegação 
-      (`total_registros`, `total_paginas`, `tem_proxima`, `tem_anterior`)?
-- [ ] Os índices do Firebird 5.0 incluem `tenant_id` como primeira coluna 
-      composta para acelerar tanto a filtragem quanto o `ORDER BY`?
-
-
-# Módulo 14: Upload, Download e Streaming Binário de Alta Eficiência
-
-A gestão documental e a troca de arquivos binários — como laudos técnicos 
+<code>vItem.Free</code> após adicioná-lo ao <code>TJSONArray</code>. A destruição do array 
+desaloca automaticamente todos os seus filhos.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_4">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Neste módulo, elevamos a qualidade e a segurança das operações de listagem 
+da nossa API Lazarus, implementando a sintaxe padrão ANSI <code>OFFSET/FETCH</code> do 
+Firebird 5.0 e blindando o sistema contra ataques de SQL Injection.</p>
+<h3 id="checklist-de-revisao_1">Checklist de Revisão</h3>
+<ul>
+<li>[ ] A paginação utiliza <code>OFFSET ... ROWS FETCH NEXT ... ROWS ONLY</code> em 
+      conformidade com o Firebird 5.0?</li>
+<li>[ ] Os parâmetros de ordenação passam por uma <em>whitelist</em> estrita de 
+      colunas válidas, prevenindo injeções no <code>ORDER BY</code>?</li>
+<li>[ ] Todos os filtros dinâmicos utilizam exclusivamente parâmetros 
+      nomeados com <code>ParamByName</code>?</li>
+<li>[ ] O limite por página (<code>limit</code>) possui um teto de segurança (ex: 100) 
+      para evitar ataques de negação de serviço (DoS) por alocação excessiva?</li>
+<li>[ ] O envelope de resposta retorna metadados completos de navegação 
+      (<code>total_registros</code>, <code>total_paginas</code>, <code>tem_proxima</code>, <code>tem_anterior</code>)?</li>
+<li>[ ] Os índices do Firebird 5.0 incluem <code>tenant_id</code> como primeira coluna 
+      composta para acelerar tanto a filtragem quanto o <code>ORDER BY</code>?</li>
+</ul>
+<h1 id="modulo-14-upload-download-e-streaming-binario-de-alta-eficiencia">Módulo 14: Upload, Download e Streaming Binário de Alta Eficiência</h1>
+<p>A gestão documental e a troca de arquivos binários — como laudos técnicos 
 em PDF, ordens de serviço assinadas, imagens de peças avariadas e XMLs de 
 notas fiscais — são requisitos onipresentes em sistemas corporativos. No 
 entanto, a manipulação ingênua de arquivos em uma API REST pode levar 
 rapidamente à exaustão de memória RAM do servidor e a gargalos severos no 
-banco de dados.
-
-Neste módulo, exploraremos como manipular fluxos binários no Horse sobre 
-o `fphttpserver` do Free Pascal. Abordaremos a estratégia arquitetural de 
-armazenamento híbrido (metadados e hashes de integridade no **Firebird 5.0**, 
+banco de dados.</p>
+<p>Neste módulo, exploraremos como manipular fluxos binários no Horse sobre 
+o <code>fphttpserver</code> do Free Pascal. Abordaremos a estratégia arquitetural de 
+armazenamento híbrido (metadados e hashes de integridade no <strong>Firebird 5.0</strong>, 
 arquivos físicos no sistema de arquivos ou object storage), o uso do 
-middleware `horse-octet-stream`, streaming de downloads sem alocação 
-integral em memória e blindagem contra ataques de *Path Traversal*.
-
----
-
-## 1. Objetivos de Aprendizagem do Módulo
-
-Ao final deste módulo, o desenvolvedor estará apto a:
+middleware <code>horse-octet-stream</code>, streaming de downloads sem alocação 
+integral em memória e blindagem contra ataques de <em>Path Traversal</em>.</p>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_5">1. Objetivos de Aprendizagem do Módulo</h2>
+<p>Ao final deste módulo, o desenvolvedor estará apto a:
 1. Implementar endpoints de upload e download de arquivos binários utilizando 
-   `THorse` e `horse-octet-stream`.
+   <code>THorse</code> e <code>horse-octet-stream</code>.
 2. Adotar a arquitetura de armazenamento híbrido, dissociando o binário 
    pesado das tabelas transacionais do Firebird 5.0.
-3. Transmitir arquivos volumosos em modo *streaming* através de `TFileStream`, 
+3. Transmitir arquivos volumosos em modo <em>streaming</em> através de <code>TFileStream</code>, 
    garantindo consumo constante e diminuto de memória RAM.
-4. Configurar rigorosamente os cabeçalhos HTTP `Content-Type`, 
-   `Content-Disposition` e `Content-Length`.
+4. Configurar rigorosamente os cabeçalhos HTTP <code>Content-Type</code>, 
+   <code>Content-Disposition</code> e <code>Content-Length</code>.
 5. Calcular e persistir somas de verificação SHA-256 para assegurar a 
-   integridade dos arquivos e detectar duplicatas (*deduplication*).
+   integridade dos arquivos e detectar duplicatas (<em>deduplication</em>).
 6. Implementar sanitização rígida de nomes de arquivos, prevenindo vulnerabilidades 
-   graves de segurança como *Directory/Path Traversal*.
-
----
-
-## 2. Fundamentação Conceitual e Arquitetural
-
-### 2.1 Armazenamento Híbrido vs. BLOBs no Firebird 5.0
-
-Embora o Firebird ofereça suporte nativo a campos `BLOB SUB_TYPE 0` (binários), 
+   graves de segurança como <em>Directory/Path Traversal</em>.</p>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_5">2. Fundamentação Conceitual e Arquitetural</h2>
+<h3 id="21-armazenamento-hibrido-vs-blobs-no-firebird-50">2.1 Armazenamento Híbrido vs. BLOBs no Firebird 5.0</h3>
+<p>Embora o Firebird ofereça suporte nativo a campos <code>BLOB SUB_TYPE 0</code> (binários), 
 armazenar centenas de gigabytes de imagens e laudos diretamente nas páginas 
 de dados do banco relacional traz penalidades severas de infraestrutura:
-- **Sobrecarga de Backup/Restore:** Rotinas de `gbak` tornam-se intoleravelmente 
-  lentas quando o `.fdb` atinge dezenas de gigabytes compostos por binários 
+- <strong>Sobrecarga de Backup/Restore:</strong> Rotinas de <code>gbak</code> tornam-se intoleravelmente 
+  lentas quando o <code>.fdb</code> atinge dezenas de gigabytes compostos por binários 
   estáticos.
-- **Poluição do Cache de Páginas:** O `DefaultDbCachePages` do Firebird passa a 
+- <strong>Poluição do Cache de Páginas:</strong> O <code>DefaultDbCachePages</code> do Firebird passa a 
   competir entre índices/tabelas quentes e blocos de arquivos temporários.
-- **Fragmentação:** A atualização ou exclusão frequente de registros com BLOBs 
-  gera fragmentação de páginas no disco.
-
-A abordagem padrão da indústria é o **Armazenamento Híbrido**:
-
-
+- <strong>Fragmentação:</strong> A atualização ou exclusão frequente de registros com BLOBs 
+  gera fragmentação de páginas no disco.</p>
+<p>A abordagem padrão da indústria é o <strong>Armazenamento Híbrido</strong>:</p>
 <pre><code>+--------------------------------------------------------------------+
 |                ARQUITETURA DE ARMAZENAMENTO HIBRIDO                |
 |                                                                    |
@@ -4336,71 +3892,57 @@ A abordagem padrão da indústria é o **Armazenamento Híbrido**:
 |  +---------------------+            +-----------------------+      |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-No banco Firebird 5.0, registramos apenas: `id`, `tenant_id`, 
-`ordem_servico_id`, `nome_original`, `content_type`, `tamanho_bytes`, 
-`hash_sha256`, `caminho_relativo` e `criado_em`. O arquivo reside no disco, 
-nomeado com um UUID v4 para evitar colisões e sobrescritas acidentais.
-
-### 2.2 Streaming de Arquivos vs. Carregamento em Memória
-
-Uma armadilha comum em Pascal é carregar o arquivo inteiro em um 
-`TMemoryStream` antes de devolvê-lo na resposta HTTP:
-
-
+<p>No banco Firebird 5.0, registramos apenas: <code>id</code>, <code>tenant_id</code>, 
+<code>ordem_servico_id</code>, <code>nome_original</code>, <code>content_type</code>, <code>tamanho_bytes</code>, 
+<code>hash_sha256</code>, <code>caminho_relativo</code> e <code>criado_em</code>. O arquivo reside no disco, 
+nomeado com um UUID v4 para evitar colisões e sobrescritas acidentais.</p>
+<h3 id="22-streaming-de-arquivos-vs-carregamento-em-memoria">2.2 Streaming de Arquivos vs. Carregamento em Memória</h3>
+<p>Uma armadilha comum em Pascal é carregar o arquivo inteiro em um 
+<code>TMemoryStream</code> antes de devolvê-lo na resposta HTTP:</p>
 <pre><code class="language-pascal">{ PRATICA INADEQUADA PARA ARQUIVOS GRANDES }
 vMem := TMemoryStream.Create;
 vMem.LoadFromFile('/caminho/video_ou_pdf_1gb.pdf'); { 1 GB alocado! }
 Res.Send&lt;TStream&gt;(vMem);
 </code></pre>
-
-
-Se dez clientes solicitarem simultaneamente um laudo de 200 MB, a aplicação 
-consumirá instantaneamente 2 GB de RAM, podendo sofrer *Out of Memory* 
-(SIGSEGV no Linux). 
-
-No `fphttpserver` do Lazarus, o `THorseResponse.SendFile` ou o envio 
-direcionado via `TFileStream` acoplado ao `horse-octet-stream` lê os dados 
-em blocos (*chunks*) diretamente do disco para o socket TCP, mantendo a 
-pegada de memória em poucos kilobytes por requisição.
-
-<blockquote class="alert-threadsafety"><strong>Atenção Thread-Safety:</strong>
-> No Free Pascal, a transferência de posse de streams enviados via 
-> `Res.Send<TStream>(...)` exige cautela. O Horse e o `fphttpserver` 
-> assumem a responsabilidade de liberar o stream (`AStream.Free`) após a 
-> transmissão dos dados pelo socket. **Nunca invoque `Free` manualmente no 
-> stream enviado para a resposta**, sob risco de *Access Violation* ou 
-> fechamento prematuro do canal.
-
-### 2.3 Prevenção Contra Ataques de Path Traversal
-
-Ao receber nomes de arquivos enviados pelo usuário (ex: `laudo_tecnico.pdf`), 
-um invasor pode submeter nomes manipulados como `../../../../etc/passwd` ou 
-`..\..\Windows\System32\cmd.exe`. Se a aplicação concatenar esse nome 
+<p>Se dez clientes solicitarem simultaneamente um laudo de 200 MB, a aplicação 
+consumirá instantaneamente 2 GB de RAM, podendo sofrer <em>Out of Memory</em> 
+(SIGSEGV no Linux). </p>
+<p>No <code>fphttpserver</code> do Lazarus, o <code>THorseResponse.SendFile</code> ou o envio 
+direcionado via <code>TFileStream</code> acoplado ao <code>horse-octet-stream</code> lê os dados 
+em blocos (<em>chunks</em>) diretamente do disco para o socket TCP, mantendo a 
+pegada de memória em poucos kilobytes por requisição.</p>
+<blockquote>
+<p><strong>Atenção Thread-Safety:</strong>
+No Free Pascal, a transferência de posse de streams enviados via 
+<code>Res.Send&lt;TStream&gt;(...)</code> exige cautela. O Horse e o <code>fphttpserver</code> 
+assumem a responsabilidade de liberar o stream (<code>AStream.Free</code>) após a 
+transmissão dos dados pelo socket. <strong>Nunca invoque <code>Free</code> manualmente no 
+stream enviado para a resposta</strong>, sob risco de <em>Access Violation</em> ou 
+fechamento prematuro do canal.</p>
+</blockquote>
+<h3 id="23-prevencao-contra-ataques-de-path-traversal">2.3 Prevenção Contra Ataques de Path Traversal</h3>
+<p>Ao receber nomes de arquivos enviados pelo usuário (ex: <code>laudo_tecnico.pdf</code>), 
+um invasor pode submeter nomes manipulados como <code>../../../../etc/passwd</code> ou 
+<code>..\..\Windows\System32\cmd.exe</code>. Se a aplicação concatenar esse nome 
 diretamente ao caminho do diretório de armazenamento, arquivos vitais do 
-sistema operacional podem ser sobrescritos ou vazados.
-
-<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>
-> 1. Nunca utilize o nome de arquivo fornecido pelo cliente para salvar o 
->    arquivo no disco.
-> 2. Gere sempre um nome interno randômico (UUID) para persistência física.
-> 3. Guarde o nome original exclusivamente como metadado no banco de dados 
->    para devolvê-lo no header `Content-Disposition: attachment; filename="..."`.
-> 4. Use `ExtractFileName` e sanitize qualquer parâmetro de busca de arquivos.
-
-### 2.4 Validação de Magic Bytes vs. Extensão Declarada
-
-Em APIs corporativas, confiar cegamente na extensão do arquivo (`.pdf`, 
-`.png`, `.jpg`) ou no cabeçalho HTTP `Content-Type` enviado pelo cliente é 
-uma vulnerabilidade de segurança conhecida como *MIME Sniffing Bypass*. 
-Um usuário mal-intencionado pode renomear um executável malicioso (`malware.exe` 
-ou script PHP/Shell) para `recibo.pdf` e transmiti-lo como `application/pdf`.
-
-A defesa em profundidade consiste em inspecionar os primeiros bytes do 
-stream recebido (*Magic Bytes* ou número mágico):
-
-
+sistema operacional podem ser sobrescritos ou vazados.</p>
+<blockquote>
+<p><strong>Boas Práticas FPC:</strong>
+1. Nunca utilize o nome de arquivo fornecido pelo cliente para salvar o 
+   arquivo no disco.
+2. Gere sempre um nome interno randômico (UUID) para persistência física.
+3. Guarde o nome original exclusivamente como metadado no banco de dados 
+   para devolvê-lo no header <code>Content-Disposition: attachment; filename="..."</code>.
+4. Use <code>ExtractFileName</code> e sanitize qualquer parâmetro de busca de arquivos.</p>
+</blockquote>
+<h3 id="24-validacao-de-magic-bytes-vs-extensao-declarada">2.4 Validação de Magic Bytes vs. Extensão Declarada</h3>
+<p>Em APIs corporativas, confiar cegamente na extensão do arquivo (<code>.pdf</code>, 
+<code>.png</code>, <code>.jpg</code>) ou no cabeçalho HTTP <code>Content-Type</code> enviado pelo cliente é 
+uma vulnerabilidade de segurança conhecida como <em>MIME Sniffing Bypass</em>. 
+Um usuário mal-intencionado pode renomear um executável malicioso (<code>malware.exe</code> 
+ou script PHP/Shell) para <code>recibo.pdf</code> e transmiti-lo como <code>application/pdf</code>.</p>
+<p>A defesa em profundidade consiste em inspecionar os primeiros bytes do 
+stream recebido (<em>Magic Bytes</em> ou número mágico):</p>
 <pre><code>+--------------------------------------------------------------------+
 |  ASSINATURA DE MAGIC BYTES DOS PRINCIPAIS FORMATOS                 |
 |                                                                    |
@@ -4410,39 +3952,27 @@ stream recebido (*Magic Bytes* ou número mágico):
 |  ZIP  : Hex '50 4B 03 04' (PK..) nos primeiros 4 bytes             |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-Ao ler os primeiros bytes do fluxo binário antes de persisti-lo, o servidor 
+<p>Ao ler os primeiros bytes do fluxo binário antes de persisti-lo, o servidor 
 rejeita sumariamente qualquer arquivo cujo conteúdo real divirja do tipo 
-declarado, retornando código `415 Unsupported Media Type`.
-
-### 2.5 Estratégia de Deduplicação via Hash Criptográfico
-
-Em ambientes de ordens de serviço, clientes frequentemente anexam 
+declarado, retornando código <code>415 Unsupported Media Type</code>.</p>
+<h3 id="25-estrategia-de-deduplicacao-via-hash-criptografico">2.5 Estratégia de Deduplicação via Hash Criptográfico</h3>
+<p>Em ambientes de ordens de serviço, clientes frequentemente anexam 
 documentos idênticos (manuais do fabricante, termos de garantia padrão, 
 folhas de rosto). Armazenar múltiplos exemplares físicos do mesmo PDF de 
-50 MB consome espaço desnecessário no disco.
-
-Com o cálculo do hash SHA-256 no momento do upload, a aplicação consulta a 
-tabela `anexos_os` no Firebird 5.0:
-1. Se já existir um registro com o mesmo `hash_sha256` para aquele Tenant, 
+50 MB consome espaço desnecessário no disco.</p>
+<p>Com o cálculo do hash SHA-256 no momento do upload, a aplicação consulta a 
+tabela <code>anexos_os</code> no Firebird 5.0:
+1. Se já existir um registro com o mesmo <code>hash_sha256</code> para aquele Tenant, 
    o arquivo físico existente é reutilizado.
 2. Apenas um novo registro de metadados é inserido na tabela apontando para 
    o arquivo já armazenado.
-3. Se o hash for inédito, o arquivo é gravado no storage físico normalmente.
-
-Essa técnica, conhecida como *Content-Addressable Storage* (CAS), economiza 
-gigabytes de armazenamento sem impacto perceptível no tempo de resposta.
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 DTO e Estrutura de Metadados de Anexo
-
-Criamos a unit `DTOs.Anexo.pas` para trafegar as informações do arquivo:
-
-
+3. Se o hash for inédito, o arquivo é gravado no storage físico normalmente.</p>
+<p>Essa técnica, conhecida como <em>Content-Addressable Storage</em> (CAS), economiza 
+gigabytes de armazenamento sem impacto perceptível no tempo de resposta.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo_5">3. Implementação Passo a Passo</h2>
+<h3 id="31-dto-e-estrutura-de-metadados-de-anexo">3.1 DTO e Estrutura de Metadados de Anexo</h3>
+<p>Criamos a unit <code>DTOs.Anexo.pas</code> para trafegar as informações do arquivo:</p>
 <pre><code class="language-pascal">unit DTOs.Anexo;
 
 {$mode objfpc}{$H+}
@@ -4496,14 +4026,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.2 Repositório de Metadados no Firebird 5.0
-
-Na unit `Repositories.Anexo.pas`, registramos e consultamos os metadados 
-dos anexos associados às Ordens de Serviço:
-
-
+<h3 id="32-repositorio-de-metadados-no-firebird-50">3.2 Repositório de Metadados no Firebird 5.0</h3>
+<p>Na unit <code>Repositories.Anexo.pas</code>, registramos e consultamos os metadados 
+dos anexos associados às Ordens de Serviço:</p>
 <pre><code class="language-pascal">unit Repositories.Anexo;
 
 {$mode objfpc}{$H+}
@@ -4643,14 +4168,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.3 Serviço de Gerenciamento de Arquivos e Streaming
-
-Na unit `Services.Anexo.pas`, centralizamos a geração de UUIDs, cálculo de 
-hash SHA-256 e gravação segura no disco:
-
-
+<h3 id="33-servico-de-gerenciamento-de-arquivos-e-streaming">3.3 Serviço de Gerenciamento de Arquivos e Streaming</h3>
+<p>Na unit <code>Services.Anexo.pas</code>, centralizamos a geração de UUIDs, cálculo de 
+hash SHA-256 e gravação segura no disco:</p>
 <pre><code class="language-pascal">unit Services.Anexo;
 
 {$mode objfpc}{$H+}
@@ -4801,13 +4321,8 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.4 Controller Horse para Upload e Download
-
-Conectamos os endpoints REST com `Horse`:
-
-
+<h3 id="34-controller-horse-para-upload-e-download">3.4 Controller Horse para Upload e Download</h3>
+<p>Conectamos os endpoints REST com <code>Horse</code>:</p>
 <pre><code class="language-pascal">unit Controllers.Anexos;
 
 {$mode objfpc}{$H+}
@@ -4913,17 +4428,10 @@ end;
 
 end.
 </code></pre>
-
-
----
-
-## 4. Testando o Endpoint
-
-Abaixo estão os comandos `curl` demonstrando o upload e download binário.
-
-### 4.1 Realizando Upload de um Arquivo PDF (POST)
-
-
+<hr />
+<h2 id="4-testando-o-endpoint_3">4. Testando o Endpoint</h2>
+<p>Abaixo estão os comandos <code>curl</code> demonstrando o upload e download binário.</p>
+<h3 id="41-realizando-upload-de-um-arquivo-pdf-post">4.1 Realizando Upload de um Arquivo PDF (POST)</h3>
 <pre><code class="language-bash">curl -i -X POST \
   http://localhost:9000/api/v1/ordens-servico/1/anexos \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot; \
@@ -4931,10 +4439,7 @@ Abaixo estão os comandos `curl` demonstrando o upload e download binário.
   -H &quot;X-File-Name: laudo_tecnico_motor.pdf&quot; \
   --data-binary &quot;@laudo_tecnico_motor.pdf&quot;
 </code></pre>
-
-
-**Resposta esperada (`201 Created`):**
-
+<p><strong>Resposta esperada (<code>201 Created</code>):</strong></p>
 <pre><code class="language-json">{
   &quot;id&quot;: 1,
   &quot;tenant_id&quot;: 1,
@@ -4946,29 +4451,19 @@ Abaixo estão os comandos `curl` demonstrando o upload e download binário.
   &quot;criado_em&quot;: &quot;2026-11-23 09:45:00&quot;
 }
 </code></pre>
-
-
-### 4.2 Baixando o Arquivo via Streaming (GET)
-
-
+<h3 id="42-baixando-o-arquivo-via-streaming-get">4.2 Baixando o Arquivo via Streaming (GET)</h3>
 <pre><code class="language-bash">curl -i -X GET \
   http://localhost:9000/api/v1/ordens-servico/1/anexos/1/download \
   -H &quot;Authorization: Bearer &lt;SEU_JWT_AQUI&gt;&quot; \
   -o &quot;download_laudo.pdf&quot;
 </code></pre>
-
-
-O arquivo binário original é gravado no disco com zero perda de dados e sem 
-alocação desnecessária de memória no servidor Lazarus.
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 Destruição Prematura de `TFileStream`
-Se o desenvolvedor instanciar um `TFileStream`, passá-lo para `Res.Send<TStream>` 
-e colocar um `vFileStream.Free` no bloco `finally`, a aplicação falhará:
-
+<p>O arquivo binário original é gravado no disco com zero perda de dados e sem 
+alocação desnecessária de memória no servidor Lazarus.</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_5">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-destruicao-prematura-de-tfilestream">5.1 Destruição Prematura de <code>TFileStream</code></h3>
+<p>Se o desenvolvedor instanciar um <code>TFileStream</code>, passá-lo para <code>Res.Send&lt;TStream&gt;</code> 
+e colocar um <code>vFileStream.Free</code> no bloco <code>finally</code>, a aplicação falhará:</p>
 <pre><code class="language-pascal">{ ERRO GRAVE }
 vStream := TFileStream.Create(...);
 try
@@ -4977,91 +4472,67 @@ finally
   vStream.Free; { AV! O socket do fphttpserver ainda nao transmitiu! }
 end;
 </code></pre>
-
-**Regra:** Não destrua o stream transmitido no `Res.Send`. O ciclo de vida 
-do objeto é transferido para o subsistema HTTP do Horse.
-
-### 5.2 Permissões no Sistema de Arquivos do Linux (Ubuntu)
-Em ambientes de produção com `systemd`, o serviço da API roda sob um 
-usuário dedicado (ex: `connectos`). Se o diretório `/var/connectos/storage` 
-pertencer ao `root`, o serviço falhará com erro `EStreamError: Access denied`.
-Garanta a permissão apropriada:
-
+<p><strong>Regra:</strong> Não destrua o stream transmitido no <code>Res.Send</code>. O ciclo de vida 
+do objeto é transferido para o subsistema HTTP do Horse.</p>
+<h3 id="52-permissoes-no-sistema-de-arquivos-do-linux-ubuntu">5.2 Permissões no Sistema de Arquivos do Linux (Ubuntu)</h3>
+<p>Em ambientes de produção com <code>systemd</code>, o serviço da API roda sob um 
+usuário dedicado (ex: <code>connectos</code>). Se o diretório <code>/var/connectos/storage</code> 
+pertencer ao <code>root</code>, o serviço falhará com erro <code>EStreamError: Access denied</code>.
+Garanta a permissão apropriada:</p>
 <pre><code class="language-bash">sudo mkdir -p /var/connectos/storage/anexos
 sudo chown -R connectos:connectos /var/connectos/storage
 sudo chmod 750 /var/connectos/storage
 </code></pre>
-
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Neste módulo, implementamos a transferência eficiente e segura de arquivos 
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_5">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Neste módulo, implementamos a transferência eficiente e segura de arquivos 
 binários na nossa API REST, dissociando o storage físico do banco de dados 
-relacional Firebird 5.0.
-
-### Checklist de Revisão
-- [ ] A arquitetura adotada é de armazenamento híbrido (disco + metadados)?
-- [ ] Os nomes físicos dos arquivos utilizam UUIDs no disco, eliminando 
-      o risco de sobrescrita e colisões?
-- [ ] Nomes de arquivo fornecidos pelo usuário são sanitizados com 
-      `ExtractFileName` contra ataques de *Path Traversal*?
-- [ ] O envio de arquivos para download utiliza streaming com `TFileStream` 
-      e configuração adequada de `Content-Length` e `Content-Disposition`?
-- [ ] O stream repassado ao `Res.Send<TStream>` não é destruído manualmente, 
-      evitando corrupção de memória e Access Violation?
-- [ ] O hash de verificação de integridade é calculado e persistido no 
-      Firebird 5.0 para auditoria e garantia contra arquivos corrompidos?
-
-
-# Elementos Pós-Textuais — Volume 2
-
----
-
-## Glossário Técnico do Volume 2
-
-**Clean Architecture:** Organização de software em camadas concêntricas 
-onde a regra de negócio independe do banco de dados e do framework web.
-
-**Commit Puro vs CommitRetaining:** Diferença fundamental no Firebird entre 
-encerrar a transação liberando recursos ou mantê-la aberta travando a OAT.
-
-**Connection Pool:** Estrutura thread-safe que mantém conexões físicas 
-abertas e prontas para uso por múltiplas threads simultâneas.
-
-**Identity Columns:** Recurso nativo do Firebird 5.0 para geração automática 
-de chaves primárias sem necessidade de triggers manuais.
-
-**MVCC:** Controle de concorrência multiversão onde leituras nunca travam 
-escritas no Firebird.
-
-**OAT (Oldest Active Transaction):** Marcador da transação ativa mais 
-antiga que define o limite da coleta de lixo.
-
-**Path Traversal:** Ataque em que manipuladores de arquivos tentam escapar 
-do diretório permitido utilizando `../`.
-
-**Streaming com TFileStream:** Envio fracionado de arquivos do disco para 
-o socket TCP sem alocação integral em memória RAM.
-
-**Unit of Work:** Padrão que agrupa operações de múltiplos repositórios 
-sob uma única transação atômica.
-
----
-
-## Referências Bibliográficas — Volume 2
-
-1. **FIREBIRD PROJECT.** *Firebird 5.0 Reference Manual: Architecture & SQL*. Firebird Foundation, 2024. Disponível em: <https://firebirdsql.org>.
-2. **FOWLER, Martin.** *Patterns of Enterprise Application Architecture*. Boston: Addison-Wesley, 2002.
-3. **MARTIN, Robert C.** *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Boston: Prentice Hall, 2017.
-4. **NEWMAN, Sam.** *Building Microservices*. 2. ed. Sebastopol: O'Reilly Media, 2021.
-
----
-
-## Colofão Editorial — Volume 2
-
-
+relacional Firebird 5.0.</p>
+<h3 id="checklist-de-revisao_2">Checklist de Revisão</h3>
+<ul>
+<li>[ ] A arquitetura adotada é de armazenamento híbrido (disco + metadados)?</li>
+<li>[ ] Os nomes físicos dos arquivos utilizam UUIDs no disco, eliminando 
+      o risco de sobrescrita e colisões?</li>
+<li>[ ] Nomes de arquivo fornecidos pelo usuário são sanitizados com 
+      <code>ExtractFileName</code> contra ataques de <em>Path Traversal</em>?</li>
+<li>[ ] O envio de arquivos para download utiliza streaming com <code>TFileStream</code> 
+      e configuração adequada de <code>Content-Length</code> e <code>Content-Disposition</code>?</li>
+<li>[ ] O stream repassado ao <code>Res.Send&lt;TStream&gt;</code> não é destruído manualmente, 
+      evitando corrupção de memória e Access Violation?</li>
+<li>[ ] O hash de verificação de integridade é calculado e persistido no 
+      Firebird 5.0 para auditoria e garantia contra arquivos corrompidos?</li>
+</ul>
+<h1 id="elementos-pos-textuais-volume-2">Elementos Pós-Textuais — Volume 2</h1>
+<hr />
+<h2 id="glossario-tecnico-do-volume-2">Glossário Técnico do Volume 2</h2>
+<p><strong>Clean Architecture:</strong> Organização de software em camadas concêntricas 
+onde a regra de negócio independe do banco de dados e do framework web.</p>
+<p><strong>Commit Puro vs CommitRetaining:</strong> Diferença fundamental no Firebird entre 
+encerrar a transação liberando recursos ou mantê-la aberta travando a OAT.</p>
+<p><strong>Connection Pool:</strong> Estrutura thread-safe que mantém conexões físicas 
+abertas e prontas para uso por múltiplas threads simultâneas.</p>
+<p><strong>Identity Columns:</strong> Recurso nativo do Firebird 5.0 para geração automática 
+de chaves primárias sem necessidade de triggers manuais.</p>
+<p><strong>MVCC:</strong> Controle de concorrência multiversão onde leituras nunca travam 
+escritas no Firebird.</p>
+<p><strong>OAT (Oldest Active Transaction):</strong> Marcador da transação ativa mais 
+antiga que define o limite da coleta de lixo.</p>
+<p><strong>Path Traversal:</strong> Ataque em que manipuladores de arquivos tentam escapar 
+do diretório permitido utilizando <code>../</code>.</p>
+<p><strong>Streaming com TFileStream:</strong> Envio fracionado de arquivos do disco para 
+o socket TCP sem alocação integral em memória RAM.</p>
+<p><strong>Unit of Work:</strong> Padrão que agrupa operações de múltiplos repositórios 
+sob uma única transação atômica.</p>
+<hr />
+<h2 id="referencias-bibliograficas-volume-2">Referências Bibliográficas — Volume 2</h2>
+<ol>
+<li><strong>FIREBIRD PROJECT.</strong> <em>Firebird 5.0 Reference Manual: Architecture &amp; SQL</em>. Firebird Foundation, 2024. Disponível em: <a href="https://firebirdsql.org">https://firebirdsql.org</a>.</li>
+<li><strong>FOWLER, Martin.</strong> <em>Patterns of Enterprise Application Architecture</em>. Boston: Addison-Wesley, 2002.</li>
+<li><strong>MARTIN, Robert C.</strong> <em>Clean Architecture: A Craftsman's Guide to Software Structure and Design</em>. Boston: Prentice Hall, 2017.</li>
+<li><strong>NEWMAN, Sam.</strong> <em>Building Microservices</em>. 2. ed. Sebastopol: O'Reilly Media, 2021.</li>
+</ol>
+<hr />
+<h2 id="colofao-editorial-volume-2">Colofão Editorial — Volume 2</h2>
 <pre><code class="language-text">=====================================================================
             ESPECIFICACOES EDITORIAIS — VOLUME 2
 =====================================================================

@@ -165,25 +165,12 @@ blockquote {
     page-break-inside: avoid;
     break-inside: avoid;
     border: 0.5pt solid #CBD5E1;
-    border-left: 3pt solid #1E293B;
     background-color: #F8FAFC;
     color: #1E293B;
 }
 
 blockquote strong:first-child {
     color: #0F172A;
-}
-
-blockquote.alert-arquitetura {
-    border-left: 3pt solid #1E293B;
-}
-
-blockquote.alert-threadsafety {
-    border-left: 3pt solid #334155;
-}
-
-blockquote.alert-fpc {
-    border-left: 3pt solid #475569;
 }
 
 /* --------------------------------------------------------------------------
@@ -403,47 +390,45 @@ carrega dinamicamente a biblioteca OpenSSL:
 |  [OpenSSL Engine] (libssl.so / libcrypto.so nativo do SO)          |
 +--------------------------------------------------------------------+
 </code></pre>
-<blockquote class="alert-threadsafety"><strong>Atenção Thread-Safety:</strong>
-> `TFPHTTPClient` **não é thread-safe**. Nunca compartilhe uma mesma 
-> instância de `TFPHTTPClient` entre múltiplas requisições Horse. Cada 
-> chamada a serviço externo deve instanciar seu próprio cliente localmente 
-> dentro do escopo da thread em execução e liberá-lo no bloco `finally`.
-
-### 2.2 O Perigo Fatal de Chamadas Síncronas sem Timeout
-
-Ao consumir uma API de pagamento externa, se o servidor remoto passar por 
+<blockquote>
+<p><strong>Atenção Thread-Safety:</strong>
+<code>TFPHTTPClient</code> <strong>não é thread-safe</strong>. Nunca compartilhe uma mesma 
+instância de <code>TFPHTTPClient</code> entre múltiplas requisições Horse. Cada 
+chamada a serviço externo deve instanciar seu próprio cliente localmente 
+dentro do escopo da thread em execução e liberá-lo no bloco <code>finally</code>.</p>
+</blockquote>
+<h3 id="22-o-perigo-fatal-de-chamadas-sincronas-sem-timeout">2.2 O Perigo Fatal de Chamadas Síncronas sem Timeout</h3>
+<p>Ao consumir uma API de pagamento externa, se o servidor remoto passar por 
 lentidão ou indisponibilidade, uma chamada sem timeout configurado 
-prenderá a thread do `fphttpserver` indefinidamente. Se a aplicação 
+prenderá a thread do <code>fphttpserver</code> indefinidamente. Se a aplicação 
 receber vinte requisições concorrentes, todo o pool de threads do Horse 
 será consumido por chamadas pendentes, travando a API inteira para todos 
-os clientes.
-
-<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>
-> Em qualquer comunicação HTTP externa, configure explicitamente:
-> 1. `ConnectTimeout`: Tempo máximo para estabelecer conexão TCP (ex: 5s).
-> 2. `IOTimeout`: Tempo máximo de espera pela resposta dos dados (ex: 10s).
-> 3. Envolva chamadas em blocos `try..except` tratando `EHTTPClient` e 
->    `ESocketError` para retornar respostas de erro elegantes ao usuário.
-
-### 2.3 Arquitetura de Webhooks: Assinatura HMAC e Idempotência
-
-Um webhook é uma notificação HTTP POST enviada de um sistema para outro 
+os clientes.</p>
+<blockquote>
+<p><strong>Boas Práticas FPC:</strong>
+Em qualquer comunicação HTTP externa, configure explicitamente:
+1. <code>ConnectTimeout</code>: Tempo máximo para estabelecer conexão TCP (ex: 5s).
+2. <code>IOTimeout</code>: Tempo máximo de espera pela resposta dos dados (ex: 10s).
+3. Envolva chamadas em blocos <code>try..except</code> tratando <code>EHTTPClient</code> e 
+   <code>ESocketError</code> para retornar respostas de erro elegantes ao usuário.</p>
+</blockquote>
+<h3 id="23-arquitetura-de-webhooks-assinatura-hmac-e-idempotencia">2.3 Arquitetura de Webhooks: Assinatura HMAC e Idempotência</h3>
+<p>Um webhook é uma notificação HTTP POST enviada de um sistema para outro 
 quando determinado evento ocorre (ex: "pagamento_aprovado"). Para que nossa 
-API possa confiar na mensagem recebida:
-
-1. **Assinatura Criptográfica HMAC-SHA256:** O emissor calcula um HMAC do 
-   corpo JSON utilizando uma chave secreta compartilhada (*Webhook Secret*) 
-   e o anexa ao cabeçalho (ex: `X-Signature: sha256=...`). Nosso receptor 
-   recalcula o hash e rejeita a requisição com `401 Unauthorized` se houver 
-   divergência.
-2. **Idempotência Estrita:** Na internet, notificações de webhooks podem 
+API possa confiar na mensagem recebida:</p>
+<ol>
+<li><strong>Assinatura Criptográfica HMAC-SHA256:</strong> O emissor calcula um HMAC do 
+   corpo JSON utilizando uma chave secreta compartilhada (<em>Webhook Secret</em>) 
+   e o anexa ao cabeçalho (ex: <code>X-Signature: sha256=...</code>). Nosso receptor 
+   recalcula o hash e rejeita a requisição com <code>401 Unauthorized</code> se houver 
+   divergência.</li>
+<li><strong>Idempotência Estrita:</strong> Na internet, notificações de webhooks podem 
    ser reenviadas devido a instabilidades de rede. Se nossa API processar o 
    mesmo evento duas vezes, uma ordem de serviço poderá ter seu saldo baixado 
-   duplicadamente. Registramos o `event_id` recebido em uma tabela com índice 
-   único no Firebird 5.0. Se o evento já existir, retornamos `200 OK` 
-   imediatamente sem reprocessar as regras de negócio.
-
-
+   duplicadamente. Registramos o <code>event_id</code> recebido em uma tabela com índice 
+   único no Firebird 5.0. Se o evento já existir, retornamos <code>200 OK</code> 
+   imediatamente sem reprocessar as regras de negócio.</li>
+</ol>
 <pre><code>+--------------------------------------------------------------------+
 |            FLUXO DO RECEPTOR DE WEBHOOK COM IDEMPOTENCIA          |
 |                                                                    |
@@ -465,25 +450,19 @@ API possa confiar na mensagem recebida:
 |                                           - Retorna 200 OK         |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-### 2.4 Emissão de Webhooks Outbound com Retry e Exponential Backoff
-
-Quando nossa API precisa notificar clientes sobre eventos relevantes (como 
+<h3 id="24-emissao-de-webhooks-outbound-com-retry-e-exponential-backoff">2.4 Emissão de Webhooks Outbound com Retry e Exponential Backoff</h3>
+<p>Quando nossa API precisa notificar clientes sobre eventos relevantes (como 
 "ordem_servico_faturada"), o endpoint de destino pode estar temporariamente 
 fora do ar. Tentar disparar a notificação HTTP de forma síncrona dentro da 
-mesma thread da transação principal causaria lentidão inaceitável.
-
-A arquitetura correta baseia-se em uma **Fila Transacional no Firebird 5.0**:
-1. Durante a finalização da OS, um registro é inserido na tabela `outbox_webhooks` 
-   com status `PENDENTE`, `tentativas = 0` e `proximo_envio = CURRENT_TIMESTAMP`.
-2. Um *worker* assíncrono em segundo plano (ou thread em loop) lê lotes de 
-   mensagens prontas para despacho (`WHERE status = 'PENDENTE' AND proximo_envio <= CURRENT_TIMESTAMP`).
+mesma thread da transação principal causaria lentidão inaceitável.</p>
+<p>A arquitetura correta baseia-se em uma <strong>Fila Transacional no Firebird 5.0</strong>:
+1. Durante a finalização da OS, um registro é inserido na tabela <code>outbox_webhooks</code> 
+   com status <code>PENDENTE</code>, <code>tentativas = 0</code> e <code>proximo_envio = CURRENT_TIMESTAMP</code>.
+2. Um <em>worker</em> assíncrono em segundo plano (ou thread em loop) lê lotes de 
+   mensagens prontas para despacho (<code>WHERE status = 'PENDENTE' AND proximo_envio &lt;= CURRENT_TIMESTAMP</code>).
 3. Em caso de falha de conexão (HTTP 5xx ou timeout de rede), o worker não 
    descarta a mensagem: calcula o próximo instante de despacho utilizando 
-   a fórmula de recuo exponencial com jitter:
-
-
+   a fórmula de recuo exponencial com jitter:</p>
 <pre><code>Intervalo = BaseSec * (2 ^ Tentativas) + JitterAleatorio
 Tentativa 1:  2 segundos
 Tentativa 2:  4 segundos
@@ -491,19 +470,13 @@ Tentativa 3:  8 segundos
 Tentativa 4: 16 segundos
 Tentativa 5: 32 segundos (Limite maximo -&gt; Dead Letter Queue)
 </code></pre>
-
-
-Essa abordagem protege a rede contra tempestades de requisições e garante que 
-instabilidades passageiras não resultem em perda de mensagens críticas.
-
-### 2.5 O Padrão Circuit Breaker para Microsserviços Externos
-
-Ao integrar com serviços instáveis de terceiros (como consultas lentas de 
+<p>Essa abordagem protege a rede contra tempestades de requisições e garante que 
+instabilidades passageiras não resultem em perda de mensagens críticas.</p>
+<h3 id="25-o-padrao-circuit-breaker-para-microsservicos-externos">2.5 O Padrão Circuit Breaker para Microsserviços Externos</h3>
+<p>Ao integrar com serviços instáveis de terceiros (como consultas lentas de 
 órgãos públicos ou gateways sob manutenção), insistir em abrir dezenas de 
 conexões simultâneas pode derrubar a nossa própria infraestrutura. O padrão 
-*Circuit Breaker* atua como um disjuntor elétrico:
-
-
+<em>Circuit Breaker</em> atua como um disjuntor elétrico:</p>
 <pre><code>+--------------------------------------------------------------------+
 |               MAQUINA DE ESTADOS DO CIRCUIT BREAKER                |
 |                                                                    |
@@ -518,22 +491,14 @@ conexões simultâneas pode derrubar a nossa própria infraestrutura. O padrão
 |     +---[Falha]   ---&gt; Retorna ao estado ABERTO (espera mais 60s)  |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-Com o disjuntor no estado **Aberto**, a chamada externa sequer é tentada: o 
-sistema devolve imediatamente uma resposta de erro em cache ou status `503 
-Service Unavailable`, liberando os recursos locais do Lazarus.
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 Cliente HTTP com Timeout e HTTPS (`Core.HTTPClient.pas`)
-
-Construímos um componente desacoplado via interface `IHTTPClient` para 
-efetuar requisições externas com segurança:
-
-
+<p>Com o disjuntor no estado <strong>Aberto</strong>, a chamada externa sequer é tentada: o 
+sistema devolve imediatamente uma resposta de erro em cache ou status <code>503 
+Service Unavailable</code>, liberando os recursos locais do Lazarus.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo">3. Implementação Passo a Passo</h2>
+<h3 id="31-cliente-http-com-timeout-e-https-corehttpclientpas">3.1 Cliente HTTP com Timeout e HTTPS (<code>Core.HTTPClient.pas</code>)</h3>
+<p>Construímos um componente desacoplado via interface <code>IHTTPClient</code> para 
+efetuar requisições externas com segurança:</p>
 <pre><code class="language-pascal">unit Core.HTTPClient;
 
 {$mode objfpc}{$H+}
@@ -642,14 +607,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.2 Validação Criptográfica de Assinatura HMAC-SHA256
-
-Criamos uma unit utilitária `Core.HMAC.pas` para validação matemática da 
-assinatura dos webhooks recebidos:
-
-
+<h3 id="32-validacao-criptografica-de-assinatura-hmac-sha256">3.2 Validação Criptográfica de Assinatura HMAC-SHA256</h3>
+<p>Criamos uma unit utilitária <code>Core.HMAC.pas</code> para validação matemática da 
+assinatura dos webhooks recebidos:</p>
 <pre><code class="language-pascal">unit Core.HMAC;
 
 {$mode objfpc}{$H+}
@@ -692,14 +652,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.3 Repositório de Idempotência e Eventos no Firebird 5.0
-
-Na unit `Repositories.Webhooks.pas`, garantimos o controle estrito de 
-duplicidade de eventos via banco de dados:
-
-
+<h3 id="33-repositorio-de-idempotencia-e-eventos-no-firebird-50">3.3 Repositório de Idempotência e Eventos no Firebird 5.0</h3>
+<p>Na unit <code>Repositories.Webhooks.pas</code>, garantimos o controle estrito de 
+duplicidade de eventos via banco de dados:</p>
 <pre><code class="language-pascal">unit Repositories.Webhooks;
 
 {$mode objfpc}{$H+}
@@ -802,14 +757,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.4 Controller Horse para Recepção de Webhooks
-
-Conectamos a rota de webhook com validação de assinatura e processamento 
-idempotente:
-
-
+<h3 id="34-controller-horse-para-recepcao-de-webhooks">3.4 Controller Horse para Recepção de Webhooks</h3>
+<p>Conectamos a rota de webhook com validação de assinatura e processamento 
+idempotente:</p>
 <pre><code class="language-pascal">unit Controllers.Webhooks;
 
 {$mode objfpc}{$H+}
@@ -899,18 +849,11 @@ end;
 
 end.
 </code></pre>
-
-
----
-
-## 4. Testando o Endpoint
-
-Abaixo estão os testes práticos simulando o disparo de um webhook com 
-assinatura digital.
-
-### 4.1 Enviando Webhook de Pagamento com Assinatura Válida
-
-
+<hr />
+<h2 id="4-testando-o-endpoint">4. Testando o Endpoint</h2>
+<p>Abaixo estão os testes práticos simulando o disparo de um webhook com 
+assinatura digital.</p>
+<h3 id="41-enviando-webhook-de-pagamento-com-assinatura-valida">4.1 Enviando Webhook de Pagamento com Assinatura Válida</h3>
 <pre><code class="language-bash">curl -i -X POST http://localhost:9000/api/v1/webhooks/pagamentos \
   -H &quot;Content-Type: application/json&quot; \
   -H &quot;X-Signature: sha256=000000bd&quot; \
@@ -922,23 +865,15 @@ assinatura digital.
     &quot;valor_pago&quot;: 420.00
   }'
 </code></pre>
-
-
-**Resposta esperada (`200 OK`):**
-
+<p><strong>Resposta esperada (<code>200 OK</code>):</strong></p>
 <pre><code class="language-json">{
   &quot;status&quot;: &quot;processado_com_sucesso&quot;
 }
 </code></pre>
-
-
-A Ordem de Serviço 1 tem seu status alterado para `CONCLUIDA` no 
-Firebird 5.0 e o `event_id` é registrado na tabela `webhooks_recebidos`.
-
-### 4.2 Reenvio do Mesmo Webhook (Teste de Idempotência)
-
-Submetendo exatamente a mesma requisição anterior:
-
+<p>A Ordem de Serviço 1 tem seu status alterado para <code>CONCLUIDA</code> no 
+Firebird 5.0 e o <code>event_id</code> é registrado na tabela <code>webhooks_recebidos</code>.</p>
+<h3 id="42-reenvio-do-mesmo-webhook-teste-de-idempotencia">4.2 Reenvio do Mesmo Webhook (Teste de Idempotência)</h3>
+<p>Submetendo exatamente a mesma requisição anterior:</p>
 <pre><code class="language-bash">curl -i -X POST http://localhost:9000/api/v1/webhooks/pagamentos \
   -H &quot;Content-Type: application/json&quot; \
   -H &quot;X-Signature: sha256=000000bd&quot; \
@@ -950,127 +885,96 @@ Submetendo exatamente a mesma requisição anterior:
     &quot;valor_pago&quot;: 420.00
   }'
 </code></pre>
-
-
-**Resposta esperada (`200 OK` com flag de duplicata):**
-
+<p><strong>Resposta esperada (<code>200 OK</code> com flag de duplicata):</strong></p>
 <pre><code class="language-json">{
   &quot;status&quot;: &quot;ja_processado&quot;
 }
 </code></pre>
-
-
-Nenhuma transação de atualização é executada novamente, garantindo que 
-ações secundárias não se repitam acidentalmente.
-
-### 4.3 Tentativa com Assinatura Inválida ou Adulterada
-
-
+<p>Nenhuma transação de atualização é executada novamente, garantindo que 
+ações secundárias não se repitam acidentalmente.</p>
+<h3 id="43-tentativa-com-assinatura-invalida-ou-adulterada">4.3 Tentativa com Assinatura Inválida ou Adulterada</h3>
 <pre><code class="language-bash">curl -i -X POST http://localhost:9000/api/v1/webhooks/pagamentos \
   -H &quot;Content-Type: application/json&quot; \
   -H &quot;X-Signature: sha256=hash_falso_hacker&quot; \
   -d '{&quot;event_id&quot;: &quot;evt_fraude&quot;}'
 </code></pre>
-
-
-**Resposta esperada:** `401 Unauthorized` ("Assinatura do webhook invalida").
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 O Erro "Could not load OpenSSL library"
-No Linux Ubuntu 24.04 LTS, o OpenSSL 3.0 é padrão (`libssl.so.3`). Em versões 
-mais antigas do FPC, o carregador procurava por `libssl.so.1.1`. 
+<p><strong>Resposta esperada:</strong> <code>401 Unauthorized</code> ("Assinatura do webhook invalida").</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-o-erro-could-not-load-openssl-library">5.1 O Erro "Could not load OpenSSL library"</h3>
+<p>No Linux Ubuntu 24.04 LTS, o OpenSSL 3.0 é padrão (<code>libssl.so.3</code>). Em versões 
+mais antigas do FPC, o carregador procurava por <code>libssl.so.1.1</code>. 
 Se a aplicação falhar ao iniciar conexões HTTPS externas:
 1. Instale o pacote de desenvolvimento OpenSSL:
-   ```bash
-   sudo apt-get update && sudo apt-get install -y libssl-dev openssl
-   ```
-2. Verifique os symlinks com `ldconfig -p | grep ssl`.
-3. No código, certifique-se de declarar `opensslsockets` na cláusula `uses`.
-
-### 5.2 Não Configurar Timeouts em Requisições Externas
-Se a API remota entrar em pane e a sua aplicação não definir `ConnectTimeout` 
-e `IOTimeout`, as threads do Horse permanecerão bloqueadas até o timeout 
+   <code>bash
+   sudo apt-get update &amp;&amp; sudo apt-get install -y libssl-dev openssl</code>
+2. Verifique os symlinks com <code>ldconfig -p | grep ssl</code>.
+3. No código, certifique-se de declarar <code>opensslsockets</code> na cláusula <code>uses</code>.</p>
+<h3 id="52-nao-configurar-timeouts-em-requisicoes-externas">5.2 Não Configurar Timeouts em Requisições Externas</h3>
+<p>Se a API remota entrar em pane e a sua aplicação não definir <code>ConnectTimeout</code> 
+e <code>IOTimeout</code>, as threads do Horse permanecerão bloqueadas até o timeout 
 do socket TCP do kernel Linux (que pode chegar a 120 segundos). 
-**Sempre limite o timeout de saída para no máximo 5 a 10 segundos**.
-
-### 5.3 O Problema de Webhooks com Payload Gigante
-Gateways que enviam payloads detalhados com centenas de linhas de log podem 
-sobrecarregar o parser JSON. No `fpjson`, evite manter instâncias de 
-`TJSONData` abertas desnecessariamente. Extraia os dados necessários e 
-chame `vJSON.Free` de imediato.
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Neste módulo, capacitamos nossa API Horse no Lazarus a interagir confiavelmente 
+<strong>Sempre limite o timeout de saída para no máximo 5 a 10 segundos</strong>.</p>
+<h3 id="53-o-problema-de-webhooks-com-payload-gigante">5.3 O Problema de Webhooks com Payload Gigante</h3>
+<p>Gateways que enviam payloads detalhados com centenas de linhas de log podem 
+sobrecarregar o parser JSON. No <code>fpjson</code>, evite manter instâncias de 
+<code>TJSONData</code> abertas desnecessariamente. Extraia os dados necessários e 
+chame <code>vJSON.Free</code> de imediato.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Neste módulo, capacitamos nossa API Horse no Lazarus a interagir confiavelmente 
 com a web externa, consumindo microsserviços via HTTPS e processando webhooks 
-assíncronos com segurança criptográfica e garantia de idempotência.
-
-### Checklist de Revisão
-- [ ] O cliente HTTP utiliza `opensslsockets` com timeouts rígidos de 
-      conexão e leitura (`ConnectTimeout` e `IOTimeout`)?
-- [ ] Cada requisição cria sua própria instância de `TFPHTTPClient`, 
-      assegurando total isolamento entre threads concorrentes?
-- [ ] Receptores de webhook validam rigorosamente a assinatura criptográfica 
-      HMAC-SHA256 antes de qualquer análise de payload?
-- [ ] O controle de idempotência consulta o `event_id` no Firebird 5.0, 
-      respondendo `200 OK` para duplicatas sem reprocessar regras?
-- [ ] A persistência do evento e a atualização de domínio residem na 
-      mesma transação atômica do Unit of Work?
-- [ ] Bibliotecas dinâmicas do OpenSSL (`libssl.so` / `libssl.dll`) estão 
-      instaladas e acessíveis no ambiente de deploy?
-
-
-# Módulo 16: Documentação Viva com OpenAPI 3.0 e Swagger UI Embarcado
-
-Uma API de alto padrão de engenharia não é medida apenas pela velocidade 
+assíncronos com segurança criptográfica e garantia de idempotência.</p>
+<h3 id="checklist-de-revisao">Checklist de Revisão</h3>
+<ul>
+<li>[ ] O cliente HTTP utiliza <code>opensslsockets</code> com timeouts rígidos de 
+      conexão e leitura (<code>ConnectTimeout</code> e <code>IOTimeout</code>)?</li>
+<li>[ ] Cada requisição cria sua própria instância de <code>TFPHTTPClient</code>, 
+      assegurando total isolamento entre threads concorrentes?</li>
+<li>[ ] Receptores de webhook validam rigorosamente a assinatura criptográfica 
+      HMAC-SHA256 antes de qualquer análise de payload?</li>
+<li>[ ] O controle de idempotência consulta o <code>event_id</code> no Firebird 5.0, 
+      respondendo <code>200 OK</code> para duplicatas sem reprocessar regras?</li>
+<li>[ ] A persistência do evento e a atualização de domínio residem na 
+      mesma transação atômica do Unit of Work?</li>
+<li>[ ] Bibliotecas dinâmicas do OpenSSL (<code>libssl.so</code> / <code>libssl.dll</code>) estão 
+      instaladas e acessíveis no ambiente de deploy?</li>
+</ul>
+<h1 id="modulo-16-documentacao-viva-com-openapi-30-e-swagger-ui-embarcado">Módulo 16: Documentação Viva com OpenAPI 3.0 e Swagger UI Embarcado</h1>
+<p>Uma API de alto padrão de engenharia não é medida apenas pela velocidade 
 de resposta ou pela sofisticação de sua arquitetura limpa, mas também 
 pela clareza e precisão de seus contratos com os desenvolvedores que a 
 consomem. Em equipes modernas de engenharia, onde frontends web, aplicativos 
 mobile e sistemas parceiros integram-se simultaneamente ao mesmo backend, 
-manter a documentação técnica atualizada e interativa é fundamental.
-
-Neste módulo, implementaremos o padrão **OpenAPI 3.0** diretamente no 
+manter a documentação técnica atualizada e interativa é fundamental.</p>
+<p>Neste módulo, implementaremos o padrão <strong>OpenAPI 3.0</strong> diretamente no 
 nosso ecossistema Horse e Lazarus. Aprenderemos a gerar a especificação 
-em formato JSON de forma programática utilizando o `fpjson` nativo, a 
+em formato JSON de forma programática utilizando o <code>fpjson</code> nativo, a 
 documentar esquemas de segurança (Bearer JWT), parâmetros de rota/query e 
 estruturas de erro padronizadas pela RFC 7807, e a servir uma interface 
-interativa do **Swagger UI** embarcada diretamente pelo servidor nativo 
-Free Pascal, sem qualquer dependência externa de Node.js ou Apache/Nginx.
-
----
-
-## 1. Objetivos de Aprendizagem do Módulo
-
-Ao final deste módulo, você será capaz de:
-1. Compreender a anatomia completa da especificação OpenAPI 3.0 (`openapi`, 
-   `info`, `paths`, `components/schemas` e `securitySchemes`).
+interativa do <strong>Swagger UI</strong> embarcada diretamente pelo servidor nativo 
+Free Pascal, sem qualquer dependência externa de Node.js ou Apache/Nginx.</p>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_1">1. Objetivos de Aprendizagem do Módulo</h2>
+<p>Ao final deste módulo, você será capaz de:
+1. Compreender a anatomia completa da especificação OpenAPI 3.0 (<code>openapi</code>, 
+   <code>info</code>, <code>paths</code>, <code>components/schemas</code> e <code>securitySchemes</code>).
 2. Projetar um gerador programático de especificações OpenAPI utilizando as 
-   classes nativas `TJSONObject` e `TJSONArray` do `fpjson`.
+   classes nativas <code>TJSONObject</code> e <code>TJSONArray</code> do <code>fpjson</code>.
 3. Documentar contratos detalhados para endpoints de cadastro, ordens de 
    serviço, anexos e autenticação com JWT.
-4. Servir a interface interativa do Swagger UI diretamente pelo `fphttpserver` 
-   do Horse na rota `/api/docs`.
+4. Servir a interface interativa do Swagger UI diretamente pelo <code>fphttpserver</code> 
+   do Horse na rota <code>/api/docs</code>.
 5. Proteger ambientes de produção contra exposição indevida da documentação 
    através de flags de ambiente e middlewares de autorização.
-6. Habilitar a funcionalidade *Try it out* com suporte nativo a tokens Bearer, 
-   permitindo testes em tempo real de endpoints autenticados.
-
----
-
-## 2. Fundamentação Conceitual e Arquitetural
-
-### 2.1 A Especificação OpenAPI 3.0
-
-O OpenAPI Specification (OAS) é o padrão universal agnóstico a linguagens 
+6. Habilitar a funcionalidade <em>Try it out</em> com suporte nativo a tokens Bearer, 
+   permitindo testes em tempo real de endpoints autenticados.</p>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_1">2. Fundamentação Conceitual e Arquitetural</h2>
+<h3 id="21-a-especificacao-openapi-30">2.1 A Especificação OpenAPI 3.0</h3>
+<p>O OpenAPI Specification (OAS) é o padrão universal agnóstico a linguagens 
 para descrição de APIs RESTful. Um documento OpenAPI 3.0 divide-se em seções 
-bem delimitadas:
-
-
+bem delimitadas:</p>
 <pre><code>+--------------------------------------------------------------------+
 |               ESTRUTURA DO DOCUMENTO OPENAPI 3.0                   |
 |                                                                    |
@@ -1085,24 +989,19 @@ bem delimitadas:
 |  6. security: Requisitos globais ou locais de autenticacao         |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-### 2.2 Swagger UI Embarcado vs. Servidor Separado
-
-Tradicionalmente, muitas equipes hospedam o Swagger UI em contêineres 
+<h3 id="22-swagger-ui-embarcado-vs-servidor-separado">2.2 Swagger UI Embarcado vs. Servidor Separado</h3>
+<p>Tradicionalmente, muitas equipes hospedam o Swagger UI em contêineres 
 separados com Node.js ou em servidores Nginx dedicados. Contudo, no 
 desenvolvimento de micro-APIs e ferramentas corporativas com Free Pascal, 
 embarcar a interface HTML diretamente no binário da aplicação traz enormes 
 benefícios operacionais:
-- **Zero Configuração Extra:** Um único arquivo executável estático (`connect_os_api`) 
+- <strong>Zero Configuração Extra:</strong> Um único arquivo executável estático (<code>connect_os_api</code>) 
   roda a API e entrega sua documentação completa.
-- **Sincronia Absoluta:** Como a rota `/api/docs/openapi.json` é gerada pelo 
+- <strong>Sincronia Absoluta:</strong> Como a rota <code>/api/docs/openapi.json</code> é gerada pelo 
   próprio código compilado, a documentação reflete exatamente a versão da 
   aplicação em execução.
-- **Portabilidade:** Ideal para ambientes de contêineres enxutos (Docker Alpine 
-  ou Debian Minimal), sem sobrecarga de runtimes externos.
-
-
+- <strong>Portabilidade:</strong> Ideal para ambientes de contêineres enxutos (Docker Alpine 
+  ou Debian Minimal), sem sobrecarga de runtimes externos.</p>
 <pre><code>+--------------------------------------------------------------------+
 |              ARQUITETURA DO SWAGGER EMBARCADO NO HORSE             |
 |                                                                    |
@@ -1120,42 +1019,34 @@ benefícios operacionais:
 |  - Rota 2: /api/docs/openapi.json (Gera TJSONObject da API)        |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-<blockquote class="alert-arquitetura"><strong>Nota de Arquitetura:</strong>
-> Em servidores de produção com alta restrição de segurança, a rota 
-> `/api/docs` deve ser desabilitada ou restrita a redes internas via 
-> variáveis de ambiente (`SWAGGER_ENABLED=false`), prevenindo que agentes 
-> mal-intencionados descubram parâmetros de rotas e estruturas internas.
-
-### 2.3 RTTI e Metaprogramação no FPC vs Abordagem Programática Direta
-
-Em ecossistemas como C# (.NET) ou Java (Spring), frameworks geram a 
+<blockquote>
+<p><strong>Nota de Arquitetura:</strong>
+Em servidores de produção com alta restrição de segurança, a rota 
+<code>/api/docs</code> deve ser desabilitada ou restrita a redes internas via 
+variáveis de ambiente (<code>SWAGGER_ENABLED=false</code>), prevenindo que agentes 
+mal-intencionados descubram parâmetros de rotas e estruturas internas.</p>
+</blockquote>
+<h3 id="23-rtti-e-metaprogramacao-no-fpc-vs-abordagem-programatica-direta">2.3 RTTI e Metaprogramação no FPC vs Abordagem Programática Direta</h3>
+<p>Em ecossistemas como C# (.NET) ou Java (Spring), frameworks geram a 
 especificação OpenAPI inspecionando anotações e reflexão em tempo de 
-execução (*Reflection/RTTI*). No ecossistema Free Pascal / Lazarus, 
+execução (<em>Reflection/RTTI</em>). No ecossistema Free Pascal / Lazarus, 
 contudo, o compilador FPC historicamente possui um modelo de RTTI estendido 
-que difere significativamente do Delphi moderno. 
-
-Tentativas de utilizar bibliotecas baseadas em atributos complexos no FPC 
+que difere significativamente do Delphi moderno. </p>
+<p>Tentativas de utilizar bibliotecas baseadas em atributos complexos no FPC 
 frequentemente esbarram em problemas de compilação cruzada para Linux x86_64, 
-aumento desmedido do tamanho do executável e lentidão na inicialização da API.
-
-Por essa razão, adotamos a **Abordagem Programática Estruturada**:
-1. Construímos a especificação utilizando árvores de `TJSONObject` e `TJSONArray` 
-   do `fpjson` nativo.
+aumento desmedido do tamanho do executável e lentidão na inicialização da API.</p>
+<p>Por essa razão, adotamos a <strong>Abordagem Programática Estruturada</strong>:
+1. Construímos a especificação utilizando árvores de <code>TJSONObject</code> e <code>TJSONArray</code> 
+   do <code>fpjson</code> nativo.
 2. A montagem do JSON ocorre em milissegundos e possui custo zero de reflexão.
 3. Compatibilidade garantida em 100% dos alvos de compilação (Windows, Linux, 
    ARM64, Docker).
 4. Possibilidade de ler metadados dinamicamente de arquivos de configuração, 
-   variáveis de ambiente ou banco de dados.
-
-### 2.4 Versionamento de Contratos de API (v1 e v2) com OpenAPI
-
-Ao evoluir uma API comercial, mudanças disruptivas (*breaking changes*) 
-exigem a publicação de uma nova versão (ex: `/api/v2`). No Swagger, podemos 
-servir múltiplos documentos simultaneamente utilizando o seletor de *URLs*:
-
-
+   variáveis de ambiente ou banco de dados.</p>
+<h3 id="24-versionamento-de-contratos-de-api-v1-e-v2-com-openapi">2.4 Versionamento de Contratos de API (v1 e v2) com OpenAPI</h3>
+<p>Ao evoluir uma API comercial, mudanças disruptivas (<em>breaking changes</em>) 
+exigem a publicação de uma nova versão (ex: <code>/api/v2</code>). No Swagger, podemos 
+servir múltiplos documentos simultaneamente utilizando o seletor de <em>URLs</em>:</p>
 <pre><code class="language-json">{
   &quot;urls&quot;: [
     { &quot;name&quot;: &quot;V1 — Estavel&quot;, &quot;url&quot;: &quot;/api/docs/v1/openapi.json&quot; },
@@ -1163,22 +1054,14 @@ servir múltiplos documentos simultaneamente utilizando o seletor de *URLs*:
   ]
 }
 </code></pre>
-
-
-O Swagger UI renderiza uma caixa de seleção (*dropdown*) no topo da página, 
+<p>O Swagger UI renderiza uma caixa de seleção (<em>dropdown</em>) no topo da página, 
 permitindo que desenvolvedores alternem instantaneamente entre as 
-especificações sem trocar de ambiente ou recarregar a interface.
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 Construindo o Documento OpenAPI com `fpjson`
-
-Criaremos a unit `Core.OpenAPI.pas`, responsável por instanciar a árvore 
-de nós da especificação OpenAPI 3.0:
-
-
+especificações sem trocar de ambiente ou recarregar a interface.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo_1">3. Implementação Passo a Passo</h2>
+<h3 id="31-construindo-o-documento-openapi-com-fpjson">3.1 Construindo o Documento OpenAPI com <code>fpjson</code></h3>
+<p>Criaremos a unit <code>Core.OpenAPI.pas</code>, responsável por instanciar a árvore 
+de nós da especificação OpenAPI 3.0:</p>
 <pre><code class="language-pascal">unit Core.OpenAPI;
 
 {$mode objfpc}{$H+}
@@ -1322,18 +1205,12 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.2 Mapeamento de Parâmetros de Query String e Erros RFC 7807
-
-Além de documentar respostas de sucesso `200 OK` e `201 Created`, uma 
+<h3 id="32-mapeamento-de-parametros-de-query-string-e-erros-rfc-7807">3.2 Mapeamento de Parâmetros de Query String e Erros RFC 7807</h3>
+<p>Além de documentar respostas de sucesso <code>200 OK</code> e <code>201 Created</code>, uma 
 especificação profissional deve instruir os desenvolvedores clientes 
-sobre filtros disponíveis na URL e estruturas de erro padronizadas.
-
-Para documentar os parâmetros de paginação e filtros vistos no Módulo 13, 
-adicionamos um array `parameters` ao nó da operação:
-
-
+sobre filtros disponíveis na URL e estruturas de erro padronizadas.</p>
+<p>Para documentar os parâmetros de paginação e filtros vistos no Módulo 13, 
+adicionamos um array <code>parameters</code> ao nó da operação:</p>
 <pre><code class="language-json">[
   {
     &quot;name&quot;: &quot;page&quot;,
@@ -1361,13 +1238,9 @@ adicionamos um array `parameters` ao nó da operação:
   }
 ]
 </code></pre>
-
-
-Para as respostas de erro HTTP `400 Bad Request`, `401 Unauthorized` e 
-`422 Unprocessable Entity`, vinculamos o schema `ProblemDetails` via 
-referência `$ref`:
-
-
+<p>Para as respostas de erro HTTP <code>400 Bad Request</code>, <code>401 Unauthorized</code> e 
+<code>422 Unprocessable Entity</code>, vinculamos o schema <code>ProblemDetails</code> via 
+referência <code>$ref</code>:</p>
 <pre><code class="language-json">&quot;422&quot;: {
   &quot;description&quot;: &quot;Regra de negocio violada&quot;,
   &quot;content&quot;: {
@@ -1379,18 +1252,12 @@ referência `$ref`:
   }
 }
 </code></pre>
-
-
-Dessa forma, o consumidor da API sabe exatamente que, ao receber um erro 
-`422`, o corpo conterá os campos padronizados `type`, `title`, `status`, 
-`detail` e `instance`.
-
-### 3.2 Página HTML do Swagger UI Embarcado
-
-Criamos a unit `Core.SwaggerUI.pas`, que gera o HTML autocontido 
-configurado para consumir o endpoint de especificação:
-
-
+<p>Dessa forma, o consumidor da API sabe exatamente que, ao receber um erro 
+<code>422</code>, o corpo conterá os campos padronizados <code>type</code>, <code>title</code>, <code>status</code>, 
+<code>detail</code> e <code>instance</code>.</p>
+<h3 id="32-pagina-html-do-swagger-ui-embarcado">3.2 Página HTML do Swagger UI Embarcado</h3>
+<p>Criamos a unit <code>Core.SwaggerUI.pas</code>, que gera o HTML autocontido 
+configurado para consumir o endpoint de especificação:</p>
 <pre><code class="language-pascal">unit Core.SwaggerUI;
 
 {$mode objfpc}{$H+}
@@ -1452,13 +1319,8 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.3 Controller Horse para Swagger e OpenAPI
-
-Integramos as rotas de documentação no Horse (`Controllers.Swagger.pas`):
-
-
+<h3 id="33-controller-horse-para-swagger-e-openapi">3.3 Controller Horse para Swagger e OpenAPI</h3>
+<p>Integramos as rotas de documentação no Horse (<code>Controllers.Swagger.pas</code>):</p>
 <pre><code class="language-pascal">unit Controllers.Swagger;
 
 {$mode objfpc}{$H+}
@@ -1512,33 +1374,19 @@ end;
 
 end.
 </code></pre>
-
-
----
-
-## 4. Testando o Endpoint
-
-Abaixo estão os procedimentos práticos para testar a documentação gerada.
-
-### 4.1 Acessando o Swagger UI pelo Navegador
-
-Abra o navegador no endereço:
-
+<hr />
+<h2 id="4-testando-o-endpoint_1">4. Testando o Endpoint</h2>
+<p>Abaixo estão os procedimentos práticos para testar a documentação gerada.</p>
+<h3 id="41-acessando-o-swagger-ui-pelo-navegador">4.1 Acessando o Swagger UI pelo Navegador</h3>
+<p>Abra o navegador no endereço:</p>
 <pre><code class="language-text">http://localhost:9000/api/docs
 </code></pre>
-
-A interface do Swagger UI será renderizada com o logotipo, título, schemas 
-detalhados e botão **Authorize** para inserção do token Bearer JWT.
-
-### 4.2 Baixando a Especificação OpenAPI via `curl`
-
-
+<p>A interface do Swagger UI será renderizada com o logotipo, título, schemas 
+detalhados e botão <strong>Authorize</strong> para inserção do token Bearer JWT.</p>
+<h3 id="42-baixando-a-especificacao-openapi-via-curl">4.2 Baixando a Especificação OpenAPI via <code>curl</code></h3>
 <pre><code class="language-bash">curl -i -X GET http://localhost:9000/api/docs/openapi.json
 </code></pre>
-
-
-**Resposta esperada (`200 OK` com especificação completa):**
-
+<p><strong>Resposta esperada (<code>200 OK</code> com especificação completa):</strong></p>
 <pre><code class="language-json">{
   &quot;openapi&quot;: &quot;3.0.3&quot;,
   &quot;info&quot;: {
@@ -1569,137 +1417,108 @@ detalhados e botão **Authorize** para inserção do token Bearer JWT.
   }
 }
 </code></pre>
-
-
-### 4.3 Integração com OpenAPI Generator para Clientes TypeScript e Mobile
-
-Uma das maiores vantagens práticas de disponibilizar a especificação OpenAPI 
+<h3 id="43-integracao-com-openapi-generator-para-clientes-typescript-e-mobile">4.3 Integração com OpenAPI Generator para Clientes TypeScript e Mobile</h3>
+<p>Uma das maiores vantagens práticas de disponibilizar a especificação OpenAPI 
 3.0 padronizada é permitir que equipes de frontend (React, Angular, Vue) e 
 mobile (Flutter, Kotlin) gerem seus clientes HTTP tipados automaticamente, 
-sem digitar uma única linha manual de código de consumo:
-
-
+sem digitar uma única linha manual de código de consumo:</p>
 <pre><code class="language-bash"># Gerando cliente tipado em TypeScript com Axios
 npx @openapitools/openapi-generator-cli generate \
   -i http://localhost:9000/api/docs/openapi.json \
   -g typescript-axios \
   -o ./frontend/src/api/client
 </code></pre>
-
-
-Esse comando cria interfaces TypeScript idênticas aos nossos DTOs Pascal 
-(`OrdemServico`, `Cliente`, `ProblemDetails`) e funções prontas para invocar 
+<p>Esse comando cria interfaces TypeScript idênticas aos nossos DTOs Pascal 
+(<code>OrdemServico</code>, <code>Cliente</code>, <code>ProblemDetails</code>) e funções prontas para invocar 
 os endpoints com tipagem estrita de parâmetros e respostas. Quando um campo 
 da API é alterado no Lazarus, basta reexecutar o gerador no frontend para 
-detectar inconsistências em tempo de compilação.
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 Content-Type Incorreto ao Servir HTML
-Ao devolver páginas web pelo Horse, se você usar `Res.Send(vHTML)` sem 
-definir explicitamente `Res.RawWebResponse.ContentType := 'text/html; charset=utf-8'`, 
-o navegador pode interpretar o arquivo como `text/plain` e exibir o código 
-fonte HTML em vez de renderizá-lo.
-
-### 5.2 Dupla Destruição de `TJSONObject` no Horse
-No método `ObterEspecificacaoJSON`, o Horse assume a propriedade do objeto 
-ao enviar via `Res.Send<TJSONObject>(vJSON)`. Nunca chame `vJSON.Free` após 
-a linha do `Send`, sob risco de causar corrupção de heap no FPC. O bloco 
-`except` deve conter `vJSON.Free` apenas para liberar a memória caso ocorra 
-uma exceção antes do envio bem-sucedido.
-
-### 5.3 Caracteres Não-ASCII no JSON
-Ao montar descrições em português (com acentos como "Gestão", "Serviço"), 
-certifique-se de salvar os arquivos fontes `.pas` com codificação **UTF-8 
-sem BOM**. No Free Pascal, a diretiva `{$H+}` garante strings dinâmicas 
-compatíveis com UTF-8 nativo no Lazarus.
-
-### 5.4 Erros de CORS ao Utilizar o Swagger UI Externo
-Se a sua equipe optar por hospedar o Swagger UI em um domínio separado 
-(ex: `docs.connectos.com.br`) consumindo a API em `api.connectos.com.br`, o 
-navegador bloqueará as chamadas *Try it out* se o middleware `horse-cors` 
+detectar inconsistências em tempo de compilação.</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_1">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-content-type-incorreto-ao-servir-html">5.1 Content-Type Incorreto ao Servir HTML</h3>
+<p>Ao devolver páginas web pelo Horse, se você usar <code>Res.Send(vHTML)</code> sem 
+definir explicitamente <code>Res.RawWebResponse.ContentType := 'text/html; charset=utf-8'</code>, 
+o navegador pode interpretar o arquivo como <code>text/plain</code> e exibir o código 
+fonte HTML em vez de renderizá-lo.</p>
+<h3 id="52-dupla-destruicao-de-tjsonobject-no-horse">5.2 Dupla Destruição de <code>TJSONObject</code> no Horse</h3>
+<p>No método <code>ObterEspecificacaoJSON</code>, o Horse assume a propriedade do objeto 
+ao enviar via <code>Res.Send&lt;TJSONObject&gt;(vJSON)</code>. Nunca chame <code>vJSON.Free</code> após 
+a linha do <code>Send</code>, sob risco de causar corrupção de heap no FPC. O bloco 
+<code>except</code> deve conter <code>vJSON.Free</code> apenas para liberar a memória caso ocorra 
+uma exceção antes do envio bem-sucedido.</p>
+<h3 id="53-caracteres-nao-ascii-no-json">5.3 Caracteres Não-ASCII no JSON</h3>
+<p>Ao montar descrições em português (com acentos como "Gestão", "Serviço"), 
+certifique-se de salvar os arquivos fontes <code>.pas</code> com codificação <strong>UTF-8 
+sem BOM</strong>. No Free Pascal, a diretiva <code>{$H+}</code> garante strings dinâmicas 
+compatíveis com UTF-8 nativo no Lazarus.</p>
+<h3 id="54-erros-de-cors-ao-utilizar-o-swagger-ui-externo">5.4 Erros de CORS ao Utilizar o Swagger UI Externo</h3>
+<p>Se a sua equipe optar por hospedar o Swagger UI em um domínio separado 
+(ex: <code>docs.connectos.com.br</code>) consumindo a API em <code>api.connectos.com.br</code>, o 
+navegador bloqueará as chamadas <em>Try it out</em> se o middleware <code>horse-cors</code> 
 não estiver configurado para autorizar a origem da documentação e os 
-cabeçalhos customizados (`Authorization`, `Content-Type`). Garanta que o 
-CORS libere o método `OPTIONS` e exponha os headers necessários conforme 
-visto no Módulo 07.
-
-### 5.5 Content Security Policy (CSP) e CDN Bloqueada
-Em ambientes corporativos com políticas rígidas de segurança de conteúdo 
+cabeçalhos customizados (<code>Authorization</code>, <code>Content-Type</code>). Garanta que o 
+CORS libere o método <code>OPTIONS</code> e exponha os headers necessários conforme 
+visto no Módulo 07.</p>
+<h3 id="55-content-security-policy-csp-e-cdn-bloqueada">5.5 Content Security Policy (CSP) e CDN Bloqueada</h3>
+<p>Em ambientes corporativos com políticas rígidas de segurança de conteúdo 
 (CSP), o navegador pode bloquear o carregamento dos scripts e estilos da 
-CDN do Swagger (`unpkg.com`). Caso sua API opere em redes isoladas sem 
-acesso à internet pública (*air-gapped*), armazene os arquivos `swagger-ui.css` 
-e `swagger-ui-bundle.js` localmente em um diretório do servidor e configure 
-o Horse para servi-los estaticamente via `horse-octet-stream` ou rotas 
-estáticas locais.
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Neste módulo, dotamos nossa API de um ecossistema completo de documentação 
+CDN do Swagger (<code>unpkg.com</code>). Caso sua API opere em redes isoladas sem 
+acesso à internet pública (<em>air-gapped</em>), armazene os arquivos <code>swagger-ui.css</code> 
+e <code>swagger-ui-bundle.js</code> localmente em um diretório do servidor e configure 
+o Horse para servi-los estaticamente via <code>horse-octet-stream</code> ou rotas 
+estáticas locais.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_1">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Neste módulo, dotamos nossa API de um ecossistema completo de documentação 
 viva e interativa no padrão OpenAPI 3.0, servida nativamente pelo Horse sem 
-qualquer dependência de ferramentas externas.
-
-### Checklist de Revisão
-- [ ] A especificação obedece estritamente ao formato padronizado OpenAPI 3.0?
-- [ ] O esquema de segurança Bearer JWT está configurado em `securitySchemes`?
-- [ ] Os modelos de dados (`Cliente`, `OrdemServico`, `ProblemDetails`) 
-      estão mapeados em `components/schemas`?
-- [ ] A interface do Swagger UI é servida na rota `/api/docs` com header 
-      `text/html; charset=utf-8`?
-- [ ] O endpoint JSON `/api/docs/openapi.json` responde com status 200 OK 
-      e validação de sintaxe JSON íntegra?
-- [ ] Em produção restrita, a rota de documentação pode ser desativada 
-      por configuração de ambiente?
-
-
-# Módulo 17: Testes Automatizados com FPCUnit, Mocks e CI/CD
-
-No desenvolvimento moderno de software corporativo, a confiabilidade de 
+qualquer dependência de ferramentas externas.</p>
+<h3 id="checklist-de-revisao_1">Checklist de Revisão</h3>
+<ul>
+<li>[ ] A especificação obedece estritamente ao formato padronizado OpenAPI 3.0?</li>
+<li>[ ] O esquema de segurança Bearer JWT está configurado em <code>securitySchemes</code>?</li>
+<li>[ ] Os modelos de dados (<code>Cliente</code>, <code>OrdemServico</code>, <code>ProblemDetails</code>) 
+      estão mapeados em <code>components/schemas</code>?</li>
+<li>[ ] A interface do Swagger UI é servida na rota <code>/api/docs</code> com header 
+      <code>text/html; charset=utf-8</code>?</li>
+<li>[ ] O endpoint JSON <code>/api/docs/openapi.json</code> responde com status 200 OK 
+      e validação de sintaxe JSON íntegra?</li>
+<li>[ ] Em produção restrita, a rota de documentação pode ser desativada 
+      por configuração de ambiente?</li>
+</ul>
+<h1 id="modulo-17-testes-automatizados-com-fpcunit-mocks-e-cicd">Módulo 17: Testes Automatizados com FPCUnit, Mocks e CI/CD</h1>
+<p>No desenvolvimento moderno de software corporativo, a confiabilidade de 
 uma API REST não pode repousar sobre testes manuais com ferramentas visuais. 
 Refatorações de regras de negócio, atualizações de dependências no Boss ou 
 migrações de versão do Free Pascal podem introduzir regressões silenciosas 
 se não houver uma suíte automatizada de testes cobrindo os caminhos críticos 
-do sistema.
-
-Neste módulo, exploraremos o framework nativo **FPCUnit** do Free Pascal, 
+do sistema.</p>
+<p>Neste módulo, exploraremos o framework nativo <strong>FPCUnit</strong> do Free Pascal, 
 projetado para rodar em modo console de forma ultrarrápida. Aprenderemos a 
-isolar regras de negócio criando *Mocks* e *Stubs* de interfaces 
-(`IOrdemServicoRepository`), a testar máquinas de estado sem necessidade de 
+isolar regras de negócio criando <em>Mocks</em> e <em>Stubs</em> de interfaces 
+(<code>IOrdemServicoRepository</code>), a testar máquinas de estado sem necessidade de 
 banco de dados ativo, a construir testes de integração HTTP ponta a ponta 
 para endpoints do Horse e a integrar a execução dos testes em pipelines 
-modernas de Integração Contínua (CI/CD) com relatórios no padrão JUnit XML.
-
----
-
-## 1. Objetivos de Aprendizagem do Módulo
-
-Ao final deste módulo, você será capaz de:
-1. Estruturar um projeto de testes console com **FPCUnit** (`fpcunit`, 
-   `testregistry`, `consoletestrunner`) no Free Pascal.
-2. Implementar *Mocks* e *Fakes* de repositórios baseados em interfaces 
+modernas de Integração Contínua (CI/CD) com relatórios no padrão JUnit XML.</p>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_2">1. Objetivos de Aprendizagem do Módulo</h2>
+<p>Ao final deste módulo, você será capaz de:
+1. Estruturar um projeto de testes console com <strong>FPCUnit</strong> (<code>fpcunit</code>, 
+   <code>testregistry</code>, <code>consoletestrunner</code>) no Free Pascal.
+2. Implementar <em>Mocks</em> e <em>Fakes</em> de repositórios baseados em interfaces 
    Object Pascal para testes unitários puros e determinísticos de Services.
 3. Validar cenários de sucesso e lançamento de exceções customizadas de domínio 
-   (`EBusinessException`, `EValidationException`).
+   (<code>EBusinessException</code>, <code>EValidationException</code>).
 4. Construir testes de integração HTTP disparando requisições contra rotas do 
    Horse em portas de teste temporárias.
 5. Exportar resultados de testes em formato padronizado JUnit XML para 
    integração direta com GitHub Actions e GitLab CI.
-6. Integrar a detecção de vazamentos de memória (`HeapTrc`) na rotina de 
-   testes automatizados, reprovando *pull requests* que causem memory leaks.
-
----
-
-## 2. Fundamentação Conceitual e Arquitetural
-
-### 2.1 A Pirâmide de Testes aplicada ao Ecossistema Pascal
-
-Para garantir alta cobertura com baixo tempo de execução e manutenção 
-sustentável, nossa estratégia divide-se em duas camadas essenciais:
-
-
+6. Integrar a detecção de vazamentos de memória (<code>HeapTrc</code>) na rotina de 
+   testes automatizados, reprovando <em>pull requests</em> que causem memory leaks.</p>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_2">2. Fundamentação Conceitual e Arquitetural</h2>
+<h3 id="21-a-piramide-de-testes-aplicada-ao-ecossistema-pascal">2.1 A Pirâmide de Testes aplicada ao Ecossistema Pascal</h3>
+<p>Para garantir alta cobertura com baixo tempo de execução e manutenção 
+sustentável, nossa estratégia divide-se em duas camadas essenciais:</p>
 <pre><code>+--------------------------------------------------------------------+
 |                PIRAMIDE DE TESTES NO CONNECTOS API                 |
 |                                                                    |
@@ -1713,24 +1532,20 @@ sustentável, nossa estratégia divide-se em duas camadas essenciais:
 |    /______________\- Isolamento total de banco de dados e rede    |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-1. **Testes Unitários de Services (Base da Pirâmide):** Focam exclusivamente 
-   nas regras de negócio (`TOrdemServicoService`). Como os repositórios são 
-   injetados via interfaces (`IOrdemServicoRepository`), substituímos o 
-   banco de dados Firebird 5.0 por implementações em memória (*Mock/Fake*). 
-   Milhares de testes unitários rodam em frações de segundo.
-2. **Testes de Integração HTTP (Topo da Pirâmide):** Inicializam o servidor 
+<ol>
+<li><strong>Testes Unitários de Services (Base da Pirâmide):</strong> Focam exclusivamente 
+   nas regras de negócio (<code>TOrdemServicoService</code>). Como os repositórios são 
+   injetados via interfaces (<code>IOrdemServicoRepository</code>), substituímos o 
+   banco de dados Firebird 5.0 por implementações em memória (<em>Mock/Fake</em>). 
+   Milhares de testes unitários rodam em frações de segundo.</li>
+<li><strong>Testes de Integração HTTP (Topo da Pirâmide):</strong> Inicializam o servidor 
    Horse em uma porta de teste (ex: porta 9099) e efetuam chamadas reais com 
-   `TFPHTTPClient`, validando serialização JSON, middlewares de autenticação e 
-   códigos de status HTTP.
-
-### 2.2 O Framework FPCUnit: Estrutura e Ciclo de Vida
-
-O FPCUnit é uma implementação padrão da família xUnit construída para o 
-Free Pascal. Cada caso de teste herda de `TTestCase`:
-
-
+   <code>TFPHTTPClient</code>, validando serialização JSON, middlewares de autenticação e 
+   códigos de status HTTP.</li>
+</ol>
+<h3 id="22-o-framework-fpcunit-estrutura-e-ciclo-de-vida">2.2 O Framework FPCUnit: Estrutura e Ciclo de Vida</h3>
+<p>O FPCUnit é uma implementação padrão da família xUnit construída para o 
+Free Pascal. Cada caso de teste herda de <code>TTestCase</code>:</p>
 <pre><code>+--------------------------------------------------------------------+
 |                  CICLO DE VIDA DO TESTE NO FPCUNIT                 |
 |                                                                    |
@@ -1744,45 +1559,39 @@ Free Pascal. Cada caso de teste herda de `TTestCase`:
 |       +---&gt; TearDown()    : Desaloca recursos e limpa a memoria    |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-<blockquote class="alert-threadsafety"><strong>Atenção Thread-Safety:</strong>
-> No FPCUnit, os testes de uma suíte são executados sequencialmente na thread 
-> principal. Se os seus testes de integração dispararem chamadas contra o 
-> servidor Horse, certifique-se de que o Horse foi inicializado com suporte a 
-> `cthreads` e que cada teste utilize dados ou identificadores isolados para 
-> não causar colisões de estado.
-
-<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>
-> Sempre declare a destruição rigorosa de todos os objetos criados no `SetUp` 
-> ou dentro do método de teste no `TearDown`. Ao compilar o projeto de testes 
-> com a flag `-gh` (`HeapTrc`), o executor deve finalizar reportando 
-> `0 unfreed memory blocks`. Qualquer bloco órfão falha o build no CI/CD.
-
-### 2.3 Taxonomia de Dublês de Teste no Object Pascal
-
-Na engenharia de software rigorosa (conforme definido por Gerard Meszaros 
-em *xUnit Test Patterns*), o termo genérico *Mock* engloba diferentes tipos 
-de dublês de teste (*Test Doubles*). No ecossistema Free Pascal orientado a 
-interfaces, utilizamos três variantes principais:
-
-1. **Dummy Objects:** Instâncias passadas apenas para preencher parâmetros de 
-   métodos que nunca serão efetivamente utilizados na lógica testada.
-2. **Fake Objects / In-Memory Stubs:** Implementações simplificadas e funcionais 
-   em memória (como uma lista `TList` ou array simulando a tabela `ordens_servico`), 
-   que devolvem respostas pré-definidas para alimentar o Service.
-3. **Mocks Estritos:** Objetos que registram chamadas recebidas (métodos 
+<blockquote>
+<p><strong>Atenção Thread-Safety:</strong>
+No FPCUnit, os testes de uma suíte são executados sequencialmente na thread 
+principal. Se os seus testes de integração dispararem chamadas contra o 
+servidor Horse, certifique-se de que o Horse foi inicializado com suporte a 
+<code>cthreads</code> e que cada teste utilize dados ou identificadores isolados para 
+não causar colisões de estado.</p>
+<p><strong>Boas Práticas FPC:</strong>
+Sempre declare a destruição rigorosa de todos os objetos criados no <code>SetUp</code> 
+ou dentro do método de teste no <code>TearDown</code>. Ao compilar o projeto de testes 
+com a flag <code>-gh</code> (<code>HeapTrc</code>), o executor deve finalizar reportando 
+<code>0 unfreed memory blocks</code>. Qualquer bloco órfão falha o build no CI/CD.</p>
+</blockquote>
+<h3 id="23-taxonomia-de-dubles-de-teste-no-object-pascal">2.3 Taxonomia de Dublês de Teste no Object Pascal</h3>
+<p>Na engenharia de software rigorosa (conforme definido por Gerard Meszaros 
+em <em>xUnit Test Patterns</em>), o termo genérico <em>Mock</em> engloba diferentes tipos 
+de dublês de teste (<em>Test Doubles</em>). No ecossistema Free Pascal orientado a 
+interfaces, utilizamos três variantes principais:</p>
+<ol>
+<li><strong>Dummy Objects:</strong> Instâncias passadas apenas para preencher parâmetros de 
+   métodos que nunca serão efetivamente utilizados na lógica testada.</li>
+<li><strong>Fake Objects / In-Memory Stubs:</strong> Implementações simplificadas e funcionais 
+   em memória (como uma lista <code>TList</code> ou array simulando a tabela <code>ordens_servico</code>), 
+   que devolvem respostas pré-definidas para alimentar o Service.</li>
+<li><strong>Mocks Estritos:</strong> Objetos que registram chamadas recebidas (métodos 
    invocados, parâmetros passados e contagem de execuções) e permitem verificar 
-   se o Service interagiu com o contrato exatamente como esperado.
-
-### 2.4 Arquitetura de Pipeline de CI/CD para Free Pascal no GitHub Actions
-
-Para assegurar que nenhum código defeituoso atinja a branch principal, 
+   se o Service interagiu com o contrato exatamente como esperado.</li>
+</ol>
+<h3 id="24-arquitetura-de-pipeline-de-cicd-para-free-pascal-no-github-actions">2.4 Arquitetura de Pipeline de CI/CD para Free Pascal no GitHub Actions</h3>
+<p>Para assegurar que nenhum código defeituoso atinja a branch principal, 
 configuramos um workflow automatizado no GitHub Actions 
-(`.github/workflows/ci.yml`). O runner Linux Ubuntu provisiona o compilador 
-`fpc` 3.2.2, resolve dependências e executa o runner de testes:
-
-
+(<code>.github/workflows/ci.yml</code>). O runner Linux Ubuntu provisiona o compilador 
+<code>fpc</code> 3.2.2, resolve dependências e executa o runner de testes:</p>
 <pre><code class="language-yaml">name: CI/CD Pipeline — ConnectOS API
 
 on:
@@ -1819,23 +1628,15 @@ jobs:
         with:
           report_paths: 'test-results.xml'
 </code></pre>
-
-
-Se qualquer asserção falhar ou se o relatório do `HeapTrc` acusar vazamento 
+<p>Se qualquer asserção falhar ou se o relatório do <code>HeapTrc</code> acusar vazamento 
 de memória, o pipeline é interrompido com erro, bloqueando o merge do 
-pull request antes de afetar o ambiente produtivo.
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 Construindo o Mock de Repositório (`Mocks.OrdemServico.pas`)
-
-Para testar a camada de serviço sem tocar no banco de dados Firebird, 
+pull request antes de afetar o ambiente produtivo.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo_2">3. Implementação Passo a Passo</h2>
+<h3 id="31-construindo-o-mock-de-repositorio-mocksordemservicopas">3.1 Construindo o Mock de Repositório (<code>Mocks.OrdemServico.pas</code>)</h3>
+<p>Para testar a camada de serviço sem tocar no banco de dados Firebird, 
 criamos um repositório simulado em memória que implementa 
-`IOrdemServicoRepository`:
-
-
+<code>IOrdemServicoRepository</code>:</p>
 <pre><code class="language-pascal">unit Mocks.OrdemServico;
 
 {$mode objfpc}{$H+}
@@ -1926,14 +1727,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.2 Testes Unitários de Regras de Negócio (`Test.Services.OrdemServico.pas`)
-
-Criamos a suíte de testes unitários validando cálculo de totais e transição 
-de status:
-
-
+<h3 id="32-testes-unitarios-de-regras-de-negocio-testservicesordemservicopas">3.2 Testes Unitários de Regras de Negócio (<code>Test.Services.OrdemServico.pas</code>)</h3>
+<p>Criamos a suíte de testes unitários validando cálculo de totais e transição 
+de status:</p>
 <pre><code class="language-pascal">unit Test.Services.OrdemServico;
 
 {$mode objfpc}{$H+}
@@ -2049,14 +1845,9 @@ initialization
 
 end.
 </code></pre>
-
-
-### 3.3 Testes de Integração HTTP (`Test.Integration.HTTP.pas`)
-
-Construímos um teste que faz uma requisição HTTP real contra o endpoint 
-de healthcheck da API para certificar o funcionamento do `fphttpserver`:
-
-
+<h3 id="33-testes-de-integracao-http-testintegrationhttppas">3.3 Testes de Integração HTTP (<code>Test.Integration.HTTP.pas</code>)</h3>
+<p>Construímos um teste que faz uma requisição HTTP real contra o endpoint 
+de healthcheck da API para certificar o funcionamento do <code>fphttpserver</code>:</p>
 <pre><code class="language-pascal">unit Test.Integration.HTTP;
 
 {$mode objfpc}{$H+}
@@ -2115,14 +1906,9 @@ initialization
 
 end.
 </code></pre>
-
-
-### 3.4 O Runner de Testes Console (`TestRunner.lpr`)
-
-Criamos o programa principal de execução de testes em linha de comando, 
-apto a exportar relatórios XML para pipelines de integração contínua:
-
-
+<h3 id="34-o-runner-de-testes-console-testrunnerlpr">3.4 O Runner de Testes Console (<code>TestRunner.lpr</code>)</h3>
+<p>Criamos o programa principal de execução de testes em linha de comando, 
+apto a exportar relatórios XML para pipelines de integração contínua:</p>
 <pre><code class="language-pascal">program TestRunner;
 
 {$mode objfpc}{$H+}
@@ -2159,37 +1945,26 @@ begin
   end;
 end.
 </code></pre>
-
-
-### 3.5 Testando Middlewares do Horse Isoladamente
-
-Além de testar Services e rotas HTTP completas, a arquitetura modular 
+<h3 id="35-testando-middlewares-do-horse-isoladamente">3.5 Testando Middlewares do Horse Isoladamente</h3>
+<p>Além de testar Services e rotas HTTP completas, a arquitetura modular 
 do Horse permite testar middlewares de forma puramente unitária. Como a 
-assinatura de um middleware é `procedure(Req: THorseRequest; Res: 
-THorseResponse; Next: TNextProc)`, podemos instanciar objetos simulados de 
-requisição e verificar se o middleware cumpre seu papel sem abrir um socket TCP.
-
-Por exemplo, para testar se o middleware de Correlation-ID injeta o cabeçalho 
-`X-Correlation-ID` quando ausente:
+assinatura de um middleware é <code>procedure(Req: THorseRequest; Res: 
+THorseResponse; Next: TNextProc)</code>, podemos instanciar objetos simulados de 
+requisição e verificar se o middleware cumpre seu papel sem abrir um socket TCP.</p>
+<p>Por exemplo, para testar se o middleware de Correlation-ID injeta o cabeçalho 
+<code>X-Correlation-ID</code> quando ausente:
 1. Criamos uma classe de teste que invoca o middleware diretamente.
-2. Passamos um procedimento fictício para o parâmetro `Next`.
+2. Passamos um procedimento fictício para o parâmetro <code>Next</code>.
 3. Verificamos se a variável booleana que indica o avanço do pipeline foi 
-   sinalizada como verdadeira (`AssertTrue('Next deve ser chamado', vNextChamado)`).
-4. Inspecionamos se o cabeçalho foi adicionado à resposta.
-
-Esse nível cirúrgico de teste unitário garante que alterações na ordem de 
-registro do pipeline (Módulo 05) não quebrem o fluxo de auditoria e segurança.
-
----
-
-## 4. Testando o Endpoint e Executando a Suíte
-
-### 4.1 Compilação e Execução dos Testes no Terminal
-
-Podemos compilar o runner de testes diretamente via linha de comando 
-utilizando o compilador `fpc`:
-
-
+   sinalizada como verdadeira (<code>AssertTrue('Next deve ser chamado', vNextChamado)</code>).
+4. Inspecionamos se o cabeçalho foi adicionado à resposta.</p>
+<p>Esse nível cirúrgico de teste unitário garante que alterações na ordem de 
+registro do pipeline (Módulo 05) não quebrem o fluxo de auditoria e segurança.</p>
+<hr />
+<h2 id="4-testando-o-endpoint-e-executando-a-suite">4. Testando o Endpoint e Executando a Suíte</h2>
+<h3 id="41-compilacao-e-execucao-dos-testes-no-terminal">4.1 Compilação e Execução dos Testes no Terminal</h3>
+<p>Podemos compilar o runner de testes diretamente via linha de comando 
+utilizando o compilador <code>fpc</code>:</p>
 <pre><code class="language-bash"># Compilando o runner com diagnostico de memoria (-gh)
 fpc -B -Mobjfpc -Sh -gh -gl -Fi./src -Fu./src/** -Fu./tests \
     tests/TestRunner.lpr -o./bin/test_runner
@@ -2197,10 +1972,7 @@ fpc -B -Mobjfpc -Sh -gh -gl -Fi./src -Fu./src/** -Fu./tests \
 # Executando todos os testes
 ./bin/test_runner --all
 </code></pre>
-
-
-**Saída esperada no terminal:**
-
+<p><strong>Saída esperada no terminal:</strong></p>
 <pre><code class="language-text">Loaded 4 tests
 Running 4 tests...
 ..
@@ -2213,19 +1985,13 @@ Heap dump by heaptrc unit of /home/dev/connectos/bin/test_runner
 0 unfreed memory blocks : 0
 True heap size : 131072
 </code></pre>
-
-
-O relatório do `HeapTrc` comprova que `0 unfreed memory blocks` foram 
-deixados para trás.
-
-### 4.2 Executando Testes Específicos em Ciclos Rápidos de TDD
-
-Durante o desenvolvimento diário orientado a testes (*Test-Driven Development*), 
+<p>O relatório do <code>HeapTrc</code> comprova que <code>0 unfreed memory blocks</code> foram 
+deixados para trás.</p>
+<h3 id="42-executando-testes-especificos-em-ciclos-rapidos-de-tdd">4.2 Executando Testes Específicos em Ciclos Rápidos de TDD</h3>
+<p>Durante o desenvolvimento diário orientado a testes (<em>Test-Driven Development</em>), 
 reexecutar a suíte completa a cada pequena alteração pode desacelerar o 
 fluxo de trabalho do programador. O runner do FPCUnit permite filtrar 
-precisamente qual teste ou classe executar via argumento `--suite`:
-
-
+precisamente qual teste ou classe executar via argumento <code>--suite</code>:</p>
 <pre><code class="language-bash"># Executando apenas a classe de testes de servico
 ./bin/test_runner --suite=TTestOrdemServicoService
 
@@ -2233,124 +1999,95 @@ precisamente qual teste ou classe executar via argumento `--suite`:
 ./bin/test_runner \
   --suite=TTestOrdemServicoService.TesteCalculoTotalItensCorreto
 </code></pre>
-
-
-O executor inicializa apenas os dublês necessários para aquele teste, 
+<p>O executor inicializa apenas os dublês necessários para aquele teste, 
 retornando o resultado em milissegundos. Isso propicia um ciclo virtuoso 
-*Red-Green-Refactor* com feedback imediato para o desenvolvedor.
-
-### 4.3 Gerando Relatório JUnit XML para CI/CD
-
-Para que servidores de automação (como GitHub Actions) exibam painéis 
-gráficos dos testes, executamos o runner no modo XML:
-
-
+<em>Red-Green-Refactor</em> com feedback imediato para o desenvolvedor.</p>
+<h3 id="43-gerando-relatorio-junit-xml-para-cicd">4.3 Gerando Relatório JUnit XML para CI/CD</h3>
+<p>Para que servidores de automação (como GitHub Actions) exibam painéis 
+gráficos dos testes, executamos o runner no modo XML:</p>
 <pre><code class="language-bash">./bin/test_runner --all --format=xml &gt; test-results.xml
 </code></pre>
-
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 Falsos Positivos no `HeapTrc` em Testes de Interfaces
-Ao testar classes gerenciadas por interface (`TInterfacedObject`), evite 
-declarar variáveis do tipo classe concreta (`vMock: TMockRepo`) misturadas 
-com atribuições à interface (`IOrdemServicoRepository`). Se o destrutor for 
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_2">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-falsos-positivos-no-heaptrc-em-testes-de-interfaces">5.1 Falsos Positivos no <code>HeapTrc</code> em Testes de Interfaces</h3>
+<p>Ao testar classes gerenciadas por interface (<code>TInterfacedObject</code>), evite 
+declarar variáveis do tipo classe concreta (<code>vMock: TMockRepo</code>) misturadas 
+com atribuições à interface (<code>IOrdemServicoRepository</code>). Se o destrutor for 
 chamado manualmente e a interface também tentar desalocar a instância na 
 saída do método, o FPC emitirá erro de corrupção de heap. 
-**Regra:** Manipule instâncias exclusivamente pelo tipo da interface.
-
-### 5.2 Testes de Integração Falhando por Falta de Rede
-Testes de integração HTTP não devem rodar se a API não estiver de pé. Em 
+<strong>Regra:</strong> Manipule instâncias exclusivamente pelo tipo da interface.</p>
+<h3 id="52-testes-de-integracao-falhando-por-falta-de-rede">5.2 Testes de Integração Falhando por Falta de Rede</h3>
+<p>Testes de integração HTTP não devem rodar se a API não estiver de pé. Em 
 pipelines de CI/CD, crie um script de orquestração que inicie a API em 
-segundo plano, aguarde o endpoint `/ping` responder `200 OK` (via `curl --retry`) 
-e só então dispare o `./test_runner`.
-
-### 5.3 Ambientes Headless e Ausência de Display no Linux
-Ao rodar testes que utilizam bibliotecas originalmente desenhadas para 
+segundo plano, aguarde o endpoint <code>/ping</code> responder <code>200 OK</code> (via <code>curl --retry</code>) 
+e só então dispare o <code>./test_runner</code>.</p>
+<h3 id="53-ambientes-headless-e-ausencia-de-display-no-linux">5.3 Ambientes Headless e Ausência de Display no Linux</h3>
+<p>Ao rodar testes que utilizam bibliotecas originalmente desenhadas para 
 desktop (LCL), o FPC tenta conectar-se ao servidor X11 local. Em servidores 
 Ubuntu em nuvem (onde não há display gráfico), o binário aborta com erro 
-`Can't connect to X11 window server`. 
-
-**Solução:** Mantenha os projetos de API e os runners de teste puramente em 
-modo console (`consoletestrunner` em vez de `guitestrunner`). Caso alguma 
+<code>Can't connect to X11 window server</code>. </p>
+<p><strong>Solução:</strong> Mantenha os projetos de API e os runners de teste puramente em 
+modo console (<code>consoletestrunner</code> em vez de <code>guitestrunner</code>). Caso alguma 
 dependência exija o subsistema de janelas, execute o binário envelopado com 
-o virtual framebuffer: `xvfb-run --auto-servernum ./bin/test_runner`.
-
-### 5.4 Limpeza de Arquivos Temporários de Teste
-Testes que manipulam anexos físicos (conforme visto no Módulo 14) devem 
-criar diretórios temporários isolados em `/tmp/test_storage/` durante o 
-`SetUp` e apagá-los recursivamente no `TearDown`. Deixar arquivos residuais 
+o virtual framebuffer: <code>xvfb-run --auto-servernum ./bin/test_runner</code>.</p>
+<h3 id="54-limpeza-de-arquivos-temporarios-de-teste">5.4 Limpeza de Arquivos Temporários de Teste</h3>
+<p>Testes que manipulam anexos físicos (conforme visto no Módulo 14) devem 
+criar diretórios temporários isolados em <code>/tmp/test_storage/</code> durante o 
+<code>SetUp</code> e apagá-los recursivamente no <code>TearDown</code>. Deixar arquivos residuais 
 em disco polui o ambiente de CI e causa falsos negativos em execuções 
-subsequentes.
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Neste módulo, estabelecemos uma blindagem de qualidade e testes automatizados 
+subsequentes.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_2">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Neste módulo, estabelecemos uma blindagem de qualidade e testes automatizados 
 de alta velocidade com o FPCUnit nativo, capacitando o projeto para entregas 
-contínuas sem riscos de regressão.
-
-### Checklist de Revisão
-- [ ] Os testes unitários de Services utilizam Mocks e rodam de forma 
-      independente do banco de dados Firebird?
-- [ ] Cenários de validação e disparo de exceções de domínio são verificados?
-- [ ] O `TearDown` de cada teste libera adequadamente os recursos instanciados?
-- [ ] A suíte roda limpa sob `HeapTrc` (`-gh`), acusando 0 blocos de 
-      memória vazados?
-- [ ] O runner console permite exportar relatórios padronizados em XML?
-
-
-# Módulo 18: Otimização do Compilador FPC, HeapTrc e Benchmarks de Carga
-
-Uma das maiores vantagens competitivas do ecossistema Free Pascal e Lazarus 
+contínuas sem riscos de regressão.</p>
+<h3 id="checklist-de-revisao_2">Checklist de Revisão</h3>
+<ul>
+<li>[ ] Os testes unitários de Services utilizam Mocks e rodam de forma 
+      independente do banco de dados Firebird?</li>
+<li>[ ] Cenários de validação e disparo de exceções de domínio são verificados?</li>
+<li>[ ] O <code>TearDown</code> de cada teste libera adequadamente os recursos instanciados?</li>
+<li>[ ] A suíte roda limpa sob <code>HeapTrc</code> (<code>-gh</code>), acusando 0 blocos de 
+      memória vazados?</li>
+<li>[ ] O runner console permite exportar relatórios padronizados em XML?</li>
+</ul>
+<h1 id="modulo-18-otimizacao-do-compilador-fpc-heaptrc-e-benchmarks-de-carga">Módulo 18: Otimização do Compilador FPC, HeapTrc e Benchmarks de Carga</h1>
+<p>Uma das maiores vantagens competitivas do ecossistema Free Pascal e Lazarus 
 reside na sua capacidade de compilar diretamente para código de máquina nativo 
 puro. Diferente de plataformas baseadas em máquinas virtuais gerenciadas 
 (como Java/JVM ou C#/.NET) ou interpretadores com Garbage Collectors pesados 
 (como Node.js ou Python), uma aplicação Horse compilada pelo FPC inicia em 
 milissegundos, opera com uma pegada de memória RAM irrisória (frequentemente 
 inferior a 25 MB) e entrega previsibilidade absoluta de latência, sem 
-pausas de coleta de lixo (*stop-the-world*).
-
-No entanto, extrair 100% do potencial da arquitetura de hardware exige 
+pausas de coleta de lixo (<em>stop-the-world</em>).</p>
+<p>No entanto, extrair 100% do potencial da arquitetura de hardware exige 
 domínio avançado das flags de otimização do compilador, técnicas de 
-*Smartlinking*, diagnóstico cirúrgico de vazamentos de memória sob carga 
-extrema com `HeapTrc` e aferição metódica de métricas de estresse através 
-de ferramentas de benchmark modernas como `wrk` e `k6`.
-
----
-
-## 1. Objetivos de Aprendizagem do Módulo
-
-Ao final deste módulo, você estará capacitado a:
-1. Dominar as principais diretivas e flags de compilação do FPC (`-O3`, 
-   `-Xs`, `-XX`, `-CX`, `-B`) para geração de binários de produção 
+<em>Smartlinking</em>, diagnóstico cirúrgico de vazamentos de memória sob carga 
+extrema com <code>HeapTrc</code> e aferição metódica de métricas de estresse através 
+de ferramentas de benchmark modernas como <code>wrk</code> e <code>k6</code>.</p>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_3">1. Objetivos de Aprendizagem do Módulo</h2>
+<p>Ao final deste módulo, você estará capacitado a:
+1. Dominar as principais diretivas e flags de compilação do FPC (<code>-O3</code>, 
+   <code>-Xs</code>, <code>-XX</code>, <code>-CX</code>, <code>-B</code>) para geração de binários de produção 
    ultrarrápidos e compactos.
-2. Compreender o funcionamento do *Smartlinking* na eliminação de código 
+2. Compreender o funcionamento do <em>Smartlinking</em> na eliminação de código 
    morto e redução drástica do tamanho do executável ELF/PE.
 3. Configurar perfis de compilação distintos (Debug vs. Release) no Lazarus 
    e em scripts de automação de build para Linux e Windows.
 4. Identificar e erradicar vazamentos de memória sutis sob carga utilizando 
-   o `HeapTrc` (`-gh`) e gerador de backtrace (`-gl`).
-5. Projetar e executar testes de estresse com `wrk` e `k6`, analisando 
+   o <code>HeapTrc</code> (<code>-gh</code>) e gerador de backtrace (<code>-gl</code>).
+5. Projetar e executar testes de estresse com <code>wrk</code> e <code>k6</code>, analisando 
    vazão de requisições por segundo (RPS) e latências nos percentis p95 e p99.
-6. Configurar o ambiente para compilação cruzada (*Cross-Compilation*) de 
-   Windows para Linux x86_64.
-
----
-
-## 2. Fundamentação Conceitual e Arquitetural
-
-### 2.1 O Pipeline de Geração de Código Nativo do FPC
-
-O Free Pascal não emite bytecode intermediário. Ele analisa os módulos 
+6. Configurar o ambiente para compilação cruzada (<em>Cross-Compilation</em>) de 
+   Windows para Linux x86_64.</p>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_3">2. Fundamentação Conceitual e Arquitetural</h2>
+<h3 id="21-o-pipeline-de-geracao-de-codigo-nativo-do-fpc">2.1 O Pipeline de Geração de Código Nativo do FPC</h3>
+<p>O Free Pascal não emite bytecode intermediário. Ele analisa os módulos 
 Pascal, constrói a árvore sintática abstrata (AST), otimiza o fluxo de 
 registradores do processador e gera código assembly nativo diretamente 
-para a arquitetura alvo (x86_64, AArch64, ARM, etc.).
-
-
+para a arquitetura alvo (x86_64, AArch64, ARM, etc.).</p>
 <pre><code>+--------------------------------------------------------------------+
 |                  PIPELINE DE COMPILACAO DO FPC                     |
 |                                                                    |
@@ -2372,67 +2109,90 @@ para a arquitetura alvo (x86_64, AArch64, ARM, etc.).
 |  [Binario ELF/PE Nativo Puro] (Zero JVM, Zero CLR, Zero Node.js)   |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-### 2.2 Anatomia das Flags de Compilação Críticas
-
-Para construir APIs de produção, a combinação adequada de flags no comando 
-`fpc` faz a diferença entre um executável de 45 MB com logs de depuração 
-ou um binário hiperotimizado de apenas 4 MB:
-
-| Flag FPC | Categoria | Descrição Técnica e Efeito Prático |
-|---|---|---|
-| `-O3` | Otimização | Habilita otimizações agressivas de velocidade (inlining de métodos curtos, loop unrolling e alocação de registradores). |
-| `-Xs` | Stripping | Remove a tabela de símbolos de depuração (*strip*), reduzindo o tamanho físico do executável em até 70%. |
-| `-XX` | Smartlinking | Gera seções de código independentes para permitir que o linker descarte rotinas e units não invocadas. |
-| `-CX` | Smartlinking | Cria bibliotecas com suporte a smartlinking durante a geração de arquivos `.a` / `.o`. |
-| `-B` | Build | Força a recompilação de todas as units dependentes, prevenindo incompatibilidade de arquivos `.ppu` órfãos. |
-| `-gh` | Diagnóstico | Ativa o rastreador de heap `HeapTrc` (USAR EXCLUSIVAMENTE EM DEBUG). |
-| `-gl` | Diagnóstico | Adiciona informações de número de linha aos relatórios de erro e exceção. |
-
-<blockquote class="alert-arquitetura"><strong>Nota de Arquitetura:</strong>
-> **Nunca utilize a flag `-gh` em ambiente de produção.** O `HeapTrc` envelopa 
-> todas as chamadas nativas de `GetMem` e `FreeMem` com estruturas de 
-> sentinela para auditoria. Em uma API com milhares de requisições por 
-> segundo, isso degrada a performance em mais de 60% e pode esgotar a RAM do 
-> servidor com tabelas de alocação de depuração.
-
-### 2.3 Compilação Cruzada: Desenvolvendo no Windows, Gerando para Linux
-
-Muitos desenvolvedores utilizam o Lazarus em estações de trabalho Windows 11, 
+<h3 id="22-anatomia-das-flags-de-compilacao-criticas">2.2 Anatomia das Flags de Compilação Críticas</h3>
+<p>Para construir APIs de produção, a combinação adequada de flags no comando 
+<code>fpc</code> faz a diferença entre um executável de 45 MB com logs de depuração 
+ou um binário hiperotimizado de apenas 4 MB:</p>
+<table>
+<thead>
+<tr>
+<th>Flag FPC</th>
+<th>Categoria</th>
+<th>Descrição Técnica e Efeito Prático</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-O3</code></td>
+<td>Otimização</td>
+<td>Habilita otimizações agressivas de velocidade (inlining de métodos curtos, loop unrolling e alocação de registradores).</td>
+</tr>
+<tr>
+<td><code>-Xs</code></td>
+<td>Stripping</td>
+<td>Remove a tabela de símbolos de depuração (<em>strip</em>), reduzindo o tamanho físico do executável em até 70%.</td>
+</tr>
+<tr>
+<td><code>-XX</code></td>
+<td>Smartlinking</td>
+<td>Gera seções de código independentes para permitir que o linker descarte rotinas e units não invocadas.</td>
+</tr>
+<tr>
+<td><code>-CX</code></td>
+<td>Smartlinking</td>
+<td>Cria bibliotecas com suporte a smartlinking durante a geração de arquivos <code>.a</code> / <code>.o</code>.</td>
+</tr>
+<tr>
+<td><code>-B</code></td>
+<td>Build</td>
+<td>Força a recompilação de todas as units dependentes, prevenindo incompatibilidade de arquivos <code>.ppu</code> órfãos.</td>
+</tr>
+<tr>
+<td><code>-gh</code></td>
+<td>Diagnóstico</td>
+<td>Ativa o rastreador de heap <code>HeapTrc</code> (USAR EXCLUSIVAMENTE EM DEBUG).</td>
+</tr>
+<tr>
+<td><code>-gl</code></td>
+<td>Diagnóstico</td>
+<td>Adiciona informações de número de linha aos relatórios de erro e exceção.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Nota de Arquitetura:</strong>
+<strong>Nunca utilize a flag <code>-gh</code> em ambiente de produção.</strong> O <code>HeapTrc</code> envelopa 
+todas as chamadas nativas de <code>GetMem</code> e <code>FreeMem</code> com estruturas de 
+sentinela para auditoria. Em uma API com milhares de requisições por 
+segundo, isso degrada a performance em mais de 60% e pode esgotar a RAM do 
+servidor com tabelas de alocação de depuração.</p>
+</blockquote>
+<h3 id="23-compilacao-cruzada-desenvolvendo-no-windows-gerando-para-linux">2.3 Compilação Cruzada: Desenvolvendo no Windows, Gerando para Linux</h3>
+<p>Muitos desenvolvedores utilizam o Lazarus em estações de trabalho Windows 11, 
 mas realizam o deploy da API em instâncias Linux (Ubuntu Server em nuvem). O 
 FPC suporta compilação cruzada nativa através das diretivas de arquitetura 
-e sistema operacional:
-
-
+e sistema operacional:</p>
 <pre><code class="language-bash"># Compilando para Linux x86_64 a partir do Windows
 fpc -Tlinux -Px86_64 -Mobjfpc -Sh -O3 -XX -Xs \
     -FlC:\fpc\cross\lib\x86_64-linux \
     ConnectOSApi.lpr
 </code></pre>
-
-
-Para que a compilação cruzada funcione perfeitamente, o FPC necessita do 
-binário cruzado do assembler (`as`) e linker (`ld`) do GNU Binutils para 
-Linux, além das bibliotecas base da libc (`libc.so`, `libpthread.so`).
-
-### 2.4 O Gerenciador de Memória do FPC: Heap Nativo vs. `cmem`
-
-Por padrão, o Free Pascal implementa seu próprio gerenciador de memória 
+<p>Para que a compilação cruzada funcione perfeitamente, o FPC necessita do 
+binário cruzado do assembler (<code>as</code>) e linker (<code>ld</code>) do GNU Binutils para 
+Linux, além das bibliotecas base da libc (<code>libc.so</code>, <code>libpthread.so</code>).</p>
+<h3 id="24-o-gerenciador-de-memoria-do-fpc-heap-nativo-vs-cmem">2.4 O Gerenciador de Memória do FPC: Heap Nativo vs. <code>cmem</code></h3>
+<p>Por padrão, o Free Pascal implementa seu próprio gerenciador de memória 
 interno em nível de runtime. Esse gerenciador é extremamente rápido para 
 alocações sequenciais pequenas em aplicações mono-thread. No entanto, em 
 servidores HTTP multi-threaded com dezenas de threads simultâneas do 
-`fphttpserver` alocando e desalocando JSONs e DTOs, o alocador nativo do FPC 
-pode sofrer com contenção no lock global de alocação de memória.
-
-Para resolver isso em servidores Linux de alto tráfego, o Free Pascal 
-fornece a unit `cmem`. Ao incluir `cmem` como a **primeiríssima unit** do 
-arquivo principal `.lpr` (antes mesmo de `cthreads`), o runtime do FPC 
-substitui seu alocador interno pelas chamadas nativas de `malloc`, `realloc` 
-e `free` da biblioteca padrão C (`glibc` ou alocadores modernos como 
-`jemalloc` ou `tcmalloc`):
-
-
+<code>fphttpserver</code> alocando e desalocando JSONs e DTOs, o alocador nativo do FPC 
+pode sofrer com contenção no lock global de alocação de memória.</p>
+<p>Para resolver isso em servidores Linux de alto tráfego, o Free Pascal 
+fornece a unit <code>cmem</code>. Ao incluir <code>cmem</code> como a <strong>primeiríssima unit</strong> do 
+arquivo principal <code>.lpr</code> (antes mesmo de <code>cthreads</code>), o runtime do FPC 
+substitui seu alocador interno pelas chamadas nativas de <code>malloc</code>, <code>realloc</code> 
+e <code>free</code> da biblioteca padrão C (<code>glibc</code> ou alocadores modernos como 
+<code>jemalloc</code> ou <code>tcmalloc</code>):</p>
 <pre><code class="language-pascal">program ConnectOSApi;
 
 {$mode objfpc}{$H+}
@@ -2444,56 +2204,43 @@ uses
   {$ENDIF}
   SysUtils, Classes, Horse, ...
 </code></pre>
-
-
-**Benefícios do `cmem` sob Carga Concorrente:**
-- **Zero Contenção de Lock Global:** Alocadores como o da `glibc` utilizam 
-  arenas de memória separadas por thread (*per-thread memory arenas*).
-- **Menor Fragmentação em Long Runs:** O sistema operacional recupera 
+<p><strong>Benefícios do <code>cmem</code> sob Carga Concorrente:</strong>
+- <strong>Zero Contenção de Lock Global:</strong> Alocadores como o da <code>glibc</code> utilizam 
+  arenas de memória separadas por thread (<em>per-thread memory arenas</em>).
+- <strong>Menor Fragmentação em Long Runs:</strong> O sistema operacional recupera 
   páginas de memória desalocadas com maior eficiência.
-- **Integração com Profilers de SO:** Permite que ferramentas como `valgrind`, 
-  `massif` e `perf` inspecionem as alocações da API diretamente.
-
-Para extrair desempenho ainda mais extremo em servidores com 32 ou mais 
-núcleos de CPU, você pode vincular a API diretamente ao alocador `jemalloc` 
-ou `tcmalloc` (desenvolvido pelo Google), bastando instalar a biblioteca 
-no Linux (`sudo apt-get install libjemalloc2`) e inicializar a aplicação 
-com a variável de ambiente `LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2`. 
+- <strong>Integração com Profilers de SO:</strong> Permite que ferramentas como <code>valgrind</code>, 
+  <code>massif</code> e <code>perf</code> inspecionem as alocações da API diretamente.</p>
+<p>Para extrair desempenho ainda mais extremo em servidores com 32 ou mais 
+núcleos de CPU, você pode vincular a API diretamente ao alocador <code>jemalloc</code> 
+ou <code>tcmalloc</code> (desenvolvido pelo Google), bastando instalar a biblioteca 
+no Linux (<code>sudo apt-get install libjemalloc2</code>) e inicializar a aplicação 
+com a variável de ambiente <code>LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2</code>. 
 Isso elimina qualquer fragmentação residual de memória durante semanas 
-ininterruptas de operação sob carga pesada.
-
-### 2.5 Guia de Configuração do Cross-Compiler Windows para Linux
-
-Para habilitar a compilação cruzada no Lazarus sob Windows:
+ininterruptas de operação sob carga pesada.</p>
+<h3 id="25-guia-de-configuracao-do-cross-compiler-windows-para-linux">2.5 Guia de Configuração do Cross-Compiler Windows para Linux</h3>
+<p>Para habilitar a compilação cruzada no Lazarus sob Windows:
 1. Instale o pacote oficial de binários cruzados do FPC: 
-   `fpc-3.2.2.x86_64-linux.cross.binutils.exe`.
+   <code>fpc-3.2.2.x86_64-linux.cross.binutils.exe</code>.
 2. O instalador deposita os utilitários de linkedição GNU em 
-   `C:\lazarus\fpc\3.2.2\bin\i386-win32\x86_64-linux-*.exe`.
+   <code>C:\lazarus\fpc\3.2.2\bin\i386-win32\x86_64-linux-*.exe</code>.
 3. Extraia as bibliotecas dinâmicas essenciais de uma instalação Ubuntu 
-   (`libc.so.6`, `libm.so.6`, `libpthread.so.0`, `ld-linux-x86-64.so.2`) 
-   para o diretório `C:\lazarus\fpc\3.2.2\lib\x86_64-linux\`.
-4. No arquivo de configuração global `fpc.cfg`, adicione as regras de busca:
-   ```text
+   (<code>libc.so.6</code>, <code>libm.so.6</code>, <code>libpthread.so.0</code>, <code>ld-linux-x86-64.so.2</code>) 
+   para o diretório <code>C:\lazarus\fpc\3.2.2\lib\x86_64-linux\</code>.
+4. No arquivo de configuração global <code>fpc.cfg</code>, adicione as regras de busca:
+   <code>text
    #IFDEF LINUX
    -FlC:\lazarus\fpc\3.2.2\lib\x86_64-linux
    -Xr/usr/lib
-   #ENDIF
-   ```
-
-A partir dessa configuração, compilar um binário para a nuvem Linux requer 
-apenas selecionar o perfil `Linux x86_64` no menu de opções do projeto no 
-Lazarus ou passar `-Tlinux -Px86_64` na linha de comando.
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 Script Automatizado de Compilação de Produção (`build_release.sh`)
-
-Criamos um script shell otimizado para compilar a API ConnectOS no Ubuntu 
-Server 24.04 LTS:
-
-
+   #ENDIF</code></p>
+<p>A partir dessa configuração, compilar um binário para a nuvem Linux requer 
+apenas selecionar o perfil <code>Linux x86_64</code> no menu de opções do projeto no 
+Lazarus ou passar <code>-Tlinux -Px86_64</code> na linha de comando.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo_3">3. Implementação Passo a Passo</h2>
+<h3 id="31-script-automatizado-de-compilacao-de-producao-build_releasesh">3.1 Script Automatizado de Compilação de Produção (<code>build_release.sh</code>)</h3>
+<p>Criamos um script shell otimizado para compilar a API ConnectOS no Ubuntu 
+Server 24.04 LTS:</p>
 <pre><code class="language-bash">#!/usr/bin/env bash
 # ===================================================================
 # Script de Compilacao de Producao — ConnectOS API
@@ -2536,14 +2283,9 @@ if command -v upx &amp;&gt; /dev/null; then
     ls -lh &quot;${OUTPUT_BIN}&quot;
 fi
 </code></pre>
-
-
-### 3.2 Script de Diagnóstico de Memória em Modo Debug (`build_debug.sh`)
-
-Para detectar vazamentos de memória antes de liberar versões para produção, 
-criamos o script de depuração com `HeapTrc`:
-
-
+<h3 id="32-script-de-diagnostico-de-memoria-em-modo-debug-build_debugsh">3.2 Script de Diagnóstico de Memória em Modo Debug (<code>build_debug.sh</code>)</h3>
+<p>Para detectar vazamentos de memória antes de liberar versões para produção, 
+criamos o script de depuração com <code>HeapTrc</code>:</p>
 <pre><code class="language-bash">#!/usr/bin/env bash
 # ===================================================================
 # Script de Compilacao em Modo Debug com Rastreamento de Heap
@@ -2577,14 +2319,9 @@ fpc -B \
 
 echo &quot;==&gt; Binario de Debug gerado com sucesso: ${OUTPUT_BIN}&quot;
 </code></pre>
-
-
-### 3.3 Script de Benchmark de Estresse com `k6` (`benchmark.js`)
-
-Criamos um cenário de teste de carga simulando 200 clientes simultâneos 
-disparando requisições contra a rota de listagem de Ordens de Serviço:
-
-
+<h3 id="33-script-de-benchmark-de-estresse-com-k6-benchmarkjs">3.3 Script de Benchmark de Estresse com <code>k6</code> (<code>benchmark.js</code>)</h3>
+<p>Criamos um cenário de teste de carga simulando 200 clientes simultâneos 
+disparando requisições contra a rota de listagem de Ordens de Serviço:</p>
 <pre><code class="language-javascript">import http from 'k6/http';
 import { check, sleep } from 'k6';
 
@@ -2621,14 +2358,9 @@ export default function () {
   sleep(0.05); // Pausa minima simulando navegacao real
 }
 </code></pre>
-
-
-### 3.4 Script PowerShell de Build de Produção para Windows (`build_release.ps1`)
-
-Para desenvolvedores operando nativamente em estações Windows 11, criamos 
-o script correspondente em PowerShell para automação do build de release:
-
-
+<h3 id="34-script-powershell-de-build-de-producao-para-windows-build_releaseps1">3.4 Script PowerShell de Build de Produção para Windows (<code>build_release.ps1</code>)</h3>
+<p>Para desenvolvedores operando nativamente em estações Windows 11, criamos 
+o script correspondente em PowerShell para automação do build de release:</p>
 <pre><code class="language-powershell"># ===================================================================
 # Script de Build de Producao (Windows x86_64) — ConnectOS API
 # ===================================================================
@@ -2668,25 +2400,15 @@ if ($LASTEXITCODE -eq 0) {
     Write-Error &quot;Falha na compilacao da API.&quot;
 }
 </code></pre>
-
-
----
-
-## 4. Testando o Endpoint e Analisando Resultados
-
-### 4.1 Executando Teste de Carga com `wrk`
-
-O `wrk` é uma ferramenta de benchmark HTTP de alta performance escrita em 
+<hr />
+<h2 id="4-testando-o-endpoint-e-analisando-resultados">4. Testando o Endpoint e Analisando Resultados</h2>
+<h3 id="41-executando-teste-de-carga-com-wrk">4.1 Executando Teste de Carga com <code>wrk</code></h3>
+<p>O <code>wrk</code> é uma ferramenta de benchmark HTTP de alta performance escrita em 
 C, capaz de gerar cargas expressivas utilizando poucos threads locais. 
-Executaremos um teste com 12 threads e 400 conexões abertas durante 30 segundos:
-
-
+Executaremos um teste com 12 threads e 400 conexões abertas durante 30 segundos:</p>
 <pre><code class="language-bash">wrk -t12 -c400 -d30s --latency http://localhost:9000/ping
 </code></pre>
-
-
-**Resultado Típico de Performance da API Horse no Lazarus:**
-
+<p><strong>Resultado Típico de Performance da API Horse no Lazarus:</strong></p>
 <pre><code class="language-text">Running 30s test @ http://localhost:9000/ping
   12 threads and 400 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -2701,144 +2423,110 @@ Executaremos um teste com 12 threads e 400 conexões abertas durante 30 segundos
 Requests/sec: 220,672.21
 Transfer/sec:     42.59MB
 </code></pre>
-
-
-Observe a taxa impressionante: **mais de 220.000 requisições por segundo**, 
+<p>Observe a taxa impressionante: <strong>mais de 220.000 requisições por segundo</strong>, 
 com latência média de 1,85 milissegundos e percentil p99 em apenas 6,4 ms. 
 Isso demonstra o poder bruto do código de máquina gerado pelo FPC acoplado ao 
-`fphttpserver`.
-
-### 4.2 Monitoramento de Memória (RSS) sob Carga
-
-Durante a execução do teste de estresse de 30 segundos, monitoramos o 
-consumo de memória com o comando `ps`:
-
-
+<code>fphttpserver</code>.</p>
+<h3 id="42-monitoramento-de-memoria-rss-sob-carga">4.2 Monitoramento de Memória (RSS) sob Carga</h3>
+<p>Durante a execução do teste de estresse de 30 segundos, monitoramos o 
+consumo de memória com o comando <code>ps</code>:</p>
 <pre><code class="language-bash">watch -n 1 'ps -C connect_os_api -o pid,user,%cpu,%mem,rss,vsz,cmd'
 </code></pre>
-
-
-**Comportamento Observado:**
-O consumo residente de memória (RSS) estabiliza-se em **18 MB** e permanece 
+<p><strong>Comportamento Observado:</strong>
+O consumo residente de memória (RSS) estabiliza-se em <strong>18 MB</strong> e permanece 
 completamente estável do início ao fim do teste. Diferente de aplicações 
 baseadas em linguagens com Garbage Collector (onde a memória sobe em dentes 
 de serra até que o ciclo de coleta seja disparado), o gerenciamento nativo 
 de memória do Free Pascal devolve blocos desalocados imediatamente para o 
-gerenciador de heap do sistema operacional.
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 O Erro de Inicialização por Ausência de `cthreads`
-Ao compilar o projeto para Linux em modo Release, se a unit `cthreads` não 
-for a primeiríssima unit da cláusula `uses` do arquivo principal `.lpr`:
-
+gerenciador de heap do sistema operacional.</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_3">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-o-erro-de-inicializacao-por-ausencia-de-cthreads">5.1 O Erro de Inicialização por Ausência de <code>cthreads</code></h3>
+<p>Ao compilar o projeto para Linux em modo Release, se a unit <code>cthreads</code> não 
+for a primeiríssima unit da cláusula <code>uses</code> do arquivo principal <code>.lpr</code>:</p>
 <pre><code class="language-text">Runtime error 211 at $000000000045A1B0
 </code></pre>
-
-O runtime do FPC aborta imediatamente porque o `fphttpserver` tentou criar 
+<p>O runtime do FPC aborta imediatamente porque o <code>fphttpserver</code> tentou criar 
 uma thread de trabalho sem que a biblioteca de threads nativa do POSIX 
-(`libpthread`) tenha sido registrada pelo gerenciador de threads do FPC.
-
-### 5.2 Alocação Excessiva de Strings Curtas em Loops
-O tipo `string` com a diretiva `{$H+}` é implementado como uma string 
-dinâmica de referência contada (*AnsiString*). Concatenações repetitivas 
-dentro de loops pesados (`vSQL := vSQL + '...'`) forçam constantes chamadas 
-ao `ReAllocMem`. Em trechos de ultra performance, utilize `TStringBuilder` 
-ou aloque buffers de tamanho pré-dimensionado para evitar fragmentação de heap.
-
-### 5.3 Otimizações Agressivas e Inlining Indesejado
-Ao utilizar a flag `-O4`, o compilador FPC realiza otimizações especulativas 
+(<code>libpthread</code>) tenha sido registrada pelo gerenciador de threads do FPC.</p>
+<h3 id="52-alocacao-excessiva-de-strings-curtas-em-loops">5.2 Alocação Excessiva de Strings Curtas em Loops</h3>
+<p>O tipo <code>string</code> com a diretiva <code>{$H+}</code> é implementado como uma string 
+dinâmica de referência contada (<em>AnsiString</em>). Concatenações repetitivas 
+dentro de loops pesados (<code>vSQL := vSQL + '...'</code>) forçam constantes chamadas 
+ao <code>ReAllocMem</code>. Em trechos de ultra performance, utilize <code>TStringBuilder</code> 
+ou aloque buffers de tamanho pré-dimensionado para evitar fragmentação de heap.</p>
+<h3 id="53-otimizacoes-agressivas-e-inlining-indesejado">5.3 Otimizações Agressivas e Inlining Indesejado</h3>
+<p>Ao utilizar a flag <code>-O4</code>, o compilador FPC realiza otimizações especulativas 
 e inlining de funções em cascata. Em raros cenários com manipulação de 
 ponteiros puros ou inline assembly, isso pode gerar bugs sutis. 
-**Recomendação de Produção:** Mantenha o patamar de otimização em `-O3`, que 
-oferece o equilíbrio ideal entre velocidade máxima e estabilidade garantida.
-
-### 5.4 Erros de Linker "cannot find -lc" ou "cannot find -lpthread"
-Ao tentar realizar compilação cruzada para Linux a partir do Windows, se 
-o compilador retornar:
-
+<strong>Recomendação de Produção:</strong> Mantenha o patamar de otimização em <code>-O3</code>, que 
+oferece o equilíbrio ideal entre velocidade máxima e estabilidade garantida.</p>
+<h3 id="54-erros-de-linker-cannot-find-lc-ou-cannot-find-lpthread">5.4 Erros de Linker "cannot find -lc" ou "cannot find -lpthread"</h3>
+<p>Ao tentar realizar compilação cruzada para Linux a partir do Windows, se 
+o compilador retornar:</p>
 <pre><code class="language-text">Error: Error while linking
 /usr/bin/x86_64-linux-gnu-ld: cannot find -lc
 /usr/bin/x86_64-linux-gnu-ld: cannot find -lpthread
 </code></pre>
-
-O motivo é que o linker GNU não encontrou os arquivos `.so` de importação da 
-libc do Linux. Garanta que o caminho especificado na diretiva `-Fl` aponte 
+<p>O motivo é que o linker GNU não encontrou os arquivos <code>.so</code> de importação da 
+libc do Linux. Garanta que o caminho especificado na diretiva <code>-Fl</code> aponte 
 para o diretório exato onde as bibliotecas x86_64 do Linux foram descompactadas 
-e que os symlinks (como `libc.so` apontando para `libc.so.6`) estejam 
-preservados intactos.
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Neste módulo, elevamos nossa API ao patamar máximo de performance que o 
+e que os symlinks (como <code>libc.so</code> apontando para <code>libc.so.6</code>) estejam 
+preservados intactos.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_3">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Neste módulo, elevamos nossa API ao patamar máximo de performance que o 
 hardware hospedeiro pode oferecer, configurando compilações de produção 
-enxutas e auditando a ausência de vazamentos sob tráfego massivo.
-
-### Checklist de Revisão
-- [ ] O binário de produção é compilado com as flags `-O3 -XX -Xs -B`?
-- [ ] A flag de auditoria de memória `-gh` está desativada no build final?
-- [ ] O tamanho do executável compilado situa-se entre 3 MB e 8 MB?
-- [ ] A suíte de testes de estresse (`k6` ou `wrk`) confirma estabilidade de 
-      consumo de memória RAM (sem vazamento contínuo)?
-- [ ] A latência p99 permaneceu em patamares inferiores a 20 ms sob carga?
-- [ ] O script de compilação automatiza a limpeza de diretórios temporários?
-
-
-# Módulo 19: Daemons de Produção com systemd e Windows Services
-
-Em ambientes de produção corporativos, uma API REST não pode depender 
+enxutas e auditando a ausência de vazamentos sob tráfego massivo.</p>
+<h3 id="checklist-de-revisao_3">Checklist de Revisão</h3>
+<ul>
+<li>[ ] O binário de produção é compilado com as flags <code>-O3 -XX -Xs -B</code>?</li>
+<li>[ ] A flag de auditoria de memória <code>-gh</code> está desativada no build final?</li>
+<li>[ ] O tamanho do executável compilado situa-se entre 3 MB e 8 MB?</li>
+<li>[ ] A suíte de testes de estresse (<code>k6</code> ou <code>wrk</code>) confirma estabilidade de 
+      consumo de memória RAM (sem vazamento contínuo)?</li>
+<li>[ ] A latência p99 permaneceu em patamares inferiores a 20 ms sob carga?</li>
+<li>[ ] O script de compilação automatiza a limpeza de diretórios temporários?</li>
+</ul>
+<h1 id="modulo-19-daemons-de-producao-com-systemd-e-windows-services">Módulo 19: Daemons de Produção com systemd e Windows Services</h1>
+<p>Em ambientes de produção corporativos, uma API REST não pode depender 
 de sessões interativas de terminal abertas via SSH ou de janelas de console 
 no desktop do administrador. Se o servidor for reiniciado para aplicação de 
 patches de segurança do kernel ou se o processo sofrer um encerramento 
 inesperado, o sistema operacional deve ser capaz de reiniciar a aplicação 
-de forma autônoma em milissegundos.
-
-Além disso, a API deve operar sob o princípio do menor privilégio (*Least 
-Privilege*), executando sob um usuário dedicado do sistema, gerenciando 
+de forma autônoma em milissegundos.</p>
+<p>Além disso, a API deve operar sob o princípio do menor privilégio (<em>Least 
+Privilege</em>), executando sob um usuário dedicado do sistema, gerenciando 
 limites de descritores de arquivos para suportar milhares de conexões TCP 
 simultâneas e respondendo adequadamente a sinais de encerramento gracioso 
-(*Graceful Shutdown*).
-
-Neste módulo, aprenderemos a empacotar e gerenciar nossa API Horse como um 
-daemon nativo do **systemd** no Ubuntu Linux 24.04 LTS e como um serviço do 
-**Windows Service**, garantindo disponibilidade contínua, telemetria de 
-logs com `journalctl` e ciclo de vida robusto.
-
----
-
-## 1. Objetivos de Aprendizagem do Módulo
-
-Ao término deste módulo, você será capaz de:
-1. Projetar e configurar uma unidade de serviço nativa do **systemd** 
-   (`/etc/systemd/system/connectos-api.service`) para o Linux.
-2. Implementar a política de reinicialização automática (`Restart=always`) 
-   e limites de segurança de sistema operacional (`LimitNOFILE=65536`).
-3. Tratar sinais POSIX (`SIGTERM`, `SIGINT`) no Free Pascal para encerramento 
+(<em>Graceful Shutdown</em>).</p>
+<p>Neste módulo, aprenderemos a empacotar e gerenciar nossa API Horse como um 
+daemon nativo do <strong>systemd</strong> no Ubuntu Linux 24.04 LTS e como um serviço do 
+<strong>Windows Service</strong>, garantindo disponibilidade contínua, telemetria de 
+logs com <code>journalctl</code> e ciclo de vida robusto.</p>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_4">1. Objetivos de Aprendizagem do Módulo</h2>
+<p>Ao término deste módulo, você será capaz de:
+1. Projetar e configurar uma unidade de serviço nativa do <strong>systemd</strong> 
+   (<code>/etc/systemd/system/connectos-api.service</code>) para o Linux.
+2. Implementar a política de reinicialização automática (<code>Restart=always</code>) 
+   e limites de segurança de sistema operacional (<code>LimitNOFILE=65536</code>).
+3. Tratar sinais POSIX (<code>SIGTERM</code>, <code>SIGINT</code>) no Free Pascal para encerramento 
    gracioso, esvaziando o Pool de Conexões sem derrubar requisições ativas.
-4. Operar o serviço com comandos de controle `systemctl` (start, stop, 
+4. Operar o serviço com comandos de controle <code>systemctl</code> (start, stop, 
    restart, status, enable).
 5. Analisar, filtrar e auditar logs do sistema através do utilitário 
-   `journalctl` com rotação estruturada.
-6. Configurar a execução da API como um **Windows Service** nativo 
-   utilizando o gerenciador de serviços do Windows (`sc.exe` ou WinSW).
-
----
-
-## 2. Fundamentação Conceitual e Arquitetural
-
-### 2.1 A Arquitetura do systemd no Linux Moderno
-
-O `systemd` é o sistema de inicialização (*init system*) e gerenciador de 
+   <code>journalctl</code> com rotação estruturada.
+6. Configurar a execução da API como um <strong>Windows Service</strong> nativo 
+   utilizando o gerenciador de serviços do Windows (<code>sc.exe</code> ou WinSW).</p>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_4">2. Fundamentação Conceitual e Arquitetural</h2>
+<h3 id="21-a-arquitetura-do-systemd-no-linux-moderno">2.1 A Arquitetura do systemd no Linux Moderno</h3>
+<p>O <code>systemd</code> é o sistema de inicialização (<em>init system</em>) e gerenciador de 
 serviços padrão das principais distribuições Linux corporativas (Ubuntu, 
 Debian, Red Hat, CentOS). Ele substituiu os antigos scripts SysVinit, 
 oferecendo paralelização no boot, monitoramento de processos via cgroups 
-(grupos de controle) e supervisão contínua:
-
-
+(grupos de controle) e supervisão contínua:</p>
 <pre><code>+--------------------------------------------------------------------+
 |                SUPERVISAO DE PROCESSOS VIA SYSTEMD                 |
 |                                                                    |
@@ -2858,91 +2546,69 @@ oferecendo paralelização no boot, monitoramento de processos via cgroups
 |         +---&gt; Se receber systemctl stop: envia SIGTERM gracioso    |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-### 2.2 O Desafio Crítico dos Descritores de Arquivos (`LimitNOFILE`)
-
-No Linux, a máxima "tudo é um arquivo" aplica-se rigorosamente às conexões 
+<h3 id="22-o-desafio-critico-dos-descritores-de-arquivos-limitnofile">2.2 O Desafio Crítico dos Descritores de Arquivos (<code>LimitNOFILE</code>)</h3>
+<p>No Linux, a máxima "tudo é um arquivo" aplica-se rigorosamente às conexões 
 de rede. Cada socket TCP aberto por um cliente HTTP consumindo a API Horse 
-utiliza um **descritor de arquivo** (*file descriptor*). 
-
-Por padrão, a maioria das distribuições Linux impõe um limite moderado de 
+utiliza um <strong>descritor de arquivo</strong> (<em>file descriptor</em>). </p>
+<p>Por padrão, a maioria das distribuições Linux impõe um limite moderado de 
 1.024 descritores por processo para usuários comuns. Se a sua API receber 
 1.500 requisições simultâneas em um pico de tráfego, o kernel rejeitará as 
-novas conexões com o erro fatal:
-
+novas conexões com o erro fatal:</p>
 <pre><code class="language-text">Socket Error: Too many open files (EMFILE)
 </code></pre>
-
-
-<blockquote class="alert-threadsafety"><strong>Atenção Thread-Safety:</strong>
-> No arquivo de unidade do systemd, é obrigatório definir explicitamente 
-> `LimitNOFILE=65536`. Essa diretiva eleva o teto de sockets simultâneos que 
-> o Horse pode manter abertos, impedindo a negação de serviço por esgotamento 
-> de descritores locais.
-
-### 2.3 Encerramento Gracioso (*Graceful Shutdown*)
-
-Quando o administrador emite `systemctl restart connectos-api` para aplicar 
-uma nova versão, o systemd envia o sinal `SIGTERM` ao processo. Se a 
+<blockquote>
+<p><strong>Atenção Thread-Safety:</strong>
+No arquivo de unidade do systemd, é obrigatório definir explicitamente 
+<code>LimitNOFILE=65536</code>. Essa diretiva eleva o teto de sockets simultâneos que 
+o Horse pode manter abertos, impedindo a negação de serviço por esgotamento 
+de descritores locais.</p>
+</blockquote>
+<h3 id="23-encerramento-gracioso-graceful-shutdown">2.3 Encerramento Gracioso (<em>Graceful Shutdown</em>)</h3>
+<p>Quando o administrador emite <code>systemctl restart connectos-api</code> para aplicar 
+uma nova versão, o systemd envia o sinal <code>SIGTERM</code> ao processo. Se a 
 aplicação for abortada instantaneamente:
 1. Requisições de clientes gravando faturamento ou ordens de serviço são 
    interrompidas pela metade.
 2. Transações abertas no Firebird 5.0 sofrem rollback abrupto.
-3. Conexões físicas do pool são fechadas forçadamente na `fbclient`.
-
-O encerramento gracioso intercepta o sinal `SIGTERM`:
-- Interrompe a aceitação de novas conexões HTTP no Horse (`THorse.StopListen`).
+3. Conexões físicas do pool são fechadas forçadamente na <code>fbclient</code>.</p>
+<p>O encerramento gracioso intercepta o sinal <code>SIGTERM</code>:
+- Interrompe a aceitação de novas conexões HTTP no Horse (<code>THorse.StopListen</code>).
 - Aguarda até 10 segundos para que as requisições em trânsito terminem.
-- Esvazia e desconecta ordenadamente o `TFirebirdConnectionPool`.
-- Finaliza o processo com código de saída 0.
-
-### 2.4 A Arquitetura do Service Control Manager (SCM) no Windows
-
-No ecossistema Microsoft Windows (Windows Server 2022 / Windows 11), os 
+- Esvazia e desconecta ordenadamente o <code>TFirebirdConnectionPool</code>.
+- Finaliza o processo com código de saída 0.</p>
+<h3 id="24-a-arquitetura-do-service-control-manager-scm-no-windows">2.4 A Arquitetura do Service Control Manager (SCM) no Windows</h3>
+<p>No ecossistema Microsoft Windows (Windows Server 2022 / Windows 11), os 
 processos em segundo plano são orquestrados pelo subsistema central 
-denominado **Service Control Manager (SCM)**. 
-
-Diferente do Linux (onde qualquer binário executável console pode ser 
+denominado <strong>Service Control Manager (SCM)</strong>. </p>
+<p>Diferente do Linux (onde qualquer binário executável console pode ser 
 supervisionado diretamente pelo systemd), o Windows exige que o executável 
 implemente um protocolo formal de comunicação RPC com o SCM:
-1. Ao iniciar, a aplicação deve chamar a API Win32 `StartServiceCtrlDispatcher`.
-2. O processo registra uma função de retorno (*Handler*) para responder a 
-   comandos do sistema operacional (`SERVICE_CONTROL_STOP`, `SERVICE_CONTROL_PAUSE`).
+1. Ao iniciar, a aplicação deve chamar a API Win32 <code>StartServiceCtrlDispatcher</code>.
+2. O processo registra uma função de retorno (<em>Handler</em>) para responder a 
+   comandos do sistema operacional (<code>SERVICE_CONTROL_STOP</code>, <code>SERVICE_CONTROL_PAUSE</code>).
 3. Periodicamente, o serviço reporta seu estado operacional ao SCM 
-   (`SERVICE_RUNNING`, `SERVICE_START_PENDING`, `SERVICE_STOPPED`).
-
-O Lazarus disponibiliza o pacote nativo `lazdaemon`, que encapsula 
+   (<code>SERVICE_RUNNING</code>, <code>SERVICE_START_PENDING</code>, <code>SERVICE_STOPPED</code>).</p>
+<p>O Lazarus disponibiliza o pacote nativo <code>lazdaemon</code>, que encapsula 
 toda essa complexidade de baixo nível em classes estruturadas como 
-`TCustomDaemon` e `TCustomDaemonApplication`.
-
-### 2.5 Políticas de Rotação de Logs com systemd-journald e Logrotate
-
-APIs de alta frequência de requisições geram gigabytes de logs de acesso e 
+<code>TCustomDaemon</code> e <code>TCustomDaemonApplication</code>.</p>
+<h3 id="25-politicas-de-rotacao-de-logs-com-systemd-journald-e-logrotate">2.5 Políticas de Rotação de Logs com systemd-journald e Logrotate</h3>
+<p>APIs de alta frequência de requisições geram gigabytes de logs de acesso e 
 auditoria em poucos dias. Sem uma política ativa de retenção e expurgo, o 
-disco rígido do servidor de produção pode lotar (`No space left on device`), 
-causando corrupção no banco de dados Firebird e paralisação dos serviços.
-
-O `systemd-journald` possui controle nativo de retenção em `/etc/systemd/journald.conf`:
-- `SystemMaxUse=500M`: Impede que os logs combinados do journal ocupem mais 
+disco rígido do servidor de produção pode lotar (<code>No space left on device</code>), 
+causando corrupção no banco de dados Firebird e paralisação dos serviços.</p>
+<p>O <code>systemd-journald</code> possui controle nativo de retenção em <code>/etc/systemd/journald.conf</code>:
+- <code>SystemMaxUse=500M</code>: Impede que os logs combinados do journal ocupem mais 
   de 500 megabytes no disco.
-- `MaxRetentionSec=1month`: Expulga automaticamente entradas com mais de 30 dias.
-- `Compress=yes`: Compacta blocos de log antigos em formato binário otimizado.
-
-Caso sua infraestrutura exija arquivos de log tradicionais em texto plano 
-(`/var/log/connectos/access.log`), configuramos o utilitário padrão `logrotate` 
-para efetuar compressão gzip diária e manter apenas as últimas 14 rotações.
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 Tratamento de Sinais POSIX no Free Pascal (`Core.Signals.pas`)
-
-No Linux, utilizamos a unit `BaseUnix` para capturar os sinais `SIGTERM` 
-e `SIGINT`:
-
-
+- <code>MaxRetentionSec=1month</code>: Expulga automaticamente entradas com mais de 30 dias.
+- <code>Compress=yes</code>: Compacta blocos de log antigos em formato binário otimizado.</p>
+<p>Caso sua infraestrutura exija arquivos de log tradicionais em texto plano 
+(<code>/var/log/connectos/access.log</code>), configuramos o utilitário padrão <code>logrotate</code> 
+para efetuar compressão gzip diária e manter apenas as últimas 14 rotações.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo_4">3. Implementação Passo a Passo</h2>
+<h3 id="31-tratamento-de-sinais-posix-no-free-pascal-coresignalspas">3.1 Tratamento de Sinais POSIX no Free Pascal (<code>Core.Signals.pas</code>)</h3>
+<p>No Linux, utilizamos a unit <code>BaseUnix</code> para capturar os sinais <code>SIGTERM</code> 
+e <code>SIGINT</code>:</p>
 <pre><code class="language-pascal">unit Core.Signals;
 
 {$mode objfpc}{$H+}
@@ -3006,13 +2672,8 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.2 O Arquivo de Unidade systemd (`connectos-api.service`)
-
-Criamos o arquivo de serviço em `/etc/systemd/system/connectos-api.service`:
-
-
+<h3 id="32-o-arquivo-de-unidade-systemd-connectos-apiservice">3.2 O Arquivo de Unidade systemd (<code>connectos-api.service</code>)</h3>
+<p>Criamos o arquivo de serviço em <code>/etc/systemd/system/connectos-api.service</code>:</p>
 <pre><code class="language-ini">[Unit]
 Description=ConnectOS API — Servico de Gestao de OS e Faturamento
 After=network.target firebird.service
@@ -3056,13 +2717,8 @@ SyslogIdentifier=connectos-api
 [Install]
 WantedBy=multi-user.target
 </code></pre>
-
-
-### 3.3 Provisionamento e Ativação do Serviço no Ubuntu 24.04
-
-Executamos o passo a passo de implantação no servidor Linux:
-
-
+<h3 id="33-provisionamento-e-ativacao-do-servico-no-ubuntu-2404">3.3 Provisionamento e Ativação do Serviço no Ubuntu 24.04</h3>
+<p>Executamos o passo a passo de implantação no servidor Linux:</p>
 <pre><code class="language-bash"># 1. Cria usuario de sistema sem shell de login (seguranca)
 sudo useradd -r -s /usr/sbin/nologin -d /opt/connectos connectos
 
@@ -3086,14 +2742,9 @@ sudo systemctl daemon-reload
 sudo systemctl enable connectos-api
 sudo systemctl start connectos-api
 </code></pre>
-
-
-### 3.4 Implementando um Windows Service com Lazarus (`lazdaemon`)
-
-Para sistemas Windows, criamos a unit `Daemon.ConnectOS.pas` herdando 
-de `TCustomDaemon`:
-
-
+<h3 id="34-implementando-um-windows-service-com-lazarus-lazdaemon">3.4 Implementando um Windows Service com Lazarus (<code>lazdaemon</code>)</h3>
+<p>Para sistemas Windows, criamos a unit <code>Daemon.ConnectOS.pas</code> herdando 
+de <code>TCustomDaemon</code>:</p>
 <pre><code class="language-pascal">unit Daemon.ConnectOS;
 
 {$mode objfpc}{$H+}
@@ -3131,14 +2782,9 @@ end;
 
 end.
 </code></pre>
-
-
-### 3.5 Instalação e Controle de Windows Service via PowerShell
-
-No Windows Server, instalamos e gerenciamos o serviço via PowerShell 
-administrativo:
-
-
+<h3 id="35-instalacao-e-controle-de-windows-service-via-powershell">3.5 Instalação e Controle de Windows Service via PowerShell</h3>
+<p>No Windows Server, instalamos e gerenciamos o serviço via PowerShell 
+administrativo:</p>
 <pre><code class="language-powershell"># 1. Registra o servico no Service Control Manager (SCM)
 New-Service -Name &quot;ConnectOSAPI&quot; `
     -BinaryPathName &quot;C:\ConnectOS\bin\connect_os_service.exe&quot; `
@@ -3152,14 +2798,9 @@ Start-Service -Name &quot;ConnectOSAPI&quot;
 # 3. Consulta o status operacional
 Get-Service -Name &quot;ConnectOSAPI&quot;
 </code></pre>
-
-
-### 3.6 Script de Healthcheck e Reinicialização Controlada (`graceful_restart.sh`)
-
-Para realizar deploys sem *downtime* perceptível, criamos um script shell 
-que verifica a saúde do processo antes e depois da transição de versão:
-
-
+<h3 id="36-script-de-healthcheck-e-reinicializacao-controlada-graceful_restartsh">3.6 Script de Healthcheck e Reinicialização Controlada (<code>graceful_restart.sh</code>)</h3>
+<p>Para realizar deploys sem <em>downtime</em> perceptível, criamos um script shell 
+que verifica a saúde do processo antes e depois da transição de versão:</p>
 <pre><code class="language-bash">#!/usr/bin/env bash
 set -e
 
@@ -3186,15 +2827,10 @@ echo &quot;==&gt; ERRO: API nao respondeu ao healthcheck apos 10 segundos!&quot;
 sudo journalctl -u connectos-api -n 25 --no-pager
 exit 1
 </code></pre>
-
-
-### 3.7 Limites de CPU e Memória via cgroups no systemd
-
-Para impedir que picos de tráfego consumam todos os recursos do servidor e 
+<h3 id="37-limites-de-cpu-e-memoria-via-cgroups-no-systemd">3.7 Limites de CPU e Memória via cgroups no systemd</h3>
+<p>Para impedir que picos de tráfego consumam todos os recursos do servidor e 
 prejudiquem o Firebird 5.0, você pode aplicar limites rígidos de cgroups 
-diretamente na seção `[Service]` do arquivo de unidade:
-
-
+diretamente na seção <code>[Service]</code> do arquivo de unidade:</p>
 <pre><code class="language-ini"># Limite estrito de Memoria RAM (512 MB)
 MemoryMax=512M
 MemoryHigh=400M
@@ -3202,27 +2838,16 @@ MemoryHigh=400M
 # Limite de Utilizacao de CPU (200% = maximo de 2 nucleos completos)
 CPUQuota=200%
 </code></pre>
-
-
-Se a aplicação atingir o limite de `MemoryMax`, o kernel Linux ativa o 
+<p>Se a aplicação atingir o limite de <code>MemoryMax</code>, o kernel Linux ativa o 
 OOM-killer apenas sobre as threads excedentes da API, protegendo o sistema 
-operacional e os demais serviços hospedeiros.
-
----
-
-## 4. Testando o Endpoint e Operações do Serviço
-
-Abaixo demonstramos a administração e monitoramento do serviço em produção.
-
-### 4.1 Verificando o Status do Serviço
-
-
+operacional e os demais serviços hospedeiros.</p>
+<hr />
+<h2 id="4-testando-o-endpoint-e-operacoes-do-servico">4. Testando o Endpoint e Operações do Serviço</h2>
+<p>Abaixo demonstramos a administração e monitoramento do serviço em produção.</p>
+<h3 id="41-verificando-o-status-do-servico">4.1 Verificando o Status do Serviço</h3>
 <pre><code class="language-bash">sudo systemctl status connectos-api
 </code></pre>
-
-
-**Saída esperada:**
-
+<p><strong>Saída esperada:</strong></p>
 <pre><code class="language-text">● connectos-api.service - ConnectOS API — Gestao de OS
      Loaded: loaded (/etc/systemd/system/connectos-api.service; enabled)
      Active: active (running) since Mon 2026-11-23 10:15:00 UTC
@@ -3236,183 +2861,139 @@ Abaixo demonstramos a administração e monitoramento do serviço em produção.
 Nov 23 10:15:00 srv-prod connectos[1042]: [POOL] 5 conexoes aquecidas.
 Nov 23 10:15:00 srv-prod connectos[1042]: [HORSE] Escutando porta 9000.
 </code></pre>
-
-
-### 4.2 Monitoramento de Logs em Tempo Real com `journalctl`
-
-Para acompanhar os logs gerados pela aplicação e middlewares em tempo real:
-
-
+<h3 id="42-monitoramento-de-logs-em-tempo-real-com-journalctl">4.2 Monitoramento de Logs em Tempo Real com <code>journalctl</code></h3>
+<p>Para acompanhar os logs gerados pela aplicação e middlewares em tempo real:</p>
 <pre><code class="language-bash"># Acompanhamento continuo (-f) dos logs da API
 sudo journalctl -u connectos-api -f
 
 # Filtrando logs apenas das ultimas 2 horas com prioridade de erro
 sudo journalctl -u connectos-api --since &quot;2 hours ago&quot; -p err
 </code></pre>
-
-
-### 4.3 Testando o Encerramento Gracioso e Reinicialização
-
-Simulando o envio de um sinal de encerramento controlado:
-
-
+<h3 id="43-testando-o-encerramento-gracioso-e-reinicializacao">4.3 Testando o Encerramento Gracioso e Reinicialização</h3>
+<p>Simulando o envio de um sinal de encerramento controlado:</p>
 <pre><code class="language-bash">sudo systemctl stop connectos-api
 sudo journalctl -u connectos-api -n 10
 </code></pre>
-
-
-**Logs de encerramento gracioso exibidos:**
-
+<p><strong>Logs de encerramento gracioso exibidos:</strong></p>
 <pre><code class="language-text">Nov 23 12:30:10 srv-prod connectos[1042]: [SINAL] POSIX 15 capturado.
 Nov 23 12:30:10 srv-prod connectos[1042]: [HORSE] Fechando escuta...
 Nov 23 12:30:11 srv-prod connectos[1042]: [POOL] Fechando conexoes...
 Nov 23 12:30:11 srv-prod connectos[1042]: [CONNECTOS] Sucesso.
 </code></pre>
-
-
-### 4.4 Supervisão Ativa por Watchdog do systemd
-
-Para aplicações de missão crítica onde até mesmo um travamento por deadlock 
+<h3 id="44-supervisao-ativa-por-watchdog-do-systemd">4.4 Supervisão Ativa por Watchdog do systemd</h3>
+<p>Para aplicações de missão crítica onde até mesmo um travamento por deadlock 
 de thread deve ser detectado e corrigido automaticamente sem intervenção 
-humana, o systemd oferece o mecanismo de **Watchdog de Hardware e Software**:
-
-1. No arquivo `.service`, habilite: `WatchdogSec=30s`.
-2. A cada 10 ou 15 segundos, a API Horse envia um sinal de "estou viva" para 
-   o socket do systemd chamando a função `sd_notify(0, 'WATCHDOG=1')` da 
-   biblioteca `libsystemd0`.
-3. Se a aplicação sofrer um travamento completo em todas as threads e não 
+humana, o systemd oferece o mecanismo de <strong>Watchdog de Hardware e Software</strong>:</p>
+<ol>
+<li>No arquivo <code>.service</code>, habilite: <code>WatchdogSec=30s</code>.</li>
+<li>A cada 10 ou 15 segundos, a API Horse envia um sinal de "estou viva" para 
+   o socket do systemd chamando a função <code>sd_notify(0, 'WATCHDOG=1')</code> da 
+   biblioteca <code>libsystemd0</code>.</li>
+<li>Se a aplicação sofrer um travamento completo em todas as threads e não 
    emitir o sinal antes do esgotamento da janela de 30 segundos, o systemd 
-   conclui que o processo está congelado (*unresponsive*), emite um sinal 
-   `SIGABRT` para salvar um *core dump* de depuração e reinicia o serviço 
-   imediatamente.
-
-Esse recurso eleva a resiliência do ecossistema a níveis de alta disponibilidade 
-corporativa (*four nines* / 99.99%).
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 O Erro de Inicialização por Diretório de Trabalho Incorreto
-Se o arquivo `.service` não declarar `WorkingDirectory=/opt/connectos/api`, 
-o systemd iniciará o binário no diretório raiz (`/`). Qualquer tentativa de 
-ler arquivos de configuração relativos (`config.json`) ou criar diretórios 
-locais falhará com erro `EInOutError: Directory not found`.
-
-### 5.2 O Loop de Falha Rápida (*Start-Limit-Hit*)
-Se a aplicação falhar imediatamente na inicialização (por exemplo, porque o 
+   conclui que o processo está congelado (<em>unresponsive</em>), emite um sinal 
+   <code>SIGABRT</code> para salvar um <em>core dump</em> de depuração e reinicia o serviço 
+   imediatamente.</li>
+</ol>
+<p>Esse recurso eleva a resiliência do ecossistema a níveis de alta disponibilidade 
+corporativa (<em>four nines</em> / 99.99%).</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_4">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-o-erro-de-inicializacao-por-diretorio-de-trabalho-incorreto">5.1 O Erro de Inicialização por Diretório de Trabalho Incorreto</h3>
+<p>Se o arquivo <code>.service</code> não declarar <code>WorkingDirectory=/opt/connectos/api</code>, 
+o systemd iniciará o binário no diretório raiz (<code>/</code>). Qualquer tentativa de 
+ler arquivos de configuração relativos (<code>config.json</code>) ou criar diretórios 
+locais falhará com erro <code>EInOutError: Directory not found</code>.</p>
+<h3 id="52-o-loop-de-falha-rapida-start-limit-hit">5.2 O Loop de Falha Rápida (<em>Start-Limit-Hit</em>)</h3>
+<p>Se a aplicação falhar imediatamente na inicialização (por exemplo, porque o 
 Firebird 5.0 ainda não estava online ou as credenciais estavam incorretas), 
-a diretiva `Restart=always` tentará reiniciar o processo dezenas de vezes em 
-segundos. O systemd bloqueará o serviço para proteger o SO:
-
+a diretiva <code>Restart=always</code> tentará reiniciar o processo dezenas de vezes em 
+segundos. O systemd bloqueará o serviço para proteger o SO:</p>
 <pre><code class="language-text">systemd[1]: connectos-api.service: Start request repeated too quickly.
 </code></pre>
-
-**Solução:** 
-1. Sempre defina `RestartSec=5s` para espaçar as tentativas.
-2. No `[Unit]`, inclua `After=network.target firebird.service` para garantir 
-   que o banco de dados inicialize antes da API.
-
-### 5.3 O Problema da Falta de Liberação de Porta (*SO_REUSEADDR*)
-Se a API for encerrada e reiniciada imediatamente, o socket TCP pode 
-permanecer em estado `TIME_WAIT` no kernel do Linux por até 60 segundos. 
-O `fphttpserver` do Lazarus deve ser configurado com a opção de reuso de 
-endereço (`SO_REUSEADDR`), prevenindo o erro `Address already in use`.
-
-### 5.4 Isolamento da Sessão 0 no Windows Server
-Desde o Windows Vista e Windows Server 2008, todos os serviços do sistema 
-operacional rodam exclusivamente na **Sessão 0**, isolados das sessões 
+<p><strong>Solução:</strong> 
+1. Sempre defina <code>RestartSec=5s</code> para espaçar as tentativas.
+2. No <code>[Unit]</code>, inclua <code>After=network.target firebird.service</code> para garantir 
+   que o banco de dados inicialize antes da API.</p>
+<h3 id="53-o-problema-da-falta-de-liberacao-de-porta-so_reuseaddr">5.3 O Problema da Falta de Liberação de Porta (<em>SO_REUSEADDR</em>)</h3>
+<p>Se a API for encerrada e reiniciada imediatamente, o socket TCP pode 
+permanecer em estado <code>TIME_WAIT</code> no kernel do Linux por até 60 segundos. 
+O <code>fphttpserver</code> do Lazarus deve ser configurado com a opção de reuso de 
+endereço (<code>SO_REUSEADDR</code>), prevenindo o erro <code>Address already in use</code>.</p>
+<h3 id="54-isolamento-da-sessao-0-no-windows-server">5.4 Isolamento da Sessão 0 no Windows Server</h3>
+<p>Desde o Windows Vista e Windows Server 2008, todos os serviços do sistema 
+operacional rodam exclusivamente na <strong>Sessão 0</strong>, isolados das sessões 
 interativas dos usuários de desktop (Sessão 1, 2, etc.). Qualquer rotina 
-que tente invocar caixas de diálogo modais (`ShowMessage`, `MessageDlg`) 
+que tente invocar caixas de diálogo modais (<code>ShowMessage</code>, <code>MessageDlg</code>) 
 congelará a thread do serviço indefinidamente aguardando um clique que nunca 
 poderá ocorrer. Mantenha os serviços do Lazarus estritamente livres de 
-qualquer unit da LCL (interface visual).
-
-### 5.5 Sincronização de Fuso Horário e NTP em Logs de Auditoria
-Se o relógio do servidor estiver desalinhado ou configurado em fusos 
+qualquer unit da LCL (interface visual).</p>
+<h3 id="55-sincronizacao-de-fuso-horario-e-ntp-em-logs-de-auditoria">5.5 Sincronização de Fuso Horário e NTP em Logs de Auditoria</h3>
+<p>Se o relógio do servidor estiver desalinhado ou configurado em fusos 
 incompatíveis (por exemplo, o sistema operacional gravando logs no journalctl 
 em UTC e o banco Firebird 5.0 operando em Horário de Brasília GMT-3), a 
-correlação de incidentes de segurança torna-se caótica.
-
-**Recomendação:** Configure todos os servidores de aplicação e banco para 
-o fuso universal UTC com o serviço `systemd-timesyncd` ativado:
-
+correlação de incidentes de segurança torna-se caótica.</p>
+<p><strong>Recomendação:</strong> Configure todos os servidores de aplicação e banco para 
+o fuso universal UTC com o serviço <code>systemd-timesyncd</code> ativado:</p>
 <pre><code class="language-bash">sudo timedatectl set-timezone UTC
 sudo timedatectl set-ntp true
 </code></pre>
-
-Dessa forma, todo `TIMESTAMP` gravado no banco ou emitido nos logs segue a 
-mesma referência temporal inequívoca.
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Neste módulo, transformamos nossa aplicação Horse em um serviço autônomo de 
+<p>Dessa forma, todo <code>TIMESTAMP</code> gravado no banco ou emitido nos logs segue a 
+mesma referência temporal inequívoca.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_4">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Neste módulo, transformamos nossa aplicação Horse em um serviço autônomo de 
 nível corporativo, protegido por limites de recursos do Linux e monitorado 
-continuamente pelo systemd.
-
-### Checklist de Revisão
-- [ ] A unidade `connectos-api.service` reside em `/etc/systemd/system/`?
-- [ ] O serviço roda sob usuário de sistema sem permissão de shell (`nologin`)?
-- [ ] O limite de descritores de arquivos `LimitNOFILE=65536` está ativado?
-- [ ] A política `Restart=always` com `RestartSec=5s` está configurada?
-- [ ] Sinais `SIGTERM` e `SIGINT` são interceptados para encerramento gracioso?
-- [ ] Os logs são despachados para o `systemd-journald` e auditáveis com `journalctl`?
-
-
-# Módulo 20: Nginx Proxy Reverso, SSL Gratuito, Multi-Stage Docker e Deploy
-
-Chegamos ao ápice da nossa jornada de engenharia de software: a publicação 
+continuamente pelo systemd.</p>
+<h3 id="checklist-de-revisao_4">Checklist de Revisão</h3>
+<ul>
+<li>[ ] A unidade <code>connectos-api.service</code> reside em <code>/etc/systemd/system/</code>?</li>
+<li>[ ] O serviço roda sob usuário de sistema sem permissão de shell (<code>nologin</code>)?</li>
+<li>[ ] O limite de descritores de arquivos <code>LimitNOFILE=65536</code> está ativado?</li>
+<li>[ ] A política <code>Restart=always</code> com <code>RestartSec=5s</code> está configurada?</li>
+<li>[ ] Sinais <code>SIGTERM</code> e <code>SIGINT</code> são interceptados para encerramento gracioso?</li>
+<li>[ ] Os logs são despachados para o <code>systemd-journald</code> e auditáveis com <code>journalctl</code>?</li>
+</ul>
+<h1 id="modulo-20-nginx-proxy-reverso-ssl-gratuito-multi-stage-docker-e-deploy">Módulo 20: Nginx Proxy Reverso, SSL Gratuito, Multi-Stage Docker e Deploy</h1>
+<p>Chegamos ao ápice da nossa jornada de engenharia de software: a publicação 
 da nossa API REST em um ambiente de produção de classe empresarial. Embora 
-o Horse rodando sobre o `fphttpserver` do Free Pascal ofereça uma vazão 
+o Horse rodando sobre o <code>fphttpserver</code> do Free Pascal ofereça uma vazão 
 bruta extraordinária, expor o servidor Pascal diretamente à internet 
 pública na porta 80 ou 443 contraria as melhores práticas de segurança e 
-arquitetura de redes.
-
-A arquitetura de referência recomendada para microsserviços modernos 
-posiciona o **Nginx** como Proxy Reverso na borda (*edge*), encarregado de:
+arquitetura de redes.</p>
+<p>A arquitetura de referência recomendada para microsserviços modernos 
+posiciona o <strong>Nginx</strong> como Proxy Reverso na borda (<em>edge</em>), encarregado de:
 - Efetuar a terminação criptográfica SSL/TLS com certificados gratuitos 
-  e renovação automática via **Let's Encrypt / Certbot**.
-- Distribuir a carga (*Load Balancing*) entre múltiplos processos Horse.
+  e renovação automática via <strong>Let's Encrypt / Certbot</strong>.
+- Distribuir a carga (<em>Load Balancing</em>) entre múltiplos processos Horse.
 - Mitigar ataques de negação de serviço (DDoS) e absorver requisições malformadas.
-- Injetar cabeçalhos de segurança corporativos (HSTS, CSP, X-Frame-Options).
-
-Neste módulo, projetaremos a infraestrutura completa de deploy, incluindo 
-configurações avançadas do Nginx, containerização multi-stage com **Docker** 
+- Injetar cabeçalhos de segurança corporativos (HSTS, CSP, X-Frame-Options).</p>
+<p>Neste módulo, projetaremos a infraestrutura completa de deploy, incluindo 
+configurações avançadas do Nginx, containerização multi-stage com <strong>Docker</strong> 
 (gerando imagens ultracompactas inferiores a 80 MB) e orquestração de toda a 
-pilha (API Lazarus + **Firebird 5.0** + Nginx) com **Docker Compose**.
-
----
-
-## 1. Objetivos de Aprendizagem do Módulo
-
-Ao concluir este módulo, o leitor estará plenamente capacitado a:
-1. Projetar e configurar o **Nginx** como Proxy Reverso de alta performance 
+pilha (API Lazarus + <strong>Firebird 5.0</strong> + Nginx) com <strong>Docker Compose</strong>.</p>
+<hr />
+<h2 id="1-objetivos-de-aprendizagem-do-modulo_5">1. Objetivos de Aprendizagem do Módulo</h2>
+<p>Ao concluir este módulo, o leitor estará plenamente capacitado a:
+1. Projetar e configurar o <strong>Nginx</strong> como Proxy Reverso de alta performance 
    para a API Horse.
 2. Implementar terminação SSL/TLS com certificados A+ emitidos pelo Let's 
    Encrypt através do utilitário Certbot com renovação automática.
-3. Configurar balanceamento de carga (*Load Balancing*) com algoritmos 
-   `round-robin` e `least_conn` entre múltiplas instâncias da API.
-4. Construir um `Dockerfile` multi-stage otimizado para Free Pascal, gerando 
+3. Configurar balanceamento de carga (<em>Load Balancing</em>) com algoritmos 
+   <code>round-robin</code> e <code>least_conn</code> entre múltiplas instâncias da API.
+4. Construir um <code>Dockerfile</code> multi-stage otimizado para Free Pascal, gerando 
    uma imagem final de produção minimalista e hipersegura.
 5. Orquestrar a pilha completa de produção (Nginx + API + Firebird 5.0) 
-   utilizando `docker-compose.yml` com redes virtuais isoladas.
+   utilizando <code>docker-compose.yml</code> com redes virtuais isoladas.
 6. Garantir a preservação do endereço IP original do cliente utilizando os 
-   cabeçalhos `X-Forwarded-For` e `X-Real-IP`.
-
----
-
-## 2. Fundamentação Conceitual e Arquitetural
-
-### 2.1 A Topologia de Produção: Edge Nginx + Upstream Cluster
-
-Na topologia de produção recomendada, o tráfego externo proveniente da 
+   cabeçalhos <code>X-Forwarded-For</code> e <code>X-Real-IP</code>.</p>
+<hr />
+<h2 id="2-fundamentacao-conceitual-e-arquitetural_5">2. Fundamentação Conceitual e Arquitetural</h2>
+<h3 id="21-a-topologia-de-producao-edge-nginx-upstream-cluster">2.1 A Topologia de Produção: Edge Nginx + Upstream Cluster</h3>
+<p>Na topologia de produção recomendada, o tráfego externo proveniente da 
 internet é recebido pelo Nginx nas portas padrão 80 (HTTP) e 443 (HTTPS). O 
 Nginx decodifica a criptografia TLS e repassa o tráfego HTTP puro para um 
-cluster de nós da API Horse escutando em portas locais (ex: 9000 e 9001):
-
-
+cluster de nós da API Horse escutando em portas locais (ex: 9000 e 9001):</p>
 <pre><code>+--------------------------------------------------------------------+
 |                  TOPOLOGIA DE PRODUCAO CONNECTOS                   |
 |                                                                    |
@@ -3446,73 +3027,55 @@ cluster de nós da API Horse escutando em portas locais (ex: 9000 e 9001):
 |                  +----------------------------+                    |
 +--------------------------------------------------------------------+
 </code></pre>
-
-
-### 2.2 Vantagens da Terminação SSL no Nginx
-
-Descarregar a responsabilidade criptográfica TLS para o Nginx traz 
+<h3 id="22-vantagens-da-terminacao-ssl-no-nginx">2.2 Vantagens da Terminação SSL no Nginx</h3>
+<p>Descarregar a responsabilidade criptográfica TLS para o Nginx traz 
 vantagens decisivas:
-- **Economia de CPU na Aplicação:** O Nginx possui rotinas em C altamente 
+- <strong>Economia de CPU na Aplicação:</strong> O Nginx possui rotinas em C altamente 
   otimizadas com aceleração por hardware (instruções AES-NI da CPU) para 
   handshake TLS.
-- **Renovação Transparente:** O Certbot renova os certificados a cada 60 
-  dias recarregando apenas a configuração do Nginx (`nginx -s reload`), 
+- <strong>Renovação Transparente:</strong> O Certbot renova os certificados a cada 60 
+  dias recarregando apenas a configuração do Nginx (<code>nginx -s reload</code>), 
   sem necessidade de reiniciar o binário da API Lazarus.
-- **Protocolos Modernos:** Habilita facilmente HTTP/2 e HTTP/3 (QUIC) na 
-  borda sem exigir alterações no runtime do FPC.
-
-### 2.3 Multi-Stage Docker Build para Free Pascal
-
-Um erro comum ao containerizar aplicações compiladas é utilizar uma única 
+- <strong>Protocolos Modernos:</strong> Habilita facilmente HTTP/2 e HTTP/3 (QUIC) na 
+  borda sem exigir alterações no runtime do FPC.</p>
+<h3 id="23-multi-stage-docker-build-para-free-pascal">2.3 Multi-Stage Docker Build para Free Pascal</h3>
+<p>Um erro comum ao containerizar aplicações compiladas é utilizar uma única 
 imagem base com o compilador completo instalado. Uma imagem Ubuntu com FPC, 
-Lazarus e ferramentas de build facilmente ultrapassa 1.5 GB.
-
-Com o recurso de **Multi-Stage Build**, dividimos o processo em dois estágios:
-1. **Stage 1 (Builder):** Imagem com FPC 3.2.2 e código-fonte. O compilador 
-   gera o executável nativo otimizado (`connect_os_api`).
-2. **Stage 2 (Runner):** Imagem base mínima (`debian:bookworm-slim` ou 
-   `ubuntu:24.04`), contendo apenas as bibliotecas dinâmicas essenciais 
-   (`libfbclient2`, `libssl3`, `ca-certificates`). O binário compilado no 
-   Stage 1 é copiado para cá e o compilador inteiro é descartado.
-
-O resultado é uma imagem final de produção com **menos de 80 MB**, 
-composta exclusivamente pelo binário estático e bibliotecas mínimas.
-
-### 2.4 Otimização de Buffers e Conexões no Nginx
-
-Para suportar dezenas de milhares de requisições simultâneas sem engasgos, 
-o arquivo principal do Nginx (`/etc/nginx/nginx.conf`) deve ser ajustado 
+Lazarus e ferramentas de build facilmente ultrapassa 1.5 GB.</p>
+<p>Com o recurso de <strong>Multi-Stage Build</strong>, dividimos o processo em dois estágios:
+1. <strong>Stage 1 (Builder):</strong> Imagem com FPC 3.2.2 e código-fonte. O compilador 
+   gera o executável nativo otimizado (<code>connect_os_api</code>).
+2. <strong>Stage 2 (Runner):</strong> Imagem base mínima (<code>debian:bookworm-slim</code> ou 
+   <code>ubuntu:24.04</code>), contendo apenas as bibliotecas dinâmicas essenciais 
+   (<code>libfbclient2</code>, <code>libssl3</code>, <code>ca-certificates</code>). O binário compilado no 
+   Stage 1 é copiado para cá e o compilador inteiro é descartado.</p>
+<p>O resultado é uma imagem final de produção com <strong>menos de 80 MB</strong>, 
+composta exclusivamente pelo binário estático e bibliotecas mínimas.</p>
+<h3 id="24-otimizacao-de-buffers-e-conexoes-no-nginx">2.4 Otimização de Buffers e Conexões no Nginx</h3>
+<p>Para suportar dezenas de milhares de requisições simultâneas sem engasgos, 
+o arquivo principal do Nginx (<code>/etc/nginx/nginx.conf</code>) deve ser ajustado 
 para aproveitar o hardware moderno:
-- `worker_processes auto;`: Spawna um processo de trabalho por núcleo de CPU.
-- `worker_connections 4096;`: Permite até 4.096 conexões ativas por worker.
-- `proxy_buffering on;`: Permite que o Nginx receba e armazene a resposta 
+- <code>worker_processes auto;</code>: Spawna um processo de trabalho por núcleo de CPU.
+- <code>worker_connections 4096;</code>: Permite até 4.096 conexões ativas por worker.
+- <code>proxy_buffering on;</code>: Permite que o Nginx receba e armazene a resposta 
   rápida da API Horse em memória, liberando a thread do Free Pascal de 
   imediato enquanto o cliente lento baixa os dados pela internet móvel.
-- `proxy_buffers 8 32k;`: Aloca buffers generosos em RAM antes de usar disco.
-
-### 2.5 Estratégia de Deploy Sem Queda (*Zero-Downtime Deployment*)
-
-Com a infraestrutura orquestrada em nós duplos (`api_node_1` e `api_node_2`), 
+- <code>proxy_buffers 8 32k;</code>: Aloca buffers generosos em RAM antes de usar disco.</p>
+<h3 id="25-estrategia-de-deploy-sem-queda-zero-downtime-deployment">2.5 Estratégia de Deploy Sem Queda (<em>Zero-Downtime Deployment</em>)</h3>
+<p>Com a infraestrutura orquestrada em nós duplos (<code>api_node_1</code> e <code>api_node_2</code>), 
 podemos aplicar atualizações de código sem interromper o atendimento aos 
-usuários através de uma estratégia *Rolling Update*:
-1. O Nginx direciona o tráfego exclusivamente para `api_node_1`.
-2. O contêiner `api_node_2` é recriado e atualizado com a nova versão compilada.
-3. O healthcheck confirma que `api_node_2` está saudável (`200 OK` no `/ping`).
-4. O Nginx passa a encaminhar tráfego para `api_node_2`.
-5. O contêiner `api_node_1` é atualizado seguindo o mesmo procedimento.
-
-Nenhum usuário percebe lentidão ou recebe erro de conexão durante a migração.
-
----
-
-## 3. Implementação Passo a Passo
-
-### 3.1 Configuração Completa do Nginx (`connectos.conf`)
-
-Criamos o arquivo de configuração do Nginx em 
-`/etc/nginx/sites-available/connectos.conf`:
-
-
+usuários através de uma estratégia <em>Rolling Update</em>:
+1. O Nginx direciona o tráfego exclusivamente para <code>api_node_1</code>.
+2. O contêiner <code>api_node_2</code> é recriado e atualizado com a nova versão compilada.
+3. O healthcheck confirma que <code>api_node_2</code> está saudável (<code>200 OK</code> no <code>/ping</code>).
+4. O Nginx passa a encaminhar tráfego para <code>api_node_2</code>.
+5. O contêiner <code>api_node_1</code> é atualizado seguindo o mesmo procedimento.</p>
+<p>Nenhum usuário percebe lentidão ou recebe erro de conexão durante a migração.</p>
+<hr />
+<h2 id="3-implementacao-passo-a-passo_5">3. Implementação Passo a Passo</h2>
+<h3 id="31-configuracao-completa-do-nginx-connectosconf">3.1 Configuração Completa do Nginx (<code>connectos.conf</code>)</h3>
+<p>Criamos o arquivo de configuração do Nginx em 
+<code>/etc/nginx/sites-available/connectos.conf</code>:</p>
 <pre><code class="language-nginx"># Cluster de balanceamento de carga da API Horse
 upstream connectos_backend {
     least_conn; # Encaminha requisicoes para a instancia com menos carga
@@ -3585,13 +3148,8 @@ server {
     }
 }
 </code></pre>
-
-
-### 3.2 Emissão Automática de Certificado SSL com Certbot
-
-No servidor Ubuntu, emitimos o certificado com um único comando:
-
-
+<h3 id="32-emissao-automatica-de-certificado-ssl-com-certbot">3.2 Emissão Automática de Certificado SSL com Certbot</h3>
+<p>No servidor Ubuntu, emitimos o certificado com um único comando:</p>
 <pre><code class="language-bash"># 1. Instala o Certbot com plugin Nginx
 sudo apt-get update &amp;&amp; \
     sudo apt-get install -y certbot python3-certbot-nginx
@@ -3603,17 +3161,11 @@ sudo certbot --nginx -d api.connectos.com.br --non-interactive \
 # 3. Testa a renovacao automatica periodica
 sudo certbot renew --dry-run
 </code></pre>
-
-
-O Certbot adiciona um timer no `systemd` (`certbot.timer`) que verifica a 
+<p>O Certbot adiciona um timer no <code>systemd</code> (<code>certbot.timer</code>) que verifica a 
 validade dos certificados duas vezes ao dia e os renova automaticamente 
-30 dias antes da expiração.
-
-### 3.3 O `Dockerfile` Multi-Stage de Produção
-
-Criamos o arquivo `Dockerfile` na raiz do projeto:
-
-
+30 dias antes da expiração.</p>
+<h3 id="33-o-dockerfile-multi-stage-de-producao">3.3 O <code>Dockerfile</code> Multi-Stage de Produção</h3>
+<p>Criamos o arquivo <code>Dockerfile</code> na raiz do projeto:</p>
 <pre><code class="language-dockerfile"># ===================================================================
 # STAGE 1: Compilador e Construtor (Builder)
 # ===================================================================
@@ -3690,14 +3242,9 @@ HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
 
 ENTRYPOINT [&quot;/app/connect_os_api&quot;]
 </code></pre>
-
-
-### 3.4 Orquestração Completa com `docker-compose.yml`
-
-Criamos o arquivo `docker-compose.yml` integrando o banco Firebird 5.0, 
-duas instâncias da API Horse e o Nginx:
-
-
+<h3 id="34-orquestracao-completa-com-docker-composeyml">3.4 Orquestração Completa com <code>docker-compose.yml</code></h3>
+<p>Criamos o arquivo <code>docker-compose.yml</code> integrando o banco Firebird 5.0, 
+duas instâncias da API Horse e o Nginx:</p>
 <pre><code class="language-yaml">version: '3.8'
 
 services:
@@ -3788,14 +3335,9 @@ volumes:
   firebird_data:
   storage_data:
 </code></pre>
-
-
-### 3.5 Script de Atualização Sem Queda (`deploy_update.sh`)
-
-Para realizar a atualização contínua da aplicação em produção sem desconectar 
-clientes ativos, criamos o script `deploy_update.sh`:
-
-
+<h3 id="35-script-de-atualizacao-sem-queda-deploy_updatesh">3.5 Script de Atualização Sem Queda (<code>deploy_update.sh</code>)</h3>
+<p>Para realizar a atualização contínua da aplicação em produção sem desconectar 
+clientes ativos, criamos o script <code>deploy_update.sh</code>:</p>
 <pre><code class="language-bash">#!/usr/bin/env bash
 # ===================================================================
 # Script de Rolling Update com Zero Downtime — ConnectOS API
@@ -3823,42 +3365,26 @@ docker compose exec nginx nginx -s reload
 
 echo &quot;==&gt; Deploy concluido com sucesso sem nenhuma perda de conexao!&quot;
 </code></pre>
-
-
----
-
-## 4. Testando o Endpoint e Operações em Produção
-
-### 4.1 Subindo a Infraestrutura com Docker Compose
-
-
+<hr />
+<h2 id="4-testando-o-endpoint-e-operacoes-em-producao">4. Testando o Endpoint e Operações em Produção</h2>
+<h3 id="41-subindo-a-infraestrutura-com-docker-compose">4.1 Subindo a Infraestrutura com Docker Compose</h3>
 <pre><code class="language-bash"># Constrói as imagens e inicia os containers em background
 docker compose up -d --build
 
 # Inspeciona o estado dos containers
 docker compose ps
 </code></pre>
-
-
-**Saída esperada:**
-
+<p><strong>Saída esperada:</strong></p>
 <pre><code class="language-text">NAME                 COMMAND                  SERVICE      STATUS
 connectos_firebird   &quot;/docker-entrypoint.…&quot;   firebird     Up (healthy)
 connectos_api_1      &quot;/app/connect_os_api&quot;    api_node_1   Up (healthy)
 connectos_api_2      &quot;/app/connect_os_api&quot;    api_node_2   Up (healthy)
 connectos_nginx      &quot;/docker-entrypoint.…&quot;   nginx        Up
 </code></pre>
-
-
-### 4.2 Testando a Chamada Segura com Nginx e SSL
-
-
+<h3 id="42-testando-a-chamada-segura-com-nginx-e-ssl">4.2 Testando a Chamada Segura com Nginx e SSL</h3>
 <pre><code class="language-bash">curl -i -X GET https://api.connectos.com.br/ping
 </code></pre>
-
-
-**Resposta esperada com cabeçalhos de segurança:**
-
+<p><strong>Resposta esperada com cabeçalhos de segurança:</strong></p>
 <pre><code class="language-http">HTTP/2 200 
 server: nginx
 date: Mon, 23 Nov 2026 10:30:00 GMT
@@ -3872,138 +3398,101 @@ x-frame-options: DENY
   &quot;memory_heap_kb&quot;: 1280
 }
 </code></pre>
-
-
-### 4.3 Telemetria dos Contêineres com `docker stats`
-
-Para auditar o impacto do balanceamento de carga e o isolamento de recursos 
-em tempo real sob estresse, o comando nativo `docker stats` exibe as métricas 
-vivas de cada componente:
-
-
+<h3 id="43-telemetria-dos-conteineres-com-docker-stats">4.3 Telemetria dos Contêineres com <code>docker stats</code></h3>
+<p>Para auditar o impacto do balanceamento de carga e o isolamento de recursos 
+em tempo real sob estresse, o comando nativo <code>docker stats</code> exibe as métricas 
+vivas de cada componente:</p>
 <pre><code class="language-bash">docker stats \
   connectos_nginx connectos_api_1 connectos_api_2 connectos_firebird
 </code></pre>
-
-
-**Métricas Típicas em Produção:**
-- `connectos_api_1`: CPU flutuando entre 5% e 15%, Memória estável em 18 MB.
-- `connectos_api_2`: Carga dividida identicamente pelo algoritmo `least_conn`.
-- `connectos_firebird`: Cache de páginas aquecido, IO de disco otimizado.
-- `connectos_nginx`: Consumo inferior a 12 MB de RAM, transmitindo centenas 
-  de megabytes sem saturação.
-
-Esse painel comprova a extrema eficiência e a leveza do ecossistema Free 
+<p><strong>Métricas Típicas em Produção:</strong>
+- <code>connectos_api_1</code>: CPU flutuando entre 5% e 15%, Memória estável em 18 MB.
+- <code>connectos_api_2</code>: Carga dividida identicamente pelo algoritmo <code>least_conn</code>.
+- <code>connectos_firebird</code>: Cache de páginas aquecido, IO de disco otimizado.
+- <code>connectos_nginx</code>: Consumo inferior a 12 MB de RAM, transmitindo centenas 
+  de megabytes sem saturação.</p>
+<p>Esse painel comprova a extrema eficiência e a leveza do ecossistema Free 
 Pascal, entregando performance comparável a Go ou Rust com uma fração do 
-consumo de hardware das stacks tradicionais.
-
----
-
-## 5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus
-
-### 5.1 Perda do IP Real do Cliente no Horse
-Ao colocar a API atrás do Nginx, `Req.RawWebRequest.RemoteAddr` passa a 
-conter sempre `127.0.0.1` (o IP do próprio proxy). 
-**Solução:** Sempre extraia o IP real inspecionando o cabeçalho 
-`Req.Headers['X-Real-IP']` ou `Req.Headers['X-Forwarded-For']` injetado pelo 
-Nginx no middleware de Rate Limiting ou Log de Auditoria.
-
-### 5.2 Erro de Conexão com Firebird: "Connection Refused" no Docker
-No `docker-compose.yml`, o parâmetro de host do banco não pode ser 
-`localhost` ou `127.0.0.1`. Dentro da rede interna do Docker, cada container 
+consumo de hardware das stacks tradicionais.</p>
+<hr />
+<h2 id="5-armadilhas-comuns-e-troubleshooting-no-fpclazarus_5">5. Armadilhas Comuns e Troubleshooting no FPC/Lazarus</h2>
+<h3 id="51-perda-do-ip-real-do-cliente-no-horse">5.1 Perda do IP Real do Cliente no Horse</h3>
+<p>Ao colocar a API atrás do Nginx, <code>Req.RawWebRequest.RemoteAddr</code> passa a 
+conter sempre <code>127.0.0.1</code> (o IP do próprio proxy). 
+<strong>Solução:</strong> Sempre extraia o IP real inspecionando o cabeçalho 
+<code>Req.Headers['X-Real-IP']</code> ou <code>Req.Headers['X-Forwarded-For']</code> injetado pelo 
+Nginx no middleware de Rate Limiting ou Log de Auditoria.</p>
+<h3 id="52-erro-de-conexao-com-firebird-connection-refused-no-docker">5.2 Erro de Conexão com Firebird: "Connection Refused" no Docker</h3>
+<p>No <code>docker-compose.yml</code>, o parâmetro de host do banco não pode ser 
+<code>localhost</code> ou <code>127.0.0.1</code>. Dentro da rede interna do Docker, cada container 
 possui seu próprio endereço IP virtual. Utilize o nome do serviço 
-definido no compose (`FB_HOST=firebird`), que o DNS interno do Docker 
-resolverá automaticamente.
-
-### 5.3 Erro "502 Bad Gateway" no Nginx
-Se o Nginx retornar o status HTTP `502 Bad Gateway`, a causa é a incapacidade 
+definido no compose (<code>FB_HOST=firebird</code>), que o DNS interno do Docker 
+resolverá automaticamente.</p>
+<h3 id="53-erro-502-bad-gateway-no-nginx">5.3 Erro "502 Bad Gateway" no Nginx</h3>
+<p>Se o Nginx retornar o status HTTP <code>502 Bad Gateway</code>, a causa é a incapacidade 
 do proxy de estabelecer comunicação com o backend Horse:
-1. Inspecione os logs do Nginx: `docker compose logs nginx | tail -n 20`.
+1. Inspecione os logs do Nginx: <code>docker compose logs nginx | tail -n 20</code>.
 2. Verifique se o container da API caiu por exceção não tratada: 
-   `docker compose ps` (observe se o status está `Exit 1` ou `CrashLoop`).
-3. Confirme se as portas internas coincidem (`PORT=9000` na API e `9000` 
-   no bloco `upstream` do Nginx).
-
-### 5.4 Permissões de Volume de Storage no Host Linux
-Ao montar pastas locais do host no container (`/app/storage`), se o usuário 
-do container (`connectos` com UID 1000) não tiver permissão de escrita no 
-diretório físico do host, uploads dispararão `EStreamError: Access Denied`. 
-No host, execute `sudo chown -R 1000:1000 ./storage` para garantir a posse.
-
----
-
-## 6. Resumo Executivo e Checklist de Revisão
-
-Concluímos com êxito a arquitetura completa de publicação corporativa da 
+   <code>docker compose ps</code> (observe se o status está <code>Exit 1</code> ou <code>CrashLoop</code>).
+3. Confirme se as portas internas coincidem (<code>PORT=9000</code> na API e <code>9000</code> 
+   no bloco <code>upstream</code> do Nginx).</p>
+<h3 id="54-permissoes-de-volume-de-storage-no-host-linux">5.4 Permissões de Volume de Storage no Host Linux</h3>
+<p>Ao montar pastas locais do host no container (<code>/app/storage</code>), se o usuário 
+do container (<code>connectos</code> com UID 1000) não tiver permissão de escrita no 
+diretório físico do host, uploads dispararão <code>EStreamError: Access Denied</code>. 
+No host, execute <code>sudo chown -R 1000:1000 ./storage</code> para garantir a posse.</p>
+<hr />
+<h2 id="6-resumo-executivo-e-checklist-de-revisao_5">6. Resumo Executivo e Checklist de Revisão</h2>
+<p>Concluímos com êxito a arquitetura completa de publicação corporativa da 
 nossa API em Free Pascal e Lazarus, dotando o ecossistema de alta 
-disponibilidade, segurança de ponta a ponta e containerização moderna.
-
-### Checklist de Revisão
-- [ ] O Nginx está configurado como proxy reverso com balanceamento de carga?
-- [ ] O certificado SSL Let's Encrypt está ativo com renovação automática?
-- [ ] Cabeçalhos de segurança HSTS e prevenção de clickjacking estão ativados?
-- [ ] O `Dockerfile` multi-stage descarta o compilador, gerando imagem < 80 MB?
-- [ ] A API roda sob usuário não-privilegiado (`USER connectos`) no container?
-- [ ] O `docker-compose.yml` orquestra Firebird 5.0, API e Nginx com volumes persistentes?
-
-
-# Elementos Pós-Textuais — Volume 3
-
----
-
-## Glossário Técnico Geral da Trilogia
-
-**ACID:** Propriedades de Atomicidade, Consistência, Isolamento e Durabilidade.
-
-**Circuit Breaker:** Padrão de resiliência que interrompe temporariamente 
-chamadas a serviços externos falhos para evitar saturação de recursos locais.
-
-**Cmem:** Unit do Free Pascal que redireciona alocações de memória para a 
-`glibc` (malloc/free) para evitar contenção em servidores multi-threaded.
-
-**Docker Multi-Stage:** Técnica de criação de imagens que utiliza um contêiner 
-para compilação e descarta o compilador, mantendo apenas o binário final.
-
-**Exponential Backoff:** Cálculo de tempo de espera progressivo ($2^t$) em 
-tentativas de repetição de chamadas de rede.
-
-**FPCUnit:** Framework de testes unitários xUnit nativo do Free Pascal.
-
-**Graceful Shutdown:** Encerramento controlado interceptando `SIGTERM` sem 
-derrubar requisições HTTP ativas.
-
-**HeapTrc:** Unidade diagnóstica de heap (`-gh`) para detectar vazamentos 
-de memória no FPC.
-
-**LimitNOFILE:** Limite de descritores de arquivos no systemd para suportar 
-milhares de conexões de sockets TCP simultâneas.
-
-**OpenAPI 3.0:** Padrão internacional para especificação e documentação de 
-APIs RESTful em formato JSON.
-
-**Smartlinking:** Otimização do compilador FPC (`-XX`) que elimina rotinas 
-e units não utilizadas no binário final.
-
-**systemd:** Sistema de gerenciamento e supervisão de daemons no Linux.
-
----
-
-## Referências Bibliográficas Consolidadas
-
-1. **CANTÙ, Marco.** *Object Pascal Handbook*. Scotts Valley: Embarcadero, 2021.
-2. **FIREBIRD PROJECT.** *Firebird 5.0 Reference Manual*. 2024.
-3. **FREE PASCAL DEVELOPMENT TEAM.** *Free Pascal Compiler Guide*. 2023.
-4. **GAMMA, Erich et al.** *Design Patterns*. Boston: Addison-Wesley, 1994.
-5. **MARTIN, Robert C.** *Clean Architecture*. Boston: Prentice Hall, 2017.
-6. **MESZAROS, Gerard.** *xUnit Test Patterns: Refactoring Test Code*. Boston: Addison-Wesley, 2007.
-7. **NEWMAN, Sam.** *Building Microservices*. 2. ed. O'Reilly, 2021.
-8. **NOTTINGHAM, Mark; WILDE, Erik.** *RFC 7807: Problem Details*. IETF, 2016.
-
----
-
-## Colofão Editorial da Trilogia
-
-
+disponibilidade, segurança de ponta a ponta e containerização moderna.</p>
+<h3 id="checklist-de-revisao_5">Checklist de Revisão</h3>
+<ul>
+<li>[ ] O Nginx está configurado como proxy reverso com balanceamento de carga?</li>
+<li>[ ] O certificado SSL Let's Encrypt está ativo com renovação automática?</li>
+<li>[ ] Cabeçalhos de segurança HSTS e prevenção de clickjacking estão ativados?</li>
+<li>[ ] O <code>Dockerfile</code> multi-stage descarta o compilador, gerando imagem &lt; 80 MB?</li>
+<li>[ ] A API roda sob usuário não-privilegiado (<code>USER connectos</code>) no container?</li>
+<li>[ ] O <code>docker-compose.yml</code> orquestra Firebird 5.0, API e Nginx com volumes persistentes?</li>
+</ul>
+<h1 id="elementos-pos-textuais-volume-3">Elementos Pós-Textuais — Volume 3</h1>
+<hr />
+<h2 id="glossario-tecnico-geral-da-trilogia">Glossário Técnico Geral da Trilogia</h2>
+<p><strong>ACID:</strong> Propriedades de Atomicidade, Consistência, Isolamento e Durabilidade.</p>
+<p><strong>Circuit Breaker:</strong> Padrão de resiliência que interrompe temporariamente 
+chamadas a serviços externos falhos para evitar saturação de recursos locais.</p>
+<p><strong>Cmem:</strong> Unit do Free Pascal que redireciona alocações de memória para a 
+<code>glibc</code> (malloc/free) para evitar contenção em servidores multi-threaded.</p>
+<p><strong>Docker Multi-Stage:</strong> Técnica de criação de imagens que utiliza um contêiner 
+para compilação e descarta o compilador, mantendo apenas o binário final.</p>
+<p><strong>Exponential Backoff:</strong> Cálculo de tempo de espera progressivo ($2^t$) em 
+tentativas de repetição de chamadas de rede.</p>
+<p><strong>FPCUnit:</strong> Framework de testes unitários xUnit nativo do Free Pascal.</p>
+<p><strong>Graceful Shutdown:</strong> Encerramento controlado interceptando <code>SIGTERM</code> sem 
+derrubar requisições HTTP ativas.</p>
+<p><strong>HeapTrc:</strong> Unidade diagnóstica de heap (<code>-gh</code>) para detectar vazamentos 
+de memória no FPC.</p>
+<p><strong>LimitNOFILE:</strong> Limite de descritores de arquivos no systemd para suportar 
+milhares de conexões de sockets TCP simultâneas.</p>
+<p><strong>OpenAPI 3.0:</strong> Padrão internacional para especificação e documentação de 
+APIs RESTful em formato JSON.</p>
+<p><strong>Smartlinking:</strong> Otimização do compilador FPC (<code>-XX</code>) que elimina rotinas 
+e units não utilizadas no binário final.</p>
+<p><strong>systemd:</strong> Sistema de gerenciamento e supervisão de daemons no Linux.</p>
+<hr />
+<h2 id="referencias-bibliograficas-consolidadas">Referências Bibliográficas Consolidadas</h2>
+<ol>
+<li><strong>CANTÙ, Marco.</strong> <em>Object Pascal Handbook</em>. Scotts Valley: Embarcadero, 2021.</li>
+<li><strong>FIREBIRD PROJECT.</strong> <em>Firebird 5.0 Reference Manual</em>. 2024.</li>
+<li><strong>FREE PASCAL DEVELOPMENT TEAM.</strong> <em>Free Pascal Compiler Guide</em>. 2023.</li>
+<li><strong>GAMMA, Erich et al.</strong> <em>Design Patterns</em>. Boston: Addison-Wesley, 1994.</li>
+<li><strong>MARTIN, Robert C.</strong> <em>Clean Architecture</em>. Boston: Prentice Hall, 2017.</li>
+<li><strong>MESZAROS, Gerard.</strong> <em>xUnit Test Patterns: Refactoring Test Code</em>. Boston: Addison-Wesley, 2007.</li>
+<li><strong>NEWMAN, Sam.</strong> <em>Building Microservices</em>. 2. ed. O'Reilly, 2021.</li>
+<li><strong>NOTTINGHAM, Mark; WILDE, Erik.</strong> <em>RFC 7807: Problem Details</em>. IETF, 2016.</li>
+</ol>
+<hr />
+<h2 id="colofao-editorial-da-trilogia">Colofão Editorial da Trilogia</h2>
 <pre><code class="language-text">=====================================================================
             ESPECIFICACOES EDITORIAIS — VOLUME 3
 =====================================================================

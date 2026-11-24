@@ -158,25 +158,12 @@ blockquote {
     page-break-inside: avoid;
     break-inside: avoid;
     border: 0.5pt solid #CBD5E1;
-    border-left: 3pt solid #1E293B;
     background-color: #F8FAFC;
     color: #1E293B;
 }
 
 blockquote strong:first-child {
     color: #0F172A;
-}
-
-blockquote.alert-arquitetura {
-    border-left: 3pt solid #1E293B;
-}
-
-blockquote.alert-threadsafety {
-    border-left: 3pt solid #334155;
-}
-
-blockquote.alert-fpc {
-    border-left: 3pt solid #475569;
 }
 
 /* --------------------------------------------------------------------------

@@ -22,68 +22,37 @@
 \newpage
 
 <!-- FICHA CATALOGRÁFICA SUGERIDA -->
-\vspace*{\fill}
-
-<div style="border: 1px solid #1E293B; padding: 25px; margin: 20px 40px; font-size: 0.9em; line-height: 1.5; color: #1E293B; background-color: #FFFFFF;">
-
-**Dados Internacionais de Catalogação na Publicação (CIP)**  
-*(Câmara Brasileira do Livro, SP, Brasil)*
-
----
-
-Abreu, Maurício.  
-&nbsp;&nbsp;&nbsp;&nbsp;Desenvolvimento de APIs REST Modernas com Horse e Lazarus: Arquitetura Limpa, Firebird 5.0 e Deploy em Produção / Maurício Abreu. — 1. ed. — São Paulo : Edição do Autor, 2026.  
-&nbsp;&nbsp;&nbsp;&nbsp;Formato: 16 cm × 23 cm (Padrão UICLAP).  
-&nbsp;&nbsp;&nbsp;&nbsp;Bibliografia.  
-
-&nbsp;&nbsp;&nbsp;&nbsp;ISBN: 978-65-00-00000-0  
-
-&nbsp;&nbsp;&nbsp;&nbsp;1. Computação — Engenharia de Software. 2. Free Pascal Compiler (FPC). 3. Lazarus IDE. 4. Horse Web Framework. 5. Bancos de Dados Relacionais — Firebird 5.0. 6. Arquitetura de Software — Clean Architecture e SOLID. 7. Web Services RESTful — JSON. 8. Servidores HTTP e Deploy em Produção (Linux/Docker/Nginx). I. Título.
-
----
-
-<div style="text-align: right; margin-top: 10px;">
-**CDU 004.41:004.738.5**  
-**CDD 005.133**  
+<div style="border: 0.5pt solid #CBD5E1; padding: 20px 25px; margin: 40px 20px; font-size: 9pt; line-height: 1.5; color: #1E293B; background-color: #FFFFFF;">
+<p><strong>Dados Internacionais de Catalogação na Publicação (CIP)</strong><br>
+<em>(Câmara Brasileira do Livro, SP, Brasil)</em></p>
+<hr style="border: none; border-top: 0.5pt solid #CBD5E1; margin: 10px 0;">
+<p>Abreu, Maurício.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Desenvolvimento de APIs REST Modernas com Horse e Lazarus: Arquitetura Limpa, Firebird 5.0 e Deploy em Produção / Maurício Abreu. — 1. ed. — São Paulo : Edição do Autor, 2026.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Formato: 16 cm × 23 cm (Padrão UICLAP).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Bibliografia.</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;ISBN: 978-65-00-00000-0</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;1. Computação — Engenharia de Software. 2. Free Pascal Compiler (FPC). 3. Lazarus IDE. 4. Horse Web Framework. 5. Bancos de Dados Relacionais — Firebird 5.0. 6. Arquitetura de Software — Clean Architecture e SOLID. 7. Web Services RESTful — JSON. 8. Servidores HTTP e Deploy em Produção (Linux/Docker/Nginx). I. Título.</p>
+<hr style="border: none; border-top: 0.5pt solid #CBD5E1; margin: 10px 0;">
+<div style="text-align: right; margin-top: 8px;">
+<strong>CDU 004.41:004.738.5</strong><br>
+<strong>CDD 005.133</strong>
 </div>
-
 </div>
-
-\vspace*{\fill}
 
 \newpage
 
 <!-- DEDICATÓRIA -->
-\vspace*{\fill}
-
-<div style="text-align: right; margin-left: 35%; font-style: italic; color: #1E293B; line-height: 1.8;">
-
-*Aos meus familiares, cujo apoio incondicional, amor e paciência transformaram longas noites de pesquisa e compilação em realidade.*
-
-*A toda a vibrante comunidade mundial de Object Pascal, Free Pascal e Lazarus, que mantém viva, resiliente e moderna uma das mais brilhantes tecnologias de engenharia de software da história da computação.*
-
+<div style="text-align: right; margin-left: 30%; margin-top: 80px; font-style: italic; color: #1E293B; line-height: 1.7;">
+<p><em>Aos meus familiares, cujo apoio incondicional, amor e paciência transformaram longas noites de pesquisa e compilação em realidade.</em></p>
+<p><em>A toda a vibrante comunidade mundial de Object Pascal, Free Pascal e Lazarus, que mantém viva, resiliente e moderna uma das mais brilhantes tecnologias de engenharia de software da história da computação.</em></p>
 </div>
 
-\vspace*{\fill}
-
-\newpage
-
-<!-- EPÍGRAFE -->
-\vspace*{\fill}
-
-<div style="text-align: right; margin-left: 30%; font-style: italic; color: #1E293B; line-height: 1.6;">
-
-> "Simplicidade é pré-requisito para confiabilidade."  
-> — **Edsger W. Dijkstra**
-
-<br>
-
-> "Programas devem ser escritos para que as pessoas os leiam, e apenas incidentalmente para que as máquinas os executem."  
-> — **Harold Abelson & Gerald Jay Sussman**
-
+<div style="text-align: right; margin-left: 25%; margin-top: 60px; font-style: italic; color: #1E293B; line-height: 1.6;">
+<p>"Simplicidade é pré-requisito para confiabilidade."<br>
+— <strong>Edsger W. Dijkstra</strong></p>
+<p style="margin-top: 12px;">"Programas devem ser escritos para que as pessoas os leiam, e apenas incidentalmente para que as máquinas os executem."<br>
+— <strong>Harold Abelson &amp; Gerald Jay Sussman</strong></p>
 </div>
-
-\vspace*{\fill}
 
 <!-- PREFÁCIO -->
 # PREFÁCIO

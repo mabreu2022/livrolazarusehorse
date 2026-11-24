@@ -133,9 +133,6 @@ def preprocess_markdown(cap_files):
         content = re.sub(r'\\newpage\s*(?:\n\s*<!--.*?-->\s*)*\n\s*(?=#[^#])', '\n\n', content)
         content = re.sub(r'\\newpage', '<div class="newpage"></div>', content)
         content = re.sub(r'\\vspace\*?\{[^}]*\}', '<div style="margin: 20px 0;"></div>', content)
-        content = content.replace('> **Nota de Arquitetura:**', '<blockquote class="alert-arquitetura"><strong>Nota de Arquitetura:</strong>')
-        content = content.replace('> **Atenção Thread-Safety:**', '<blockquote class="alert-threadsafety"><strong>Atenção Thread-Safety:</strong>')
-        content = content.replace('> **Boas Práticas FPC:**', '<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>')
         
         full_content.append(content)
         
