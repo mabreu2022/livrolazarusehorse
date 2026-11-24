@@ -135,8 +135,7 @@ code {
 
 pre {
     background-color: #F8FAFC;
-    border: 1pt solid #E2E8F0;
-    border-left: 3pt solid #3B82F6;
+    border: 0.5pt solid #CBD5E1;
     padding: 6pt 8pt;
     margin: 8pt 0;
     font-size: 8pt;
@@ -165,18 +164,26 @@ blockquote {
     line-height: 1.45;
     page-break-inside: avoid;
     break-inside: avoid;
-}
-
-/* Nota de Arquitetura */
-blockquote p strong:first-child:contains("Nota de Arquitetura") {
-    color: #1D4ED8;
-}
-
-/* Estilo padrão de blockquote */
-blockquote {
-    border-left: 3.5pt solid #3B82F6;
-    background-color: #F0F7FF;
+    border: 0.5pt solid #CBD5E1;
+    border-left: 3pt solid #1E293B;
+    background-color: #F8FAFC;
     color: #1E293B;
+}
+
+blockquote strong:first-child {
+    color: #0F172A;
+}
+
+blockquote.alert-arquitetura {
+    border-left: 3pt solid #1E293B;
+}
+
+blockquote.alert-threadsafety {
+    border-left: 3pt solid #334155;
+}
+
+blockquote.alert-fpc {
+    border-left: 3pt solid #475569;
 }
 
 /* --------------------------------------------------------------------------
@@ -231,6 +238,14 @@ li {
 .newpage {
     page-break-before: always;
     break-before: page;
+}
+
+/* Previne páginas em branco acidentais quando .newpage precede um título h1 */
+.newpage + h1,
+.newpage + div h1,
+.newpage + div + h1 {
+    page-break-before: auto !important;
+    break-before: auto !important;
 }
 
     </style>
@@ -333,8 +348,6 @@ robusta com JSON Web Tokens (JWT) e Refresh Tokens.</p>
 <li>Colofão Editorial</li>
 </ul>
 <hr />
-<div class="newpage"></div>
-
 <h1 id="modulo-01-anatomia-de-um-servidor-http-com-horse-no-free-pascal">MÓDULO 01: ANATOMIA DE UM SERVIDOR HTTP COM HORSE NO FREE PASCAL</h1>
 <hr />
 <h2 id="1-objetivos-de-aprendizagem-do-modulo">1. OBJETIVOS DE APRENDIZAGEM DO MÓDULO</h2>
@@ -944,10 +957,6 @@ Antes de avançar para o Módulo 02, audite a conformidade do seu ambiente execu
 Com os alicerces do Free Pascal e da mecânica interna do Horse plenamente compreendidos e dominados, estamos preparados para o **Módulo 02**, onde estruturaremos nosso ambiente profissional com o gerenciador de pacotes **Boss**, configuraremos o Lazarus e criaremos nosso primeiro servidor estruturado para produção.
 
 
-
-<div class="newpage"></div>
-
-
 # MÓDULO 02: SETUP PROFISSIONAL NO LAZARUS COM BOSS E O PRIMEIRO SERVIDOR ESTRUTURADO
 
 ---
@@ -1550,10 +1559,6 @@ Antes de avançar para o Módulo 03, certifique-se de que o seu setup cumpre int
 - [ ] **Telemetria Funcional:** Os endpoints `/ping` e `/api/v1/metrics` responderam com sucesso via `curl`, comprovando o baixo consumo de memória do heap FPC.
 
 Com a fundação do nosso projeto corporativo formalmente estabelecida, estamos prontos para avançar para o **Módulo 03**, onde mergulharemos a fundo no motor de roteamento avançado, nos verbos HTTP RESTful e na captura de parâmetros complexos.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 03: ROTEAMENTO AVANÇADO, VERBOS HTTP E PARÂMETROS
@@ -2220,10 +2225,6 @@ Antes de avançar para o Módulo 04, certifique-se de validar todos os itens da 
 Com o domínio pleno das técnicas de roteamento e extração de parâmetros no Horse, avançamos agora para o **Módulo 04**, onde dissecaremos o ciclo de vida completo de requisições e respostas, os códigos de status HTTP e a implementação formal do padrão **RFC 7807 (Problem Details)** para tratamento padronizado de erros.
 
 
-
-<div class="newpage"></div>
-
-
 # MÓDULO 04: REQUISIÇÕES, RESPOSTAS, SEMÂNTICA DE CÓDIGOS HTTP E PADRÃO RFC 7807
 
 ---
@@ -2823,10 +2824,6 @@ Antes de dar por encerrado o **Bloco I**, certifique-se de validar os seguintes 
 - [ ] **Cabeçalho Location no 201:** Operações de cadastro bem-sucedidas emitem o cabeçalho `Location` com a rota de consulta do novo recurso.
 
 Com a conclusão do Módulo 04, finalizamos com sucesso absoluto o **BLOCO I — FUNDAMENTOS DO HORSE E SERVIDORES NATIVOS EM LAZARUS**. Estamos agora prontos para avançar para o **BLOCO II**, onde construiremos o pipeline de middlewares avançados, decodificação JSON com `fpjson` e `Jhonson`, tratamento global de exceções e segurança stateless com JWT.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 05: O PIPELINE DE MIDDLEWARES E O DELEGADO TNEXTPROC
@@ -3491,10 +3488,6 @@ Antes de avançar para o Módulo 06, valide a conformidade dos itens:
 - [ ] **Rate Limiting Funcional:** Teste de rajada comprovou a emissão de status HTTP `429 Too Many Requests` com cabeçalho `Retry-After`.
 
 Com o pipeline de middlewares dominado e blindado contra concorrência, estamos preparados para o **Módulo 06**, onde exploraremos a serialização JSON de alta performance com a biblioteca nativa `fpjson` e a integração com o middleware oficial `horse-jhonson`.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 06: SERIALIZAÇÃO JSON DE ALTA PERFORMANCE COM FPJSON E JHONSON
@@ -4195,10 +4188,6 @@ Antes de avançar para o Módulo 07, certifique-se de validar os seguintes itens
 Com a serialização JSON plenamente dominada, avançamos agora para o **Módulo 07**, onde aprenderemos a configurar o controle de origens cruzadas (**CORS**) e a construir um interceptador global de exceções para proteger a API contra vazamento de informações sensíveis.
 
 
-
-<div class="newpage"></div>
-
-
 # MÓDULO 07: CORS E TRATAMENTO GLOBAL DE EXCEÇÕES
 
 ---
@@ -4855,10 +4844,6 @@ Antes de avançar para o Módulo 08, audite a conformidade dos itens:
 - [ ] **Ciclo de Vida de Exceções:** Nenhuma instância de exceção é destruída manualmente dentro de blocos `except`.
 
 Com o pipeline de middlewares devidamente protegido por CORS e blindado contra falhas, estamos prontos para avançar para o **Módulo 08**, onde construiremos o sistema completo de autenticação e segurança stateless com **JSON Web Tokens (JWT)** e **Refresh Tokens** persistidos no Firebird 5.0.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 08: AUTENTICAÇÃO JWT E REFRESH TOKENS NO FIREBIRD 5.0
@@ -5711,10 +5696,6 @@ Antes de avançar para o Módulo 09, confirme a conformidade dos seguintes itens
 Com o sistema de autenticação e controle de acesso plenamente implementado, concluímos o **Bloco II** e ingressamos no **BLOCO III — ARQUITETURA LIMPA E PERSISTÊNCIA COM FIREBIRD 5.0**, iniciando no **Módulo 09** com a estruturação de Interfaces e Inversão de Controle no Lazarus.
 
 
-
-<div class="newpage"></div>
-
-
 # Elementos Pós-Textuais — Volume 1
 
 ---
@@ -5780,11 +5761,6 @@ Software:    Lazarus 3.x &amp; Free Pascal Compiler 3.2.2+
 Local/Data:  São Paulo — Brasil, Novembro de 2026.
 =====================================================================
 </code></pre>
-
-
-
-
-<div class="newpage"></div>
 </div>
 </body>
 </html>

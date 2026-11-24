@@ -1,23 +1,21 @@
-# ELEMENTOS PRÉ-TEXTUAIS
-
-\newpage
-
 <!-- FOLHA DE ROSTO -->
-<div style="text-align: center; margin-top: 100px;">
+<div style="text-align: center; padding-top: 60px;">
 
-# DESENVOLVIMENTO DE APIS REST MODERNAS COM HORSE E LAZARUS
+<h1 style="border: none; text-align: center; font-size: 22pt; margin-top: 20pt; page-break-before: avoid; break-before: avoid;">DESENVOLVIMENTO DE APIS REST MODERNAS COM HORSE E LAZARUS</h1>
 
-### Arquitetura Limpa, Firebird 5.0 e Deploy em Produção
+<h3 style="border: none; text-align: center; font-size: 13pt; color: #475569; font-weight: 500;">Arquitetura Limpa, Firebird 5.0 e Deploy em Produção</h3>
 
 <br><br>
 
-## MAURÍCIO ABREU
+<div style="font-size: 14pt; font-weight: bold; color: #0F172A;">MAURÍCIO ABREU</div>
 
 <br><br><br><br>
 
-**1ª Edição**  
-**São Paulo — Brasil**  
-**2026**
+<div style="font-size: 9.5pt; color: #475569; line-height: 1.6;">
+<strong>1ª Edição</strong><br>
+<strong>São Paulo — Brasil</strong><br>
+<strong>2026</strong>
+</div>
 
 </div>
 
@@ -87,8 +85,6 @@ Abreu, Maurício.
 
 \vspace*{\fill}
 
-\newpage
-
 <!-- PREFÁCIO -->
 # PREFÁCIO
 
@@ -113,8 +109,6 @@ Boa jornada de estudos e excelente compilação!
 **Maurício Abreu**  
 *Arquiteto de Software e Engenheiro de Sistemas*
 
-\newpage
-
 <!-- SOBRE O AUTOR -->
 # SOBRE O AUTOR
 
@@ -125,8 +119,6 @@ Com sólida trajetória na indústria de software corporativo, é fundador e dir
 Ao longo de sua carreira, liderou a concepção e implementação de soluções de alta concorrência nas áreas de automação comercial, emissão fiscal de documentos eletrônicos, integrações bancárias, plataformas de faturamento e arquiteturas multi-tenant, combinando a robustez dos binários compilados nativamente com as melhores práticas mundiais de Engenharia de Software, incluindo Clean Architecture, Domain-Driven Design (DDD) e pipelines automatizados de DevOps.
 
 Além de sua atuação prática no mercado corporativo, Maurício dedica-se ativamente ao fomento da comunidade técnica de Free Pascal e Lazarus no Brasil e no exterior, produzindo conteúdo avançado, ministrando treinamentos e defendendo o uso racional, pragmático e performático do Object Pascal moderno em ambientes de nuvem e microsserviços.
-
-\newpage
 
 <!-- COMO USAR ESTE LIVRO -->
 # COMO USAR ESTE LIVRO
@@ -190,8 +182,6 @@ codigo_fonte/connect_os_api/
     ├── Repositories/           # Acesso a dados Firebird 5.0
     └── Services/               # Regras de negocio e validacoes
 ```
-
-\newpage
 
 <!-- CONFIGURAÇÃO DO AMBIENTE DE LABORATÓRIO -->
 # CONFIGURAÇÃO DO AMBIENTE DE LABORATÓRIO

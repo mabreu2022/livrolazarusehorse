@@ -135,8 +135,7 @@ code {
 
 pre {
     background-color: #F8FAFC;
-    border: 1pt solid #E2E8F0;
-    border-left: 3pt solid #3B82F6;
+    border: 0.5pt solid #CBD5E1;
     padding: 6pt 8pt;
     margin: 8pt 0;
     font-size: 8pt;
@@ -165,18 +164,26 @@ blockquote {
     line-height: 1.45;
     page-break-inside: avoid;
     break-inside: avoid;
-}
-
-/* Nota de Arquitetura */
-blockquote p strong:first-child:contains("Nota de Arquitetura") {
-    color: #1D4ED8;
-}
-
-/* Estilo padrão de blockquote */
-blockquote {
-    border-left: 3.5pt solid #3B82F6;
-    background-color: #F0F7FF;
+    border: 0.5pt solid #CBD5E1;
+    border-left: 3pt solid #1E293B;
+    background-color: #F8FAFC;
     color: #1E293B;
+}
+
+blockquote strong:first-child {
+    color: #0F172A;
+}
+
+blockquote.alert-arquitetura {
+    border-left: 3pt solid #1E293B;
+}
+
+blockquote.alert-threadsafety {
+    border-left: 3pt solid #334155;
+}
+
+blockquote.alert-fpc {
+    border-left: 3pt solid #475569;
 }
 
 /* --------------------------------------------------------------------------
@@ -233,29 +240,36 @@ li {
     break-before: page;
 }
 
+/* Previne páginas em branco acidentais quando .newpage precede um título h1 */
+.newpage + h1,
+.newpage + div h1,
+.newpage + div + h1 {
+    page-break-before: auto !important;
+    break-before: auto !important;
+}
+
     </style>
 </head>
 <body>
 <div class="book-container">
-<h1 id="elementos-pre-textuais">ELEMENTOS PRÉ-TEXTUAIS</h1>
-<div class="newpage"></div>
-
 <!-- FOLHA DE ROSTO -->
-<div style="text-align: center; margin-top: 100px;">
+<div style="text-align: center; padding-top: 60px;">
 
-# DESENVOLVIMENTO DE APIS REST MODERNAS COM HORSE E LAZARUS
+<h1 style="border: none; text-align: center; font-size: 22pt; margin-top: 20pt; page-break-before: avoid; break-before: avoid;">DESENVOLVIMENTO DE APIS REST MODERNAS COM HORSE E LAZARUS</h1>
 
-### Arquitetura Limpa, Firebird 5.0 e Deploy em Produção
+<h3 style="border: none; text-align: center; font-size: 13pt; color: #475569; font-weight: 500;">Arquitetura Limpa, Firebird 5.0 e Deploy em Produção</h3>
 
 <br><br>
 
-## MAURÍCIO ABREU
+<div style="font-size: 14pt; font-weight: bold; color: #0F172A;">MAURÍCIO ABREU</div>
 
 <br><br><br><br>
 
-**1ª Edição**  
-**São Paulo — Brasil**  
-**2026**
+<div style="font-size: 9.5pt; color: #475569; line-height: 1.6;">
+<strong>1ª Edição</strong><br>
+<strong>São Paulo — Brasil</strong><br>
+<strong>2026</strong>
+</div>
 
 </div>
 
@@ -325,8 +339,6 @@ Abreu, Maurício.
 
 <div style="margin: 20px 0;"></div>
 
-<div class="newpage"></div>
-
 <!-- PREFÁCIO -->
 <h1 id="prefacio">PREFÁCIO</h1>
 <p>Durante mais de duas décadas, o ecossistema Object Pascal foi amplamente consagrado pelo desenvolvimento de aplicações desktop de altíssima performance, com interfaces ricas, conexão direta com bancos de dados relacionais e entregáveis consubstanciados em binários compilados nativamente, autossuficientes e velozes. Milhares de indústrias, instituições bancárias, hospitais e softwares de automação comercial foram — e continuam sendo — impulsionados pela solidez dessa tecnologia.</p>
@@ -340,16 +352,12 @@ Abreu, Maurício.
 <p>Boa jornada de estudos e excelente compilação!</p>
 <p><strong>Maurício Abreu</strong><br />
 <em>Arquiteto de Software e Engenheiro de Sistemas</em></p>
-<div class="newpage"></div>
-
 <!-- SOBRE O AUTOR -->
 <h1 id="sobre-o-autor">SOBRE O AUTOR</h1>
 <p><strong>Maurício Abreu</strong> é Engenheiro de Software Sênior, Arquiteto de Soluções Backend e especialista em desenvolvimento de alta performance no ecossistema Object Pascal (Delphi e Free Pascal / Lazarus), além de atuar no design de infraestruturas distribuídas, bancos de dados relacionais e ambientes conteinerizados.</p>
 <p>Com sólida trajetória na indústria de software corporativo, é fundador e diretor de tecnologia na <strong>Conect Solutions TI</strong>, empresa dedicada à engenharia de software de missão crítica, consultoria arquitetural e modernização de ecossistemas empresariais para médias e grandes corporações.</p>
 <p>Ao longo de sua carreira, liderou a concepção e implementação de soluções de alta concorrência nas áreas de automação comercial, emissão fiscal de documentos eletrônicos, integrações bancárias, plataformas de faturamento e arquiteturas multi-tenant, combinando a robustez dos binários compilados nativamente com as melhores práticas mundiais de Engenharia de Software, incluindo Clean Architecture, Domain-Driven Design (DDD) e pipelines automatizados de DevOps.</p>
 <p>Além de sua atuação prática no mercado corporativo, Maurício dedica-se ativamente ao fomento da comunidade técnica de Free Pascal e Lazarus no Brasil e no exterior, produzindo conteúdo avançado, ministrando treinamentos e defendendo o uso racional, pragmático e performático do Object Pascal moderno em ambientes de nuvem e microsserviços.</p>
-<div class="newpage"></div>
-
 <!-- COMO USAR ESTE LIVRO -->
 <h1 id="como-usar-este-livro">COMO USAR ESTE LIVRO</h1>
 <p>Este livro foi concebido como uma obra técnica de referência e, simultaneamente, como um guia prático de engenharia editorial. Para extrair o máximo proveito da leitura e das implementações, recomendamos observar os seguintes aspectos estruturais e metodológicos.</p>
@@ -408,8 +416,6 @@ O código-fonte integral e organizado do projeto está hospedado no diretório `
     └── Services/               # Regras de negocio e validacoes
 </code></pre>
 
-
-<div class="newpage"></div>
 
 <!-- CONFIGURAÇÃO DO AMBIENTE DE LABORATÓRIO -->
 # CONFIGURAÇÃO DO AMBIENTE DE LABORATÓRIO
@@ -533,10 +539,6 @@ Durante a instalação, o assistente solicitará a criação da senha administra
    - **wrk** ou **k6:** Ferramentas para benchmarks e testes de estresse de alta concorrência.
 
 Com o ambiente devidamente preparado e validado, você está pronto para ingressar no Módulo 01 e desvendar a anatomia profunda do Horse sobre o Free Pascal.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 01: ANATOMIA DE UM SERVIDOR HTTP COM HORSE NO FREE PASCAL
@@ -1130,10 +1132,6 @@ Antes de avançar para o Módulo 02, audite a conformidade do seu ambiente execu
 - [ ] **Resiliência a Concorrência:** O teste com ferramenta de benchmark (`ab` ou `wrk`) comprovou ausência de falhas em chamadas paralelas e liberação adequada de memória.
 
 Com os alicerces do Free Pascal e da mecânica interna do Horse plenamente compreendidos e dominados, estamos preparados para o **Módulo 02**, onde estruturaremos nosso ambiente profissional com o gerenciador de pacotes **Boss**, configuraremos o Lazarus e criaremos nosso primeiro servidor estruturado para produção.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 02: SETUP PROFISSIONAL NO LAZARUS COM BOSS E O PRIMEIRO SERVIDOR ESTRUTURADO
@@ -1738,10 +1736,6 @@ Antes de avançar para o Módulo 03, certifique-se de que o seu setup cumpre int
 - [ ] **Telemetria Funcional:** Os endpoints `/ping` e `/api/v1/metrics` responderam com sucesso via `curl`, comprovando o baixo consumo de memória do heap FPC.
 
 Com a fundação do nosso projeto corporativo formalmente estabelecida, estamos prontos para avançar para o **Módulo 03**, onde mergulharemos a fundo no motor de roteamento avançado, nos verbos HTTP RESTful e na captura de parâmetros complexos.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 03: ROTEAMENTO AVANÇADO, VERBOS HTTP E PARÂMETROS
@@ -2408,10 +2402,6 @@ Antes de avançar para o Módulo 04, certifique-se de validar todos os itens da 
 Com o domínio pleno das técnicas de roteamento e extração de parâmetros no Horse, avançamos agora para o **Módulo 04**, onde dissecaremos o ciclo de vida completo de requisições e respostas, os códigos de status HTTP e a implementação formal do padrão **RFC 7807 (Problem Details)** para tratamento padronizado de erros.
 
 
-
-<div class="newpage"></div>
-
-
 # MÓDULO 04: REQUISIÇÕES, RESPOSTAS, SEMÂNTICA DE CÓDIGOS HTTP E PADRÃO RFC 7807
 
 ---
@@ -3011,10 +3001,6 @@ Antes de dar por encerrado o **Bloco I**, certifique-se de validar os seguintes 
 - [ ] **Cabeçalho Location no 201:** Operações de cadastro bem-sucedidas emitem o cabeçalho `Location` com a rota de consulta do novo recurso.
 
 Com a conclusão do Módulo 04, finalizamos com sucesso absoluto o **BLOCO I — FUNDAMENTOS DO HORSE E SERVIDORES NATIVOS EM LAZARUS**. Estamos agora prontos para avançar para o **BLOCO II**, onde construiremos o pipeline de middlewares avançados, decodificação JSON com `fpjson` e `Jhonson`, tratamento global de exceções e segurança stateless com JWT.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 05: O PIPELINE DE MIDDLEWARES E O DELEGADO TNEXTPROC
@@ -3679,10 +3665,6 @@ Antes de avançar para o Módulo 06, valide a conformidade dos itens:
 - [ ] **Rate Limiting Funcional:** Teste de rajada comprovou a emissão de status HTTP `429 Too Many Requests` com cabeçalho `Retry-After`.
 
 Com o pipeline de middlewares dominado e blindado contra concorrência, estamos preparados para o **Módulo 06**, onde exploraremos a serialização JSON de alta performance com a biblioteca nativa `fpjson` e a integração com o middleware oficial `horse-jhonson`.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 06: SERIALIZAÇÃO JSON DE ALTA PERFORMANCE COM FPJSON E JHONSON
@@ -4383,10 +4365,6 @@ Antes de avançar para o Módulo 07, certifique-se de validar os seguintes itens
 Com a serialização JSON plenamente dominada, avançamos agora para o **Módulo 07**, onde aprenderemos a configurar o controle de origens cruzadas (**CORS**) e a construir um interceptador global de exceções para proteger a API contra vazamento de informações sensíveis.
 
 
-
-<div class="newpage"></div>
-
-
 # MÓDULO 07: CORS E TRATAMENTO GLOBAL DE EXCEÇÕES
 
 ---
@@ -5043,10 +5021,6 @@ Antes de avançar para o Módulo 08, audite a conformidade dos itens:
 - [ ] **Ciclo de Vida de Exceções:** Nenhuma instância de exceção é destruída manualmente dentro de blocos `except`.
 
 Com o pipeline de middlewares devidamente protegido por CORS e blindado contra falhas, estamos prontos para avançar para o **Módulo 08**, onde construiremos o sistema completo de autenticação e segurança stateless com **JSON Web Tokens (JWT)** e **Refresh Tokens** persistidos no Firebird 5.0.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 08: AUTENTICAÇÃO JWT E REFRESH TOKENS NO FIREBIRD 5.0
@@ -5899,10 +5873,6 @@ Antes de avançar para o Módulo 09, confirme a conformidade dos seguintes itens
 Com o sistema de autenticação e controle de acesso plenamente implementado, concluímos o **Bloco II** e ingressamos no **BLOCO III — ARQUITETURA LIMPA E PERSISTÊNCIA COM FIREBIRD 5.0**, iniciando no **Módulo 09** com a estruturação de Interfaces e Inversão de Controle no Lazarus.
 
 
-
-<div class="newpage"></div>
-
-
 # MÓDULO 09: ARQUITETURA LIMPA, MVC E INTERFACES NO LAZARUS
 
 ---
@@ -6667,10 +6637,6 @@ Antes de avançar para o Módulo 10, certifique-se de validar os seguintes itens
 Com a arquitetura limpa e desacoplada plenamente implantada, avançamos para o **Módulo 10**, onde mergulharemos a fundo na modelagem física e nos recursos nativos de alto desempenho do **Firebird 5.0**.
 
 
-
-<div class="newpage"></div>
-
-
 # MÓDULO 10: MODELAGEM DO FIREBIRD 5.0, IDENTITY E COLLATION UTF8
 
 ---
@@ -7151,10 +7117,6 @@ Antes de avançar para o Módulo 11, certifique-se de validar os seguintes itens
 - [ ] **Cliente Nativo 64-bit:** A biblioteca `fbclient` de 64 bits está homologada e pronta para conexão com o Free Pascal.
 
 Com a modelagem física do Firebird 5.0 plenamente validada, ingressamos no coração da infraestrutura de dados no **Módulo 11**, onde resolveremos o maior desafio de engenharia em servidores web Pascal: a construção de um **Pool de Conexões Thread-Safe** de alto desempenho.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 11: POOL DE CONEXÕES THREAD-SAFE COM FIREBIRD 5.0
@@ -7915,10 +7877,6 @@ Antes de avançar para o Módulo 12, certifique-se de validar os seguintes itens
 - [ ] **Configuração Externa:** Parâmetros de host, porta, usuário e banco são lidos de variáveis de ambiente do sistema operacional.
 
 Com o pool de conexões thread-safe plenamente operacional e blindado, avançamos para o **Módulo 12**, onde construiremos o **CRUD completo do projeto prático**, implementando transações explícitas, padrão Unit of Work e controle de faturamento no Firebird 5.0.
-
-
-
-<div class="newpage"></div>
 
 
 # Módulo 12: CRUD Completo, Transações Explícitas e Padrão Unit of Work
@@ -9069,10 +9027,6 @@ relacional e isolamento transacional estrito no Firebird 5.0.
       assegurando isolamento multi-tenant completo?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 13: Paginação de Alta Performance, Filtros Dinâmicos e Metadados
 
 Construir endpoints de listagem que escalam graciosamente com o crescimento 
@@ -9868,10 +9822,6 @@ Firebird 5.0 e blindando o sistema contra ataques de SQL Injection.
       composta para acelerar tanto a filtragem quanto o `ORDER BY`?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 14: Upload, Download e Streaming Binário de Alta Eficiência
 
 A gestão documental e a troca de arquivos binários — como laudos técnicos 
@@ -10621,10 +10571,6 @@ relacional Firebird 5.0.
       Firebird 5.0 para auditoria e garantia contra arquivos corrompidos?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 15: Consumo de APIs Externas, Webhooks e Resiliência HTTP
 
 No ecossistema corporativo atual, nenhuma API REST opera isolada como uma 
@@ -11319,10 +11265,6 @@ assíncronos com segurança criptográfica e garantia de idempotência.
       instaladas e acessíveis no ambiente de deploy?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 16: Documentação Viva com OpenAPI 3.0 e Swagger UI Embarcado
 
 Uma API de alto padrão de engenharia não é medida apenas pela velocidade 
@@ -11951,10 +11893,6 @@ qualquer dependência de ferramentas externas.
       e validação de sintaxe JSON íntegra?
 - [ ] Em produção restrita, a rota de documentação pode ser desativada 
       por configuração de ambiente?
-
-
-
-<div class="newpage"></div>
 
 
 # Módulo 17: Testes Automatizados com FPCUnit, Mocks e CI/CD
@@ -12605,10 +12543,6 @@ contínuas sem riscos de regressão.
 - [ ] O runner console permite exportar relatórios padronizados em XML?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 18: Otimização do Compilador FPC, HeapTrc e Benchmarks de Carga
 
 Uma das maiores vantagens competitivas do ecossistema Free Pascal e Lazarus 
@@ -13092,10 +13026,6 @@ enxutas e auditando a ausência de vazamentos sob tráfego massivo.
       consumo de memória RAM (sem vazamento contínuo)?
 - [ ] A latência p99 permaneceu em patamares inferiores a 20 ms sob carga?
 - [ ] O script de compilação automatiza a limpeza de diretórios temporários?
-
-
-
-<div class="newpage"></div>
 
 
 # Módulo 19: Daemons de Produção com systemd e Windows Services
@@ -13669,10 +13599,6 @@ continuamente pelo systemd.
 - [ ] A política `Restart=always` com `RestartSec=5s` está configurada?
 - [ ] Sinais `SIGTERM` e `SIGINT` são interceptados para encerramento gracioso?
 - [ ] Os logs são despachados para o `systemd-journald` e auditáveis com `journalctl`?
-
-
-
-<div class="newpage"></div>
 
 
 # Módulo 20: Nginx Proxy Reverso, SSL Gratuito, Multi-Stage Docker e Deploy
@@ -14261,10 +14187,6 @@ disponibilidade, segurança de ponta a ponta e containerização moderna.
 - [ ] O `docker-compose.yml` orquestra Firebird 5.0, API e Nginx com volumes persistentes?
 
 
-
-<div class="newpage"></div>
-
-
 # Elementos Pós-Textuais
 
 ---
@@ -14518,11 +14440,6 @@ Pipeline:    Python Markdown-to-PDF / Headless Chromium Engine
 Local/Data:  São Paulo — Brasil, Novembro de 2026.
 =====================================================================
 </code></pre>
-
-
-
-
-<div class="newpage"></div>
 </div>
 </body>
 </html>

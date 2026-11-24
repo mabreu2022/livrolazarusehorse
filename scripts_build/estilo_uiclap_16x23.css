@@ -128,8 +128,7 @@ code {
 
 pre {
     background-color: #F8FAFC;
-    border: 1pt solid #E2E8F0;
-    border-left: 3pt solid #3B82F6;
+    border: 0.5pt solid #CBD5E1;
     padding: 6pt 8pt;
     margin: 8pt 0;
     font-size: 8pt;
@@ -158,18 +157,26 @@ blockquote {
     line-height: 1.45;
     page-break-inside: avoid;
     break-inside: avoid;
-}
-
-/* Nota de Arquitetura */
-blockquote p strong:first-child:contains("Nota de Arquitetura") {
-    color: #1D4ED8;
-}
-
-/* Estilo padrão de blockquote */
-blockquote {
-    border-left: 3.5pt solid #3B82F6;
-    background-color: #F0F7FF;
+    border: 0.5pt solid #CBD5E1;
+    border-left: 3pt solid #1E293B;
+    background-color: #F8FAFC;
     color: #1E293B;
+}
+
+blockquote strong:first-child {
+    color: #0F172A;
+}
+
+blockquote.alert-arquitetura {
+    border-left: 3pt solid #1E293B;
+}
+
+blockquote.alert-threadsafety {
+    border-left: 3pt solid #334155;
+}
+
+blockquote.alert-fpc {
+    border-left: 3pt solid #475569;
 }
 
 /* --------------------------------------------------------------------------
@@ -224,4 +231,12 @@ li {
 .newpage {
     page-break-before: always;
     break-before: page;
+}
+
+/* Previne páginas em branco acidentais quando .newpage precede um título h1 */
+.newpage + h1,
+.newpage + div h1,
+.newpage + div + h1 {
+    page-break-before: auto !important;
+    break-before: auto !important;
 }

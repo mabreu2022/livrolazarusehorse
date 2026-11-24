@@ -129,6 +129,8 @@ def preprocess_markdown(cap_files):
         with open(fpath, "r", encoding="utf-8") as f:
             content = f.read()
             
+        # Remove \newpage que antecede h1 (que ja quebra pagina automaticamente)
+        content = re.sub(r'\\newpage\s*(?:\n\s*<!--.*?-->\s*)*\n\s*(?=#[^#])', '\n\n', content)
         content = re.sub(r'\\newpage', '<div class="newpage"></div>', content)
         content = re.sub(r'\\vspace\*?\{[^}]*\}', '<div style="margin: 20px 0;"></div>', content)
         content = content.replace('> **Nota de Arquitetura:**', '<blockquote class="alert-arquitetura"><strong>Nota de Arquitetura:</strong>')
@@ -136,9 +138,8 @@ def preprocess_markdown(cap_files):
         content = content.replace('> **Boas Práticas FPC:**', '<blockquote class="alert-fpc"><strong>Boas Práticas FPC:</strong>')
         
         full_content.append(content)
-        full_content.append('\n\n<div class="newpage"></div>\n\n')
         
-    return "\n".join(full_content)
+    return "\n\n".join(full_content)
 
 def build_html(markdown_text, vol_cfg):
     """Converte Markdown para HTML completo com suporte a CSS UICLAP."""

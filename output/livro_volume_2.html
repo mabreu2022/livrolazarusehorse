@@ -135,8 +135,7 @@ code {
 
 pre {
     background-color: #F8FAFC;
-    border: 1pt solid #E2E8F0;
-    border-left: 3pt solid #3B82F6;
+    border: 0.5pt solid #CBD5E1;
     padding: 6pt 8pt;
     margin: 8pt 0;
     font-size: 8pt;
@@ -165,18 +164,26 @@ blockquote {
     line-height: 1.45;
     page-break-inside: avoid;
     break-inside: avoid;
-}
-
-/* Nota de Arquitetura */
-blockquote p strong:first-child:contains("Nota de Arquitetura") {
-    color: #1D4ED8;
-}
-
-/* Estilo padrão de blockquote */
-blockquote {
-    border-left: 3.5pt solid #3B82F6;
-    background-color: #F0F7FF;
+    border: 0.5pt solid #CBD5E1;
+    border-left: 3pt solid #1E293B;
+    background-color: #F8FAFC;
     color: #1E293B;
+}
+
+blockquote strong:first-child {
+    color: #0F172A;
+}
+
+blockquote.alert-arquitetura {
+    border-left: 3pt solid #1E293B;
+}
+
+blockquote.alert-threadsafety {
+    border-left: 3pt solid #334155;
+}
+
+blockquote.alert-fpc {
+    border-left: 3pt solid #475569;
 }
 
 /* --------------------------------------------------------------------------
@@ -231,6 +238,14 @@ li {
 .newpage {
     page-break-before: always;
     break-before: page;
+}
+
+/* Previne páginas em branco acidentais quando .newpage precede um título h1 */
+.newpage + h1,
+.newpage + div h1,
+.newpage + div + h1 {
+    page-break-before: auto !important;
+    break-before: auto !important;
 }
 
     </style>
@@ -332,8 +347,6 @@ anti-SQL Injection e streaming de arquivos binários com storage híbrido.</p>
 <li>Colofão Editorial</li>
 </ul>
 <hr />
-<div class="newpage"></div>
-
 <h1 id="modulo-09-arquitetura-limpa-mvc-e-interfaces-no-lazarus">MÓDULO 09: ARQUITETURA LIMPA, MVC E INTERFACES NO LAZARUS</h1>
 <hr />
 <h2 id="1-objetivos-de-aprendizagem-do-modulo">1. OBJETIVOS DE APRENDIZAGEM DO MÓDULO</h2>
@@ -1068,10 +1081,6 @@ Antes de avançar para o Módulo 10, certifique-se de validar os seguintes itens
 Com a arquitetura limpa e desacoplada plenamente implantada, avançamos para o **Módulo 10**, onde mergulharemos a fundo na modelagem física e nos recursos nativos de alto desempenho do **Firebird 5.0**.
 
 
-
-<div class="newpage"></div>
-
-
 # MÓDULO 10: MODELAGEM DO FIREBIRD 5.0, IDENTITY E COLLATION UTF8
 
 ---
@@ -1552,10 +1561,6 @@ Antes de avançar para o Módulo 11, certifique-se de validar os seguintes itens
 - [ ] **Cliente Nativo 64-bit:** A biblioteca `fbclient` de 64 bits está homologada e pronta para conexão com o Free Pascal.
 
 Com a modelagem física do Firebird 5.0 plenamente validada, ingressamos no coração da infraestrutura de dados no **Módulo 11**, onde resolveremos o maior desafio de engenharia em servidores web Pascal: a construção de um **Pool de Conexões Thread-Safe** de alto desempenho.
-
-
-
-<div class="newpage"></div>
 
 
 # MÓDULO 11: POOL DE CONEXÕES THREAD-SAFE COM FIREBIRD 5.0
@@ -2316,10 +2321,6 @@ Antes de avançar para o Módulo 12, certifique-se de validar os seguintes itens
 - [ ] **Configuração Externa:** Parâmetros de host, porta, usuário e banco são lidos de variáveis de ambiente do sistema operacional.
 
 Com o pool de conexões thread-safe plenamente operacional e blindado, avançamos para o **Módulo 12**, onde construiremos o **CRUD completo do projeto prático**, implementando transações explícitas, padrão Unit of Work e controle de faturamento no Firebird 5.0.
-
-
-
-<div class="newpage"></div>
 
 
 # Módulo 12: CRUD Completo, Transações Explícitas e Padrão Unit of Work
@@ -3470,10 +3471,6 @@ relacional e isolamento transacional estrito no Firebird 5.0.
       assegurando isolamento multi-tenant completo?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 13: Paginação de Alta Performance, Filtros Dinâmicos e Metadados
 
 Construir endpoints de listagem que escalam graciosamente com o crescimento 
@@ -4269,10 +4266,6 @@ Firebird 5.0 e blindando o sistema contra ataques de SQL Injection.
       composta para acelerar tanto a filtragem quanto o `ORDER BY`?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 14: Upload, Download e Streaming Binário de Alta Eficiência
 
 A gestão documental e a troca de arquivos binários — como laudos técnicos 
@@ -5022,10 +5015,6 @@ relacional Firebird 5.0.
       Firebird 5.0 para auditoria e garantia contra arquivos corrompidos?
 
 
-
-<div class="newpage"></div>
-
-
 # Elementos Pós-Textuais — Volume 2
 
 ---
@@ -5093,11 +5082,6 @@ Software:    Lazarus 3.x, FPC 3.2.2+ &amp; Firebird RDBMS 5.0
 Local/Data:  São Paulo — Brasil, Novembro de 2026.
 =====================================================================
 </code></pre>
-
-
-
-
-<div class="newpage"></div>
 </div>
 </body>
 </html>

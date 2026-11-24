@@ -135,8 +135,7 @@ code {
 
 pre {
     background-color: #F8FAFC;
-    border: 1pt solid #E2E8F0;
-    border-left: 3pt solid #3B82F6;
+    border: 0.5pt solid #CBD5E1;
     padding: 6pt 8pt;
     margin: 8pt 0;
     font-size: 8pt;
@@ -165,18 +164,26 @@ blockquote {
     line-height: 1.45;
     page-break-inside: avoid;
     break-inside: avoid;
-}
-
-/* Nota de Arquitetura */
-blockquote p strong:first-child:contains("Nota de Arquitetura") {
-    color: #1D4ED8;
-}
-
-/* Estilo padrão de blockquote */
-blockquote {
-    border-left: 3.5pt solid #3B82F6;
-    background-color: #F0F7FF;
+    border: 0.5pt solid #CBD5E1;
+    border-left: 3pt solid #1E293B;
+    background-color: #F8FAFC;
     color: #1E293B;
+}
+
+blockquote strong:first-child {
+    color: #0F172A;
+}
+
+blockquote.alert-arquitetura {
+    border-left: 3pt solid #1E293B;
+}
+
+blockquote.alert-threadsafety {
+    border-left: 3pt solid #334155;
+}
+
+blockquote.alert-fpc {
+    border-left: 3pt solid #475569;
 }
 
 /* --------------------------------------------------------------------------
@@ -231,6 +238,14 @@ li {
 .newpage {
     page-break-before: always;
     break-before: page;
+}
+
+/* Previne páginas em branco acidentais quando .newpage precede um título h1 */
+.newpage + h1,
+.newpage + div h1,
+.newpage + div + h1 {
+    page-break-before: auto !important;
+    break-before: auto !important;
 }
 
     </style>
@@ -331,8 +346,6 @@ patamar do mercado mundial.</p>
 <li>Colofão Editorial da Trilogia</li>
 </ul>
 <hr />
-<div class="newpage"></div>
-
 <h1 id="modulo-15-consumo-de-apis-externas-webhooks-e-resiliencia-http">Módulo 15: Consumo de APIs Externas, Webhooks e Resiliência HTTP</h1>
 <p>No ecossistema corporativo atual, nenhuma API REST opera isolada como uma 
 ilha. Uma plataforma de gestão de ordens de serviço e faturamento necessita 
@@ -1012,10 +1025,6 @@ assíncronos com segurança criptográfica e garantia de idempotência.
       instaladas e acessíveis no ambiente de deploy?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 16: Documentação Viva com OpenAPI 3.0 e Swagger UI Embarcado
 
 Uma API de alto padrão de engenharia não é medida apenas pela velocidade 
@@ -1644,10 +1653,6 @@ qualquer dependência de ferramentas externas.
       e validação de sintaxe JSON íntegra?
 - [ ] Em produção restrita, a rota de documentação pode ser desativada 
       por configuração de ambiente?
-
-
-
-<div class="newpage"></div>
 
 
 # Módulo 17: Testes Automatizados com FPCUnit, Mocks e CI/CD
@@ -2298,10 +2303,6 @@ contínuas sem riscos de regressão.
 - [ ] O runner console permite exportar relatórios padronizados em XML?
 
 
-
-<div class="newpage"></div>
-
-
 # Módulo 18: Otimização do Compilador FPC, HeapTrc e Benchmarks de Carga
 
 Uma das maiores vantagens competitivas do ecossistema Free Pascal e Lazarus 
@@ -2785,10 +2786,6 @@ enxutas e auditando a ausência de vazamentos sob tráfego massivo.
       consumo de memória RAM (sem vazamento contínuo)?
 - [ ] A latência p99 permaneceu em patamares inferiores a 20 ms sob carga?
 - [ ] O script de compilação automatiza a limpeza de diretórios temporários?
-
-
-
-<div class="newpage"></div>
 
 
 # Módulo 19: Daemons de Produção com systemd e Windows Services
@@ -3362,10 +3359,6 @@ continuamente pelo systemd.
 - [ ] A política `Restart=always` com `RestartSec=5s` está configurada?
 - [ ] Sinais `SIGTERM` e `SIGINT` são interceptados para encerramento gracioso?
 - [ ] Os logs são despachados para o `systemd-journald` e auditáveis com `journalctl`?
-
-
-
-<div class="newpage"></div>
 
 
 # Módulo 20: Nginx Proxy Reverso, SSL Gratuito, Multi-Stage Docker e Deploy
@@ -3954,10 +3947,6 @@ disponibilidade, segurança de ponta a ponta e containerização moderna.
 - [ ] O `docker-compose.yml` orquestra Firebird 5.0, API e Nginx com volumes persistentes?
 
 
-
-<div class="newpage"></div>
-
-
 # Elementos Pós-Textuais — Volume 3
 
 ---
@@ -4035,11 +4024,6 @@ Software:    Lazarus 3.x, FPC 3.2.2+, Docker Engine &amp; Nginx
 Local/Data:  São Paulo — Brasil, Novembro de 2026.
 =====================================================================
 </code></pre>
-
-
-
-
-<div class="newpage"></div>
 </div>
 </body>
 </html>
